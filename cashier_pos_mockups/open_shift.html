@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mở Ca Làm Việc - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 30px 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .logo-area { text-align: center; margin-top: 30px; }
+        .brand-logo { width: 64px; height: 64px; background: #3d2314; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #c89d7c; font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+        .brand-name { font-size: 20px; font-weight: 700; color: #2c1a11; margin: 0; }
+        .brand-subtitle { font-size: 12px; color: #8c766c; margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .form-area { flex-grow: 1; margin-top: 40px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        
+        .form-select, .form-input { width: 100%; height: 46px; background: #fafafa; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; box-sizing: border-box; font-size: 14px; color: #2c1a11; font-weight: 600; transition: all 0.2s; }
+        .form-select:focus, .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+
+        .error-box { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: none; line-height: 1.4; }
+        .success-box { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: none; }
+
+        .btn-submit { width: 100%; height: 50px; background: #3d2314; color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+        .btn-submit:hover { background: #5c3826; }
+        
+        .exit-link { text-align: center; margin-bottom: 10px; }
+        .exit-btn { text-decoration: none; color: #8c766c; font-size: 13px; font-weight: 600; transition: color 0.2s; }
+        .exit-btn:hover { color: #cf6679; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 60px 24px 30px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Logo and Brand Title -->
+        <div class="logo-area">
+            <div class="brand-logo">CZ</div>
+            <h1 class="brand-name">Coffee Zone</h1>
+            <p class="brand-subtitle">Cổng POS Thu Ngân</p>
+        </div>
+
+        <!-- Form and Errors -->
+        <div class="form-area">
+            <div id="errorBox" class="error-box"></div>
+            <div id="successBox" class="success-box"></div>
+
+            <form id="openShiftForm" onsubmit="handleOpenShift(event)">
+                <!-- Register ID -->
+                <div class="form-group">
+                    <label class="form-label" for="registerId">Chọn máy POS *</label>
+                    <select id="registerId" class="form-select" required onchange="clearError()">
+                        <option value="REG-01">Máy POS 01 (REG-01)</option>
+                        <option value="REG-02">Máy POS 02 (REG-02)</option>
+                    </select>
+                </div>
+
+                <!-- Starting Float -->
+                <div class="form-group">
+                    <label class="form-label" for="startFloat">Tiền mặt đầu ca (VND) *</label>
+                    <input type="number" id="startFloat" class="form-input" value="1000000" placeholder="Nhập số tiền..." required>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Submit and Cancel -->
+        <div>
+            <button type="submit" form="openShiftForm" class="btn-submit">BẮT ĐẦU CA LÀM</button>
+            <div class="exit-link" style="margin-top: 15px;">
+                <a href="../mobile_auth_mockups/login.html" class="exit-btn">Đăng xuất tài khoản</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function clearError() {
+            document.getElementById('errorBox').style.display = 'none';
+        }
+
+        function handleOpenShift(e) {
+            e.preventDefault();
+            const register = document.getElementById('registerId').value;
+            const floatVal = parseFloat(document.getElementById('startFloat').value);
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            // BR-33: Starting float check
+            if (isNaN(floatVal) || floatVal < 0) {
+                errorBox.textContent = "Số tiền mặt đầu ca phải lớn hơn hoặc bằng 0 (Theo BR-33).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // AT1: Busy register simulation
+            if (register === 'REG-02') {
+                errorBox.textContent = "Máy POS REG-02 đang có một ca làm việc hoạt động. Vui lòng đóng ca đó trước.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success redirect simulation
+            successBox.textContent = "Mở ca thành công! Đang vào màn hình bán hàng...";
+            successBox.style.display = 'block';
+
+            // Disable form inputs
+            document.getElementById('registerId').disabled = true;
+            document.getElementById('startFloat').disabled = true;
+            document.querySelector('.btn-submit').disabled = true;
+
+            setTimeout(() => {
+                window.location.href = `checkout.html?register=${register}&float=${floatVal}`;
+            }, 1200);
+        }
+    </script>
+</body>
+</html>

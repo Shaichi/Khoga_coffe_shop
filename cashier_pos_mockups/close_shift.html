@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đóng Ca Làm Việc - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-input { width: 100%; height: 42px; background: #fafafa; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 14px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; font-weight: 600; }
+        .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+        
+        textarea.form-input { height: 65px; padding: 10px 14px; font-family: inherit; resize: none; }
+
+        .readonly-value { display: flex; align-items: center; background: #f5eee8; border-radius: 12px; height: 42px; padding: 0 16px; font-size: 14px; color: #3d2314; font-weight: 700; box-sizing: border-box; }
+
+        .checkbox-container { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #5c3826; cursor: pointer; line-height: 1.4; margin-top: 10px; font-weight: 500; }
+        .checkbox-container input { width: 16px; height: 16px; accent-color: #3d2314; margin-top: 2px; }
+
+        .alert-box { background: #fff8e1; border: 1px solid rgba(255,179,0,0.3); border-radius: 12px; padding: 12px; color: #b78103; font-size: 11.5px; font-weight: 600; margin-bottom: 15px; display: none; line-height: 1.4; }
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 15px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 15px; display: none; }
+
+        .btn-submit { width: 100%; height: 50px; background: #3d2314; color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+        .btn-submit:hover { background: #5c3826; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Form Area -->
+        <div class="content-area">
+            <div class="header">
+                <a href="checkout.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Đóng Ca Bàn Giao</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="alertBox" class="alert-box"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <form id="closeShiftForm" onsubmit="handleCloseShift(event)">
+                <!-- Cashier Meta Read-only -->
+                <div class="form-group">
+                    <label class="form-label">Thông tin ca trực</label>
+                    <div class="readonly-value" style="font-size:12px; font-weight:600;">
+                        Thu ngân: Cashier_01 | Máy POS: REG-01
+                    </div>
+                </div>
+
+                <!-- Expected Cash -->
+                <div class="form-group">
+                    <label class="form-label">Doanh thu tiền mặt hệ thống (Expected)</label>
+                    <div id="expectedCashVal" class="readonly-value">2,500,000 VND</div>
+                </div>
+
+                <!-- Actual Counted Cash -->
+                <div class="form-group">
+                    <label class="form-label" for="actualCash">Tiền mặt kiểm đếm thực tế *</label>
+                    <input type="number" id="actualCash" class="form-input" placeholder="Nhập số tiền mặt trong két..." required oninput="checkDiscrepancy()">
+                </div>
+
+                <!-- Discrepancy Notes -->
+                <div class="form-group">
+                    <label class="form-label" for="discrepancyNotes" id="notesLabel">Ghi chú sai lệch (Nếu có)</label>
+                    <textarea id="discrepancyNotes" class="form-input" placeholder="Giải trình lý do chênh lệch két tiền nếu có..."></textarea>
+                </div>
+
+                <!-- BR-03 Order checks -->
+                <div class="form-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="ordersTerminalCheck" required>
+                        Xác nhận: Tất cả đơn hàng liên kết trong ca đã xử lý xong (Hoàn thành hoặc Hủy) - Yêu cầu BR-03
+                    </label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Button -->
+        <div>
+            <button type="submit" form="closeShiftForm" class="btn-submit">ĐỒNG Ý ĐÓNG CA</button>
+        </div>
+    </div>
+
+    <script>
+        const expectedCashAmount = 2500000;
+
+        function checkDiscrepancy() {
+            const actualInput = document.getElementById('actualCash').value;
+            const alertBox = document.getElementById('alertBox');
+            const notesLabel = document.getElementById('notesLabel');
+            
+            alertBox.style.display = 'none';
+            notesLabel.innerHTML = "Ghi chú sai lệch (Nếu có)";
+
+            if (actualInput === "") return;
+
+            const actualVal = parseFloat(actualInput);
+            const diff = Math.abs(actualVal - expectedCashAmount);
+
+            // If there's a difference
+            if (diff > 0.001) {
+                alertBox.style.display = 'block';
+                notesLabel.innerHTML = 'Ghi chú sai lệch (Bắt buộc) <span style="color:#cf6679;">*</span>';
+                
+                // BR-04 alert: difference exceeds 100,000 VND
+                if (diff > 100000) {
+                    alertBox.innerHTML = `⚠️ <strong>Lưu ý quan trọng (BR-04):</strong> Sai lệch két tiền chênh lệch vượt quá 100,000 VND (Cụ thể lệch: ${diff.toLocaleString('vi-VN')} VND). Báo cáo sự cố sẽ được gửi trực tiếp đến Quản lý cửa hàng.`;
+                    alertBox.style.background = '#ffe8e8';
+                    alertBox.style.color = '#cf6679';
+                    alertBox.style.borderColor = 'rgba(207,102,121,0.2)';
+                } else {
+                    alertBox.innerHTML = `⚠️ Có chênh lệch két tiền thực tế so với sổ sách (${diff.toLocaleString('vi-VN')} VND). Bạn bắt buộc phải ghi rõ lý do giải trình.`;
+                    alertBox.style.background = '#fff8e1';
+                    alertBox.style.color = '#b78103';
+                    alertBox.style.borderColor = 'rgba(255,179,0,0.3)';
+                }
+            }
+        }
+
+        function handleCloseShift(e) {
+            e.preventDefault();
+            const actualInput = document.getElementById('actualCash').value;
+            const notes = document.getElementById('discrepancyNotes').value.trim();
+            const check = document.getElementById('ordersTerminalCheck').checked;
+            
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            const actualVal = parseFloat(actualInput);
+
+            // Validation: Cash must be >= 0
+            if (isNaN(actualVal) || actualVal < 0) {
+                errorBox.textContent = "Số tiền mặt kiểm đếm thực tế không hợp lệ (phải >= 0).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Discrepancy check: Enforce notes if there is discrepancy
+            const diff = Math.abs(actualVal - expectedCashAmount);
+            if (diff > 0.001 && notes === "") {
+                errorBox.textContent = "Giải trình lý do chênh lệch két tiền bàn giao là bắt buộc.";
+                errorBox.style.display = 'block';
+                document.getElementById('discrepancyNotes').focus();
+                return;
+            }
+
+            // BR-03: orders check
+            if (!check) {
+                errorBox.textContent = "Bạn phải xác nhận đã hoàn thành xử lý toàn bộ các đơn hàng trong ca (Theo BR-03).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success simulation
+            successBox.innerHTML = `✅ Bàn giao ca thành công! <br><strong>Hệ thống:</strong> Đã gửi báo cáo tổng kết${diff > 100000 ? " & báo động lệch két (>100k) gửi Quản lý cửa hàng" : ""}. Đang thoát...`;
+            successBox.style.display = 'block';
+
+            // Disable fields
+            document.getElementById('actualCash').disabled = true;
+            document.getElementById('discrepancyNotes').disabled = true;
+            document.getElementById('ordersTerminalCheck').disabled = true;
+            document.querySelector('.btn-submit').disabled = true;
+
+            setTimeout(() => {
+                // Exit to mobile login page
+                window.location.href = "../mobile_auth_mockups/login.html";
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

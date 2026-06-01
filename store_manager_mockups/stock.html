@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Kho - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; }
+        .empty-header-right { width: 60px; } /* visual balance */
+
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-input { width: 100%; height: 44px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .search-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+        
+        .filter-row { display: flex; align-items: center; margin-bottom: 15px; }
+        .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5c3826; cursor: pointer; user-select: none; }
+        .checkbox-container input { cursor: pointer; accent-color: #c89d7c; width: 16px; height: 16px; }
+
+        .stock-list { flex-grow: 1; overflow-y: auto; padding-right: 4px; margin-bottom: 15px; }
+        .stock-item { background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: justify; flex-direction: column; gap: 8px; transition: all 0.2s; }
+        .stock-item:hover { border-color: #c89d7c; background: #fdfaf7; }
+        .item-main { display: flex; justify-content: space-between; align-items: flex-start; }
+        .item-name { font-weight: 600; color: #2c1a11; font-size: 15px; }
+        .item-code { font-size: 11px; color: #8c766c; font-weight: 500; text-transform: uppercase; margin-top: 2px; }
+        
+        .qty-info { text-align: right; }
+        .qty-val { font-size: 16px; font-weight: 700; color: #3d2314; }
+        .qty-min { font-size: 11px; color: #8c766c; margin-top: 2px; }
+
+        .status-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
+        .badge-low { background: #fde8eb; color: #cf6679; }
+        .badge-normal { background: #e8f5e9; color: #2e7d32; }
+
+        .item-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f5eee8; padding-top: 8px; margin-top: 4px; }
+        .action-link { text-decoration: none; color: #c89d7c; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 3px; transition: color 0.2s; }
+        .action-link:hover { color: #8c766c; }
+
+        .footer-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; box-sizing: border-box; }
+        .btn-primary { background: #3d2314; color: white; border: none; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        .top-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+        .top-btn { flex: 1; height: 38px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; justify-content: center; align-items: center; border: 1px solid #eaddd3; background: white; color: #5c3826; text-decoration: none; transition: all 0.2s; }
+        .top-btn:hover { background: #fdfaf7; border-color: #c89d7c; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Header -->
+        <div>
+            <div class="header">
+                <a href="dashboard.html" class="back-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Quay lại
+                </a>
+                <h1 class="title">Kho Nguyên Liệu</h1>
+                <div style="width: 60px; text-align: right;">
+                    <a href="stock_history.html" style="text-decoration: none; color: #c89d7c; font-size: 13px; font-weight: 600;">Lịch sử</a>
+                </div>
+            </div>
+
+            <!-- Operations Tabs -->
+            <div class="top-actions">
+                <a href="stock_import.html" class="top-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M12 5v14M5 12h14"/></svg> Nhập Kho
+                </a>
+                <a href="stock_export.html" class="top-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M5 12h14"/></svg> Xuất Kho
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm nguyên liệu..." oninput="filterList()">
+            </div>
+            
+            <div class="filter-row">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="lowStockFilter" onchange="filterList()">
+                    Chỉ hiện nguyên liệu sắp hết kho
+                </label>
+            </div>
+        </div>
+
+        <!-- Stock List -->
+        <div class="stock-list" id="stockListContainer">
+            <!-- Cà phê hạt -->
+            <div class="stock-item" data-name="Cà phê hạt espresso" data-low="true">
+                <div class="item-main">
+                    <div>
+                        <div class="item-name">Cà phê hạt Espresso</div>
+                        <div class="item-code">Mã: STK-01</div>
+                        <span class="status-badge badge-low" style="margin-top: 6px;">Hết hàng / Sắp hết</span>
+                    </div>
+                    <div class="qty-info">
+                        <div class="qty-val">1.2 kg</div>
+                        <div class="qty-min">Tối thiểu: 5.0 kg</div>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <a href="stock_audit.html?item=STK-01" class="action-link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="12" y1="12" x2="12" y2="18"></line></svg> Kiểm kê vật lý
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sữa tươi -->
+            <div class="stock-item" data-name="Sữa tươi tiệt trùng" data-low="false">
+                <div class="item-main">
+                    <div>
+                        <div class="item-name">Sữa tươi tiệt trùng</div>
+                        <div class="item-code">Mã: STK-02</div>
+                        <span class="status-badge badge-normal" style="margin-top: 6px;">Đầy đủ</span>
+                    </div>
+                    <div class="qty-info">
+                        <div class="qty-val">12.0 lít</div>
+                        <div class="qty-min">Tối thiểu: 6.0 lít</div>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <a href="stock_audit.html?item=STK-02" class="action-link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="12" y1="12" x2="12" y2="18"></line></svg> Kiểm kê vật lý
+                    </a>
+                </div>
+            </div>
+
+            <!-- Siro Đào -->
+            <div class="stock-item" data-name="Siro hương đào" data-low="true">
+                <div class="item-main">
+                    <div>
+                        <div class="item-name">Siro hương đào</div>
+                        <div class="item-code">Mã: STK-03</div>
+                        <span class="status-badge badge-low" style="margin-top: 6px;">Hết hàng / Sắp hết</span>
+                    </div>
+                    <div class="qty-info">
+                        <div class="qty-val">0.8 lít</div>
+                        <div class="qty-min">Tối thiểu: 2.0 lít</div>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <a href="stock_audit.html?item=STK-03" class="action-link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="12" y1="12" x2="12" y2="18"></line></svg> Kiểm kê vật lý
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ly giấy 12oz -->
+            <div class="stock-item" data-name="Ly giấy nóng 12oz" data-low="true">
+                <div class="item-main">
+                    <div>
+                        <div class="item-name">Ly giấy nóng 12oz</div>
+                        <div class="item-code">Mã: STK-04</div>
+                        <span class="status-badge badge-low" style="margin-top: 6px;">Hết hàng / Sắp hết</span>
+                    </div>
+                    <div class="qty-info">
+                        <div class="qty-val">150 cái</div>
+                        <div class="qty-min">Tối thiểu: 500 cái</div>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <a href="stock_audit.html?item=STK-04" class="action-link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="12" y1="12" x2="12" y2="18"></line></svg> Kiểm kê vật lý
+                    </a>
+                </div>
+            </div>
+
+            <!-- Đường cát trắng -->
+            <div class="stock-item" data-name="Đường cát trắng túi" data-low="false">
+                <div class="item-main">
+                    <div>
+                        <div class="item-name">Đường cát trắng túi</div>
+                        <div class="item-code">Mã: STK-05</div>
+                        <span class="status-badge badge-normal" style="margin-top: 6px;">Đầy đủ</span>
+                    </div>
+                    <div class="qty-info">
+                        <div class="qty-val">8.5 kg</div>
+                        <div class="qty-min">Tối thiểu: 3.0 kg</div>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <a href="stock_audit.html?item=STK-05" class="action-link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="12" y1="12" x2="12" y2="18"></line></svg> Kiểm kê vật lý
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-nav">
+            <a href="dashboard.html" class="btn btn-secondary">Trang chủ</a>
+            <a href="stock_audit.html" class="btn btn-primary">Kiểm Kê Toàn Bộ</a>
+        </div>
+    </div>
+
+    <script>
+        // Check URL parameters for filtering automatically (like clicking from dashboard warning)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('low') === 'true') {
+                document.getElementById('lowStockFilter').checked = true;
+                filterList();
+            }
+        });
+
+        function filterList() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const showLowOnly = document.getElementById('lowStockFilter').checked;
+            const items = document.querySelectorAll('.stock-item');
+
+            items.forEach(item => {
+                const name = item.getAttribute('data-name').toLowerCase();
+                const isLow = item.getAttribute('data-low') === 'true';
+                
+                const matchesSearch = name.includes(searchVal);
+                const matchesLow = !showLowOnly || isLow;
+
+                if (matchesSearch && matchesLow) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In Hóa Đơn - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+        .title { color: #2c1a11; font-size: 18px; font-weight: 700; margin: 0; }
+
+        .printing-status { text-align: center; margin-bottom: 12px; }
+        .spinner { width: 24px; height: 24px; border: 3px solid #eaddd3; border-top-color: #3d2314; border-radius: 50%; display: inline-block; animation: spin 1s infinite linear; margin-bottom: 6px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status-txt { font-size: 12px; font-weight: 700; color: #8c766c; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Receipt Slip Style */
+        .receipt-slip { background: #fafafa; border: 1px solid #eaddd3; border-radius: 12px; padding: 18px 14px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #333; line-height: 1.4; flex-grow: 1; overflow-y: auto; margin-bottom: 15px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.02); }
+        .receipt-brand { text-align: center; font-size: 14px; font-weight: 900; letter-spacing: 1px; color: #000; margin-bottom: 4px; }
+        .receipt-store { text-align: center; margin-bottom: 10px; font-size: 10px; color: #666; }
+        .receipt-divider { border-bottom: 1px dashed #bbb; margin: 8px 0; }
+        
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .receipt-bold { font-weight: 700; color: #000; }
+        
+        .receipt-footer-msg { text-align: center; margin-top: 15px; font-size: 10px; color: #666; font-style: italic; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; box-sizing: border-box; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">Hóa Đơn Bán Hàng</h1>
+        </div>
+
+        <!-- Printing Status Indicator -->
+        <div class="printing-status">
+            <div class="spinner" id="printSpinner"></div>
+            <div class="status-txt" id="printStatusText">Đang in hóa đơn...</div>
+        </div>
+
+        <!-- Printed Receipt Slip -->
+        <div class="receipt-slip">
+            <div class="receipt-brand">COFFEE ZONE</div>
+            <div class="receipt-store">Chi nhánh: 123 Nguyễn Du, Quận 1</div>
+            
+            <div class="receipt-row">
+                <span>Số HD: #012</span>
+                <span>Mã: CZ-ORD-9821-7890</span>
+            </div>
+            <div class="receipt-row">
+                <span id="receiptDate">Ngày: 30/05/2026 21:50</span>
+                <span>Thu ngân: cashier_01</span>
+            </div>
+            
+            <div class="receipt-divider"></div>
+
+            <!-- Items -->
+            <div class="receipt-bold">CHI TIẾT ĐƠN HÀNG:</div>
+            <div class="receipt-row" style="margin-top: 4px;">
+                <span>1x Cà phê sữa đá</span>
+                <span>29,000 đ</span>
+            </div>
+            <div style="font-size: 9px; color:#666; margin-left: 10px; margin-bottom: 4px;">- 50% đường, Thêm sữa yến mạch</div>
+
+            <div class="receipt-row">
+                <span>1x Bánh sừng bò (Croissant)</span>
+                <span>30,000 đ</span>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <!-- Calculations (Inclusive 10% VAT calculation) -->
+            <div class="receipt-row">
+                <span>Cộng tiền hàng (Tạm tính):</span>
+                <span id="slipSubtotal">59,000 đ</span>
+            </div>
+            <div class="receipt-row">
+                <span>Giảm giá (Hội viên/Voucher):</span>
+                <span id="slipDiscount">-0 đ</span>
+            </div>
+            <div class="receipt-row">
+                <span>Đổi điểm tích lũy:</span>
+                <span id="slipPointDiscount">-0 đ</span>
+            </div>
+            
+            <div class="receipt-divider"></div>
+            
+            <div class="receipt-row receipt-bold" style="font-size:12px;">
+                <span>TỔNG THANH TOÁN (NET):</span>
+                <span id="slipGrand">59,000 đ</span>
+            </div>
+            <div class="receipt-row" style="color: #666; font-size:10px;">
+                <span>Thuế VAT gồm trong giá (10%):</span>
+                <span id="slipTax">5,364 đ</span>
+            </div>
+            
+            <div class="receipt-divider"></div>
+            
+            <div class="receipt-row">
+                <span>Thanh toán bằng:</span>
+                <span class="receipt-bold" id="slipMethod">TIỀN MẶT</span>
+            </div>
+
+            <div class="receipt-footer-msg">
+                Xin cảm ơn quý khách!<br>
+                Hẹn gặp lại quý khách lần sau.
+            </div>
+        </div>
+
+        <!-- Print slip buttons -->
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="reprint()">IN LẠI (REPRINT)</button>
+            <button class="btn btn-primary" onclick="doneOrder()">HOÀN THÀNH (DONE)</button>
+        </div>
+    </div>
+
+    <script>
+        let currentGrand = 59000;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const total = parseFloat(urlParams.get('total'));
+            const subtotal = parseFloat(urlParams.get('subtotal'));
+            const discount = parseFloat(urlParams.get('discount'));
+            const pointDiscount = parseFloat(urlParams.get('pointDiscount'));
+            const method = urlParams.get('method') || 'CASH';
+
+            // Set dynamic values if present
+            if (!isNaN(total)) currentGrand = total;
+
+            const safeDiscount = !isNaN(discount) ? discount : 0;
+            const safePointDiscount = !isNaN(pointDiscount) ? pointDiscount : 0;
+            const safeSubtotal = !isNaN(subtotal) ? subtotal : (currentGrand + safeDiscount + safePointDiscount);
+
+            document.getElementById('slipSubtotal').textContent = safeSubtotal.toLocaleString('vi-VN') + " đ";
+            document.getElementById('slipDiscount').textContent = (safeDiscount > 0 ? `-${safeDiscount.toLocaleString('vi-VN')}` : "-0") + " đ";
+            document.getElementById('slipPointDiscount').textContent = (safePointDiscount > 0 ? `-${safePointDiscount.toLocaleString('vi-VN')}` : "-0") + " đ";
+            document.getElementById('slipGrand').textContent = currentGrand.toLocaleString('vi-VN') + " đ";
+            
+            // Inclusive 10% VAT calculation: Total * 10 / 110
+            const vat = Math.round(currentGrand * 10 / 110);
+            document.getElementById('slipTax').textContent = vat.toLocaleString('vi-VN') + " đ";
+
+            // Payment method mapping
+            let methodText = "TIỀN MẶT";
+            if (method === 'CARD') methodText = "THẺ (ATM/CREDIT)";
+            if (method === 'VIETQR') methodText = "CHUYỂN KHOẢN (VIETQR)";
+            if (method === 'WALLET') methodText = "VÍ ĐIỆN TỬ";
+            document.getElementById('slipMethod').textContent = methodText;
+
+            // Set current time
+            const now = new Date();
+            const dateStr = now.getDate().toString().padStart(2, '0') + '/' +
+                            (now.getMonth()+1).toString().padStart(2, '0') + '/' +
+                            now.getFullYear() + ' ' +
+                            now.getHours().toString().padStart(2, '0') + ':' +
+                            now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('receiptDate').textContent = `Ngày: ${dateStr}`;
+
+            // Mock printer animation
+            setTimeout(() => {
+                document.getElementById('printSpinner').style.display = 'none';
+                document.getElementById('printStatusText').textContent = "Đã in hóa đơn xong";
+                document.getElementById('printStatusText').style.color = "#2e7d32";
+            }, 1500);
+        });
+
+        function reprint() {
+            document.getElementById('printSpinner').style.display = 'inline-block';
+            document.getElementById('printStatusText').textContent = "Đang in lại hóa đơn...";
+            document.getElementById('printStatusText').style.color = "#8c766c";
+            
+            setTimeout(() => {
+                document.getElementById('printSpinner').style.display = 'none';
+                document.getElementById('printStatusText').textContent = "Đã in lại xong!";
+                document.getElementById('printStatusText').style.color = "#2e7d32";
+            }, 1200);
+        }
+
+        function doneOrder() {
+            window.location.href = "checkout.html";
+        }
+    </script>
+</body>
+</html>

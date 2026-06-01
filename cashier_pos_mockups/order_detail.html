@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Đơn Hàng - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .detail-card { background: #fdfaf7; border: 1.5px solid #eaddd3; border-radius: 16px; padding: 16px; margin-bottom: 15px; }
+        .detail-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #5c3826; }
+        .detail-row:last-child { margin-bottom: 0; }
+        .detail-val { font-weight: 700; color: #2c1a11; }
+
+        .items-section { margin-bottom: 18px; }
+        .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #8c766c; margin-bottom: 10px; letter-spacing: 0.5px; border-bottom: 1px solid #f0e6df; padding-bottom: 4px; }
+
+        .item-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
+        .item-main { display: flex; flex-direction: column; }
+        .item-name { font-weight: 700; color: #3d2314; }
+        .item-mods { font-size: 11px; color: #8c766c; font-style: italic; margin-top: 2px; }
+        .item-price { font-weight: 700; color: #2c1a11; }
+
+        .status-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
+        .status-preparing { background: #e3f2fd; color: #1565c0; }
+        .status-ready { background: #fff8e1; color: #b78103; }
+        .status-completed { background: #e8f5e9; color: #2e7d32; }
+        .status-cancelled { background: #fde8eb; color: #cf6679; }
+
+        .toast-notify { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 15px; display: none; text-align: center; }
+
+        .action-buttons { display: flex; flex-direction: column; gap: 8px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; width: 100%; box-sizing: border-box; }
+        .btn-danger { background: white; color: #cf6679; border: 1.5px solid rgba(207,102,121,0.2); }
+        .btn-danger:hover { background: rgba(207,102,121,0.05); border-color: #cf6679; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Scrollable Details -->
+        <div class="content-area">
+            <div class="header">
+                <a href="order_history.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Chi Tiết Đơn Hàng</h1>
+            </div>
+
+            <div id="toastBox" class="toast-notify"></div>
+
+            <!-- Detail metadata card -->
+            <div class="detail-card">
+                <div class="detail-row">
+                    <span>Số đơn hàng:</span>
+                    <span class="detail-val" id="detNumber">#012</span>
+                </div>
+                <div class="detail-row">
+                    <span>Mã định danh (ID):</span>
+                    <span class="detail-val" id="detUUID">ORD-9821-7890</span>
+                </div>
+                <div class="detail-row">
+                    <span>Hình thức / Giờ:</span>
+                    <span class="detail-val" id="detTypeTime">Dine-in | 09:15</span>
+                </div>
+                <div class="detail-row">
+                    <span>Trạng thái thanh toán:</span>
+                    <span class="detail-val" style="color: #2e7d32;">ĐÃ THANH TOÁN</span>
+                </div>
+                <div class="detail-row" style="margin-top: 8px; border-top: 1px dashed #eaddd3; padding-top: 8px;">
+                    <span>Trạng thái đơn hàng:</span>
+                    <span class="status-badge" id="detStatusBadge">Đang chuẩn bị</span>
+                </div>
+            </div>
+
+            <!-- Items list -->
+            <div class="items-section">
+                <div class="section-title">Danh sách món nước & bánh</div>
+                
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <div class="item-main">
+                            <span class="item-name">1x Cà phê sữa đá</span>
+                            <span class="item-mods">- 50% đường, Thêm sữa yến mạch</span>
+                        </div>
+                        <span class="item-price">29,000 đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals Paid -->
+            <div class="items-section">
+                <div class="section-title">Chi tiết thanh toán</div>
+                <div class="detail-row">
+                    <span>Tổng tiền hàng:</span>
+                    <span class="detail-val" id="detSubtotal">29,000 đ</span>
+                </div>
+                <div class="detail-row">
+                    <span>Tổng chiết khấu:</span>
+                    <span class="detail-val" id="detDiscount">-0 đ</span>
+                </div>
+                <div class="detail-row" style="border-top: 1px solid #f0e6df; padding-top: 6px; font-weight:700;">
+                    <span>Khách đã trả (VietQR):</span>
+                    <span class="detail-val" id="detGrand" style="color: #3d2314;">29,000 đ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="action-buttons">
+            <button class="btn btn-danger" id="btnCancel" onclick="requestCancelOrder()">HỦY ĐƠN & HOÀN TIỀN</button>
+            <button class="btn btn-primary" onclick="triggerReprint()">IN LẠI HÓA ĐƠN</button>
+            <a href="order_history.html" class="btn btn-secondary">QUAY LẠI</a>
+        </div>
+    </div>
+
+    <script>
+        let orderId = "012";
+        let orderStatus = "PREPARING";
+        let orderTotal = 30000;
+        let orderType = "Dine-in";
+        let orderTime = "09:15";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get('id') || "012";
+            orderStatus = urlParams.get('status') || "PREPARING";
+            orderTotal = parseFloat(urlParams.get('total')) || 30000;
+            orderType = urlParams.get('type') || "Dine-in";
+            orderTime = urlParams.get('time') || "09:15";
+
+            // Set UI details
+            document.getElementById('detNumber').textContent = `#${orderId}`;
+            document.getElementById('detUUID').textContent = `ORD-9821-78${orderId}`;
+            document.getElementById('detTypeTime').textContent = `${orderType} | ${orderTime}`;
+            
+            const badge = document.getElementById('detStatusBadge');
+            badge.className = 'status-badge';
+            
+            if (orderStatus === 'PREPARING') {
+                badge.classList.add('status-preparing');
+                badge.textContent = "Đang pha chế";
+            } else if (orderStatus === 'READY') {
+                badge.classList.add('status-ready');
+                badge.textContent = "Chờ lấy hàng";
+            } else if (orderStatus === 'COMPLETED') {
+                badge.classList.add('status-completed');
+                badge.textContent = "Đã hoàn thành";
+                
+                // BR-06: Manager/Admin cannot cancel COMPLETED orders.
+                // Cashier/Manager are blocked. Hide/Disable cancel button.
+                const cancelBtn = document.getElementById('btnCancel');
+                cancelBtn.disabled = true;
+                cancelBtn.style.opacity = '0.5';
+                cancelBtn.textContent = "Không thể hủy đơn đã hoàn thành";
+            } else if (orderStatus === 'CANCELLED') {
+                badge.classList.add('status-cancelled');
+                badge.textContent = "Đã hủy đơn";
+                
+                const cancelBtn = document.getElementById('btnCancel');
+                cancelBtn.style.display = 'none';
+            }
+
+            // Set Totals
+            document.getElementById('detSubtotal').textContent = (orderTotal).toLocaleString('vi-VN') + " đ";
+            document.getElementById('detGrand').textContent = (orderTotal).toLocaleString('vi-VN') + " đ";
+        });
+
+        function triggerReprint() {
+            const toast = document.getElementById('toastBox');
+            toast.textContent = "Đang in lại hóa đơn. Vui lòng nhận slip tại máy in...";
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        function requestCancelOrder() {
+            if (orderStatus === 'COMPLETED') return;
+
+            // BR-05: Cashiers can cancel only while PENDING (prior to kitchen preparation).
+            // Since this order is in PREPARING or READY status, it requires a Manager PIN code to override.
+            const message = `Yêu cầu xác thực: Đơn hàng ở trạng thái "${orderStatus === 'PREPARING' ? 'Đang pha chế' : 'Chờ lấy hàng'}" đã được đẩy xuống quầy pha chế.\n\nCần mã PIN của Quản lý chi nhánh để hoàn tất thủ tục hủy & hoàn tiền (Theo BR-05 & BR-06).`;
+            
+            alert(message);
+            
+            // Redirect to Manager override page
+            const redirectUrl = `cancel_override.html?id=${orderId}&status=${orderStatus}&total=${orderTotal}`;
+            window.location.href = redirectUrl;
+        }
+    </script>
+</body>
+</html>

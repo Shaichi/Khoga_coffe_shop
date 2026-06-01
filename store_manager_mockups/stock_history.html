@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Giao Dịch Kho - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; }
+        .empty-header-right { width: 60px; }
+
+        .filter-row { margin-bottom: 15px; }
+        .filter-select { width: 100%; height: 40px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 0 12px; box-sizing: border-box; font-size: 14px; color: #3d2314; font-weight: 600; outline: none; }
+        .filter-select:focus { border-color: #c89d7c; }
+
+        .log-container { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+        .log-item { background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 12px; margin-bottom: 10px; font-size: 13px; transition: all 0.2s; }
+        .log-item:hover { border-color: #c89d7c; }
+        
+        .log-header { display: flex; justify-content: space-between; font-size: 11px; color: #8c766c; margin-bottom: 6px; font-weight: 600; }
+        .log-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .item-name { font-weight: 700; color: #2c1a11; font-size: 14px; }
+        
+        .qty-change { font-weight: 700; font-size: 14px; }
+        .qty-import { color: #2e7d32; }
+        .qty-export { color: #cf6679; }
+        .qty-audit { color: #b78103; }
+
+        .log-details { background: #fbf9f6; border-radius: 8px; padding: 8px 10px; color: #5c3826; font-size: 12px; line-height: 1.4; border-left: 3px solid #eaddd3; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .detail-row:last-child { margin-bottom: 0; }
+        
+        .type-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; }
+        .type-import { background: #e8f5e9; color: #2e7d32; }
+        .type-export { background: #fde8eb; color: #cf6679; }
+        .type-audit { background: #fff8e1; color: #b78103; }
+
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; width: 100%; margin-top: 15px; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; box-sizing: border-box; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div>
+            <!-- Header -->
+            <div class="header">
+                <a href="stock.html" class="back-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Quay lại
+                </a>
+                <h1 class="title">Lịch Sử Giao Dịch</h1>
+                <div class="empty-header-right"></div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-row">
+                <select id="typeFilter" class="filter-select" onchange="filterLogs()">
+                    <option value="ALL">Tất cả giao dịch</option>
+                    <option value="IMPORT">Chỉ Nhập Kho (IMPORT)</option>
+                    <option value="EXPORT">Chỉ Xuất Kho (EXPORT)</option>
+                    <option value="AUDIT">Chỉ Kiểm Kê (AUDIT)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Logs list -->
+        <div class="log-container" id="logsContainer">
+            <!-- Log 1 -->
+            <div class="log-item" data-type="IMPORT">
+                <div class="log-header">
+                    <span>30/05/2026 15:30</span>
+                    <span>Người thực hiện: Manager</span>
+                </div>
+                <div class="log-title">
+                    <span class="item-name">Cà phê hạt Espresso <span class="type-badge type-import">Nhập Kho</span></span>
+                    <span class="qty-change qty-import">+15.0 kg</span>
+                </div>
+                <div class="log-details">
+                    <div class="detail-row"><strong>Nhà CC:</strong> <span>Highlands Supplier</span></div>
+                    <div class="detail-row"><strong>Đơn giá:</strong> <span>180,000 VND / kg</span></div>
+                    <div class="detail-row"><strong>Ghi chú:</strong> <span>Nhập hàng định kỳ tuần 4</span></div>
+                </div>
+            </div>
+
+            <!-- Log 2 -->
+            <div class="log-item" data-type="EXPORT">
+                <div class="log-header">
+                    <span>29/05/2026 18:15</span>
+                    <span>Người thực hiện: Manager</span>
+                </div>
+                <div class="log-title">
+                    <span class="item-name">Sữa tươi tiệt trùng <span class="type-badge type-export">Xuất Kho</span></span>
+                    <span class="qty-change qty-export">-2.0 lít</span>
+                </div>
+                <div class="log-details">
+                    <div class="detail-row"><strong>Lý do:</strong> <span>Hao hụt / Hủy (Hỏng, hết hạn)</span></div>
+                    <div class="detail-row"><strong>Ghi chú:</strong> <span>Sữa chua bị hỏng do tủ lạnh mất nguồn</span></div>
+                </div>
+            </div>
+
+            <!-- Log 3 -->
+            <div class="log-item" data-type="AUDIT">
+                <div class="log-header">
+                    <span>28/05/2026 10:00</span>
+                    <span>Người thực hiện: Manager</span>
+                </div>
+                <div class="log-title">
+                    <span class="item-name">Siro hương đào <span class="type-badge type-audit">Kiểm Kê</span></span>
+                    <span class="qty-change qty-audit">-0.2 lít</span>
+                </div>
+                <div class="log-details">
+                    <div class="detail-row"><strong>Kiểm kê thực tế:</strong> <span>0.8 lít (Hệ thống: 1.0 lít)</span></div>
+                    <div class="detail-row"><strong>Sai lệch:</strong> <span style="color: #b78103;">-0.2 lít</span></div>
+                    <div class="detail-row"><strong>Ghi chú giải trình:</strong> <span>Đổ vỡ khi pha chế quầy pha</span></div>
+                </div>
+            </div>
+
+            <!-- Log 4 -->
+            <div class="log-item" data-type="IMPORT">
+                <div class="log-header">
+                    <span>25/05/2026 09:00</span>
+                    <span>Người thực hiện: Manager</span>
+                </div>
+                <div class="log-title">
+                    <span class="item-name">Đường cát trắng túi <span class="type-badge type-import">Nhập Kho</span></span>
+                    <span class="qty-change qty-import">+10.0 kg</span>
+                </div>
+                <div class="log-details">
+                    <div class="detail-row"><strong>Nhà CC:</strong> <span>Metro Wholesale</span></div>
+                    <div class="detail-row"><strong>Đơn giá:</strong> <span>22,000 VND / kg</span></div>
+                    <div class="detail-row"><strong>Ghi chú:</strong> <span>Nhập kho bổ sung</span></div>
+                </div>
+            </div>
+            
+            <!-- Log 5 -->
+            <div class="log-item" data-type="EXPORT">
+                <div class="log-header">
+                    <span>24/05/2026 22:00</span>
+                    <span>Người thực hiện: Hệ Thống (Auto)</span>
+                </div>
+                <div class="log-title">
+                    <span class="item-name">Cà phê hạt Espresso <span class="type-badge type-export">Tự Động</span></span>
+                    <span class="qty-change qty-export">-3.4 kg</span>
+                </div>
+                <div class="log-details">
+                    <div class="detail-row"><strong>Lý do:</strong> <span>Trừ kho theo công thức bán hàng</span></div>
+                    <div class="detail-row"><strong>Đơn hàng:</strong> <span>Tổng kết doanh số ngày 24/05</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div>
+            <a href="stock.html" class="btn btn-secondary">Quay lại Kho hàng</a>
+        </div>
+    </div>
+
+    <script>
+        function filterLogs() {
+            const filterVal = document.getElementById('typeFilter').value;
+            const items = document.querySelectorAll('.log-item');
+
+            items.forEach(item => {
+                const type = item.getAttribute('data-type');
+                if (filterVal === 'ALL' || type === filterVal) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

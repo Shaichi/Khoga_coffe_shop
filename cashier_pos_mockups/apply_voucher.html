@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Áp Dụng Khuyến Mãi - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-input { width: 100%; height: 44px; background: #fafafa; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 14px; box-sizing: border-box; font-size: 14px; color: #2c1a11; font-weight: 700; transition: all 0.2s; text-transform: uppercase; }
+        .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+
+        .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px; color: #5c3826; }
+        .info-val { font-weight: 700; color: #2c1a11; }
+
+        .voucher-list { margin-top: 20px; }
+        .list-title { font-size: 12px; font-weight: 700; color: #8c766c; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .voucher-card { border: 1.5px solid #eaddd3; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background: #fdfdfd; cursor: pointer; transition: all 0.2s; }
+        .voucher-card:hover { border-color: #c89d7c; background: #fdfaf7; }
+        .voucher-card.selected { border-color: #3d2314; background: #f5eee8; }
+        .voucher-info { display: flex; flex-direction: column; gap: 4px; }
+        .voucher-code { font-weight: 700; color: #3d2314; font-size: 13px; }
+        .voucher-desc { font-size: 11px; color: #8c766c; }
+        .voucher-badge { font-size: 10px; font-weight: 700; background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Form Scroll -->
+        <div class="content-area">
+            <div class="header">
+                <a href="checkout.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Áp Dụng Voucher</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <div class="info-row">
+                <span>Tạm tính giỏ hàng:</span>
+                <span class="info-val" id="cartSubtotal">65,000 VND</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="voucherCode">Nhập mã giảm giá</label>
+                <input type="text" id="voucherCode" class="form-input" placeholder="Ví dụ: COFFEE20">
+            </div>
+
+            <div class="voucher-list">
+                <div class="list-title">Mã khuyến mãi hiện có</div>
+                
+                <!-- Voucher Card 1 -->
+                <div class="voucher-card" onclick="selectVoucher('COFFEE20', 0)">
+                    <div class="voucher-info">
+                        <span class="voucher-code">COFFEE20</span>
+                        <span class="voucher-desc">Giảm 20% tổng giá trị đơn hàng. Không yêu cầu tối thiểu.</span>
+                    </div>
+                    <span class="voucher-badge">GIẢM 20%</span>
+                </div>
+
+                <!-- Voucher Card 2 -->
+                <div class="voucher-card" onclick="selectVoucher('SPRING50', 100000)">
+                    <div class="voucher-info">
+                        <span class="voucher-code">SPRING50</span>
+                        <span class="voucher-desc">Giảm thẳng 50,000 VND. Áp dụng đơn từ 100,000 VND.</span>
+                    </div>
+                    <span class="voucher-badge">GIẢM 50K</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="checkout.html" class="btn btn-secondary">HỦY</a>
+            <button type="button" class="btn btn-primary" onclick="handleSubmit()">XÁC NHẬN</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSubtotalVal = 65000; // Simulated active cart value in parameter
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const subtotalParam = parseFloat(urlParams.get('subtotal'));
+            if (!isNaN(subtotalParam)) {
+                currentSubtotalVal = subtotalParam;
+            }
+            document.getElementById('cartSubtotal').textContent = currentSubtotalVal.toLocaleString('vi-VN') + " VND";
+        });
+
+        function selectVoucher(code, minOrder) {
+            document.getElementById('voucherCode').value = code;
+            document.querySelectorAll('.voucher-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function handleSubmit() {
+            const code = document.getElementById('voucherCode').value.trim().toUpperCase();
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            if (code === "") {
+                errorBox.textContent = "Vui lòng nhập mã giảm giá hoặc chọn danh sách bên dưới.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // AT1 Check minimum order condition
+            if (code === 'SPRING50' && currentSubtotalVal < 100000) {
+                errorBox.textContent = `Không đủ điều kiện áp dụng mã SPRING50. Yêu cầu đơn hàng tối thiểu từ 100,000 VND (Đơn hiện tại: ${currentSubtotalVal.toLocaleString('vi-VN')} VND). (Theo AT1)`;
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            if (code !== 'COFFEE20' && code !== 'SPRING50') {
+                errorBox.textContent = "Mã voucher không tồn tại hoặc đã hết lượt sử dụng.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success simulation
+            successBox.textContent = `Áp dụng thành công mã ${code}! Đang chuyển hướng...`;
+            successBox.style.display = 'block';
+
+            setTimeout(() => {
+                window.location.href = `checkout.html?voucherCode=${code}`;
+            }, 1200);
+        }
+    </script>
+</body>
+</html>

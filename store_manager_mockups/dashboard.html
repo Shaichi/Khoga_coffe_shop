@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 40px 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        h2 { color: #2c1a11; text-align: center; margin-top: 20px; font-size: 24px; font-weight: 700; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; margin-bottom: 25px; }
+        .menu-item { background: #fdfdfd; border: 1.5px solid #eaddd3; padding: 20px 10px; border-radius: 16px; text-align: center; text-decoration: none; color: #3d2314; font-weight: 600; font-size: 14px; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .menu-item:hover { border-color: #c89d7c; background: #fdfaf7; }
+        .menu-item svg { width: 28px; height: 28px; color: #c89d7c; }
+        .status-box { background: #fdfaf7; border: 1.5px solid #eaddd3; border-radius: 16px; padding: 15px; margin-bottom: 20px; }
+        .status-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8c766c; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .status-val { font-size: 15px; font-weight: 600; color: #2c1a11; }
+        .btn-logout { width: 100%; height: 48px; background: transparent; color: #cf6679; border: 1.5px solid rgba(207,102,121,0.2); border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-logout:hover { background: rgba(207,102,121,0.05); border-color: #cf6679; }
+        
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 60px 24px 40px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div>
+            <h2>Store Manager</h2>
+            <p style="text-align: center; color: #8c766c; font-size: 12px; margin-top: 5px; letter-spacing: 1px; font-weight: 600; text-transform: uppercase;">Nguyễn Du Branch</p>
+
+            <div class="menu-grid" style="margin-top: 40px;">
+                <a href="stock.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>Kho Hàng
+                </a>
+                <a href="scheduler.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>Lịch Làm Việc
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Điểm Danh
+                </a>
+                <a href="reports.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Báo Cáo
+                </a>
+            </div>
+
+            <div class="status-box" style="cursor: pointer;" onclick="location.href='stock.html?low=true'">
+                <div class="status-title">Cảnh báo tồn kho</div>
+                <div class="status-val" style="color: #cf6679;">3 nguyên liệu sắp hết kho</div>
+            </div>
+            
+            <div class="status-box" style="cursor: pointer;" onclick="location.href='settings.html'">
+                <div class="status-title">Cấu hình chi nhánh</div>
+                <div class="status-val">Cài đặt máy in POS & Ca kíp</div>
+            </div>
+        </div>
+
+        <div>
+            <button class="btn-logout" onclick="handleLogout()">ĐĂNG XUẤT</button>
+        </div>
+    </div>
+
+    <script>
+        function handleLogout() {
+            if(confirm("Xác nhận đăng xuất?")) {
+                window.location.href = "../mobile_auth_mockups/login.html";
+            }
+        }
+    </script>
+</body>
+</html>

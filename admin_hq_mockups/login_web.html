@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HQ Admin Login - EspressoHQ</title>
+    <style>
+        :root {
+            --primary: #3d2314;
+            --primary-hover: #5c3826;
+            --accent: #c89d7c;
+            --accent-light: #eaddd3;
+            --bg: #fcfaf7;
+            --text-dark: #2c1a11;
+            --text-muted: #8c766c;
+            --danger: #cf6679;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+        .split-container {
+            display: flex;
+            width: 100%;
+        }
+        .left-pane {
+            flex: 1.2;
+            background: linear-gradient(135deg, var(--primary), #1a0f09);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .left-pane::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(200, 157, 124, 0.1) 0%, transparent 60%);
+        }
+        .logo-circle {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            z-index: 1;
+        }
+        .logo-cup {
+            width: 44px;
+            height: 36px;
+            border: 3px solid white;
+            border-radius: 2px 2px 14px 14px;
+            position: relative;
+            margin-left: -5px;
+        }
+        .logo-cup::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: -11px;
+            width: 8px;
+            height: 16px;
+            border: 3px solid white;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+        }
+        .brand-name {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 0;
+            z-index: 1;
+        }
+        .brand-name span {
+            color: var(--accent);
+        }
+        .tagline {
+            font-size: 16px;
+            color: var(--accent-light);
+            margin-top: 10px;
+            z-index: 1;
+            max-width: 320px;
+            line-height: 1.6;
+        }
+        .right-pane {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            background-color: var(--bg);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-card h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        .login-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input {
+            width: 100%;
+            height: 48px;
+            padding: 12px;
+            border: 1.5px solid #eaddd3;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .alert-box {
+            background: rgba(207, 102, 121, 0.08);
+            border: 1px solid rgba(207, 102, 121, 0.2);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: none;
+        }
+        button {
+            width: 100%;
+            height: 48px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: var(--primary-hover);
+        }
+        .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .links a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .links a:hover {
+            color: var(--primary);
+        }
+
+        @media (max-width: 900px) {
+            .left-pane {
+                display: none;
+            }
+            .right-pane {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="split-container">
+        <!-- Left Pane with Branding -->
+        <div class="left-pane">
+            <div class="logo-circle">
+                <div class="logo-cup"></div>
+            </div>
+            <h1 class="brand-name">Espressō<span>HQ</span></h1>
+            <p class="tagline">Hệ thống quản lý chuỗi cửa hàng cà phê thông minh dành cho quản trị viên trung tâm.</p>
+        </div>
+
+        <!-- Right Pane with Form -->
+        <div class="right-pane">
+            <div class="login-card">
+                <h2>Đăng Nhập Quản Trị</h2>
+                <p>Nhập tài khoản quản trị HQ để tiếp tục.</p>
+
+                <div class="alert-box" id="login-alert">Tên đăng nhập hoặc mật khẩu quản trị không đúng.</div>
+
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <input type="text" id="username" placeholder="admin01" value="admin01">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="password" placeholder="••••••••" value="admin123">
+                </div>
+
+                <button onclick="handleLogin()">ĐĂNG NHẬP</button>
+
+                <div class="links">
+                    <a href="forgot_password_web.html">Quên mật khẩu quản trị?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const pass = document.getElementById('password').value;
+            if (pass !== "admin123" && pass !== "12345678") {
+                document.getElementById('login-alert').style.display = 'block';
+            } else {
+                alert("Đăng nhập quản trị thành công!");
+                window.location.href = "dashboard_web.html";
+            }
+        }
+    </script>
+</body>
+</html>

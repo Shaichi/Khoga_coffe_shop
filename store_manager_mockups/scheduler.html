@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Làm Việc - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; }
+        .empty-header-right { width: 60px; }
+
+        .date-picker-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .date-input { flex-grow: 1; height: 40px; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 0 12px; font-size: 14px; font-weight: 600; color: #3d2314; outline: none; box-sizing: border-box; text-align: center; }
+        .date-input:focus { border-color: #c89d7c; }
+        
+        .role-filters { display: flex; gap: 6px; margin-bottom: 15px; }
+        .filter-chip { flex: 1; height: 32px; border-radius: 20px; border: 1px solid #eaddd3; background: white; color: #5c3826; font-size: 11px; font-weight: 700; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+        .filter-chip.active { background: #3d2314; color: white; border-color: #3d2314; }
+
+        .schedule-list { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+        .shift-card { background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 14px; padding: 14px; margin-bottom: 10px; position: relative; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; transition: all 0.2s; }
+        .shift-card:hover { border-color: #c89d7c; background: #fdfaf7; }
+        
+        .staff-info { display: flex; flex-direction: column; gap: 4px; }
+        .staff-name { font-weight: 700; color: #2c1a11; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+        .role-tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .role-cashier { background: #e3f2fd; color: #1565c0; }
+        .role-barista { background: #efebe9; color: #4e342e; }
+
+        .shift-details { font-size: 12px; color: #5c3826; font-weight: 500; }
+        .pos-alloc { font-size: 11px; color: #8c766c; font-style: italic; margin-top: 2px; }
+        
+        .arrow-icon { color: #c89d7c; }
+
+        .footer-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; box-sizing: border-box; }
+        .btn-primary { background: #3d2314; color: white; border: none; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Header & Controls -->
+        <div>
+            <div class="header">
+                <a href="dashboard.html" class="back-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Quay lại
+                </a>
+                <h1 class="title">Lịch Làm Việc</h1>
+                <div class="empty-header-right"></div>
+            </div>
+
+            <!-- Date Select -->
+            <div class="date-picker-row">
+                <button onclick="changeDate(-1)" style="background:none; border:none; color:#c89d7c; cursor:pointer;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <input type="date" id="scheduleDate" class="date-input" value="2026-05-25" onchange="filterShifts()">
+                <button onclick="changeDate(1)" style="background:none; border:none; color:#c89d7c; cursor:pointer;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+
+            <!-- Role Filters -->
+            <div class="role-filters">
+                <button class="filter-chip active" id="chip-all" onclick="setRoleFilter('ALL')">Tất cả</button>
+                <button class="filter-chip" id="chip-cashier" onclick="setRoleFilter('CASHIER')">Thu ngân</button>
+                <button class="filter-chip" id="chip-barista" onclick="setRoleFilter('BARISTA')">Pha chế</button>
+            </div>
+        </div>
+
+        <!-- Shift Schedule List -->
+        <div class="schedule-list" id="shiftList">
+            <!-- Shift 1 -->
+            <a href="schedule_edit.html?id=1&name=Nguyen%20Van%20A&role=CASHIER&shift=MORNING&register=REG-01" class="shift-card" data-role="CASHIER">
+                <div class="staff-info">
+                    <div class="staff-name">
+                        Nguyễn Văn A
+                        <span class="role-tag role-cashier">Thu Ngân</span>
+                    </div>
+                    <div class="shift-details">Ca sáng (06:00 - 14:00)</div>
+                    <div class="pos-alloc">Máy POS phân bổ: REG-01</div>
+                </div>
+                <div class="arrow-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+            </a>
+
+            <!-- Shift 2 -->
+            <a href="schedule_edit.html?id=2&name=Tran%20Thi%20B&role=BARISTA&shift=MORNING" class="shift-card" data-role="BARISTA">
+                <div class="staff-info">
+                    <div class="staff-name">
+                        Trần Thị B
+                        <span class="role-tag role-barista">Pha Chế</span>
+                    </div>
+                    <div class="shift-details">Ca sáng (06:00 - 14:00)</div>
+                    <div class="pos-alloc">Máy POS phân bổ: Không</div>
+                </div>
+                <div class="arrow-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+            </a>
+
+            <!-- Shift 3 -->
+            <a href="schedule_edit.html?id=3&name=Pham%20Van%20C&role=CASHIER&shift=AFTERNOON&register=REG-01" class="shift-card" data-role="CASHIER">
+                <div class="staff-info">
+                    <div class="staff-name">
+                        Phạm Văn C
+                        <span class="role-tag role-cashier">Thu Ngân</span>
+                    </div>
+                    <div class="shift-details">Ca chiều (14:00 - 22:00)</div>
+                    <div class="pos-alloc">Máy POS phân bổ: REG-01</div>
+                </div>
+                <div class="arrow-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+            </a>
+
+            <!-- Shift 4 -->
+            <a href="schedule_edit.html?id=4&name=Le%20Thi%20D&role=BARISTA&shift=AFTERNOON" class="shift-card" data-role="BARISTA">
+                <div class="staff-info">
+                    <div class="staff-name">
+                        Lê Thị D
+                        <span class="role-tag role-barista">Pha Chế</span>
+                    </div>
+                    <div class="shift-details">Ca chiều (14:00 - 22:00)</div>
+                    <div class="pos-alloc">Máy POS phân bổ: Không</div>
+                </div>
+                <div class="arrow-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+            </a>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="footer-buttons">
+            <a href="schedule_add.html" class="btn btn-primary">+ Phân Ca Mới</a>
+            <a href="attendance.html" class="btn btn-secondary">Xem Báo Cáo Điểm Danh</a>
+        </div>
+    </div>
+
+    <script>
+        let currentRoleFilter = "ALL";
+
+        function changeDate(days) {
+            const dateInput = document.getElementById('scheduleDate');
+            const currentDate = new Date(dateInput.value);
+            currentDate.setDate(currentDate.getDate() + days);
+            
+            // Format YYYY-MM-DD
+            const yyyy = currentDate.getFullYear();
+            const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(currentDate.getDate()).padStart(2, '0');
+            
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            filterShifts();
+        }
+
+        function setRoleFilter(role) {
+            currentRoleFilter = role;
+            
+            // Update chip UI
+            document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+            if (role === 'ALL') document.getElementById('chip-all').classList.add('active');
+            if (role === 'CASHIER') document.getElementById('chip-cashier').classList.add('active');
+            if (role === 'BARISTA') document.getElementById('chip-barista').classList.add('active');
+
+            filterShifts();
+        }
+
+        function filterShifts() {
+            const date = document.getElementById('scheduleDate').value;
+            const items = document.querySelectorAll('.shift-card');
+
+            // In mockup, we display the same list but show/hide depending on the filter for demo purposes.
+            // In a real system, we'd pull from server for that specific date. We will simulate this by keeping standard demo values.
+            items.forEach(item => {
+                const role = item.getAttribute('data-role');
+                const matchesRole = currentRoleFilter === 'ALL' || role === currentRoleFilter;
+                
+                if (matchesRole) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

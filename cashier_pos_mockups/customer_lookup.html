@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Kiếm Hội Viên - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-input { width: 100%; height: 40px; background: #fafafa; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 14px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+
+        .btn-search { width: 100%; height: 42px; background: #3d2314; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-bottom: 15px; }
+        .btn-search:hover { background: #5c3826; }
+
+        .result-box { background: #fdfaf7; border: 1.5px dashed #c89d7c; border-radius: 14px; padding: 14px; margin-bottom: 20px; color: #3d2314; font-size: 13px; display: none; line-height: 1.5; }
+        .result-title { font-weight: 700; font-size: 14px; color: #2c1a11; margin-bottom: 8px; border-bottom: 1px solid #f0e6df; padding-bottom: 4px; }
+
+        .section-divider { display: flex; align-items: center; text-align: center; color: #8c766c; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 20px 0; }
+        .section-divider::before, .section-divider::after { content: ''; flex: 1; border-bottom: 1px solid #eaddd3; }
+        .section-divider:not(:empty)::before { margin-right: .5em; }
+        .section-divider:not(:empty)::after { margin-left: .5em; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Area Scroll -->
+        <div class="content-area">
+            <div class="header">
+                <a href="checkout.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Tìm Kiếm Hội Viên</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <!-- Lookup Section -->
+            <div class="form-group">
+                <label class="form-label" for="searchPhone">Số điện thoại hội viên</label>
+                <input type="text" id="searchPhone" class="form-input" placeholder="Nhập số điện thoại...">
+            </div>
+            <button class="btn-search" onclick="performSearch()">TÌM KIẾM HỘI VIÊN</button>
+
+            <!-- Results display -->
+            <div class="result-box" id="resultBox">
+                <div class="result-title">Thông tin hội viên</div>
+                <strong>Tên khách hàng:</strong> <span id="resName">-</span><br>
+                <strong>Hạng hội viên:</strong> <span id="resTier">-</span><br>
+                <strong>Điểm tích lũy khả dụng:</strong> <span id="resPoints">-</span>
+            </div>
+
+            <!-- Add new customer section -->
+            <div class="section-divider">ĐĂNG KÝ HỘI VIÊN MỚI</div>
+            
+            <form id="newCustForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label" for="newName">Họ và tên *</label>
+                    <input type="text" id="newName" class="form-input" placeholder="Ví dụ: Nguyễn Văn A">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="newPhone">Số điện thoại *</label>
+                    <input type="text" id="newPhone" class="form-input" placeholder="Ví dụ: 0912345678">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="newEmail">Địa chỉ Email</label>
+                    <input type="email" id="newEmail" class="form-input" placeholder="Ví dụ: name@domain.com">
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="checkout.html" class="btn btn-secondary">HỦY</a>
+            <button type="submit" form="newCustForm" id="btnAction" class="btn btn-primary">XÁC NHẬN</button>
+        </div>
+    </div>
+
+    <script>
+        let matchedCustomer = null;
+
+        function performSearch() {
+            const phone = document.getElementById('searchPhone').value.trim();
+            const errorBox = document.getElementById('errorBox');
+            const resultBox = document.getElementById('resultBox');
+            const btnAction = document.getElementById('btnAction');
+
+            errorBox.style.display = 'none';
+            resultBox.style.display = 'none';
+
+            if (phone === "") {
+                errorBox.textContent = "Vui lòng nhập số điện thoại hội viên để tìm kiếm.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Database lookup simulation
+            if (phone === '0987654321') {
+                matchedCustomer = {
+                    name: 'Nguyễn Văn A',
+                    tier: 'GOLD',
+                    points: 340
+                };
+                
+                document.getElementById('resName').textContent = matchedCustomer.name;
+                document.getElementById('resTier').textContent = "Gold (Chiết khấu 10%)";
+                document.getElementById('resPoints').textContent = "340 điểm";
+                
+                resultBox.style.display = 'block';
+                
+                // Change footer button behavior to link this customer
+                btnAction.textContent = "GẮN VÀO HÓA ĐƠN";
+                btnAction.removeAttribute('form');
+                btnAction.onclick = linkCustomer;
+            } else {
+                errorBox.textContent = "Không tìm thấy thông tin hội viên cho số điện thoại này. Bạn có thể nhập thông tin bên dưới để đăng ký hội viên mới.";
+                errorBox.style.display = 'block';
+            }
+        }
+
+        function linkCustomer() {
+            if (!matchedCustomer) return;
+            // Success simulation, redirecting back to checkout with customer params
+            const successBox = document.getElementById('successBox');
+            successBox.textContent = `Gắn hội viên ${matchedCustomer.name} thành công! Đang chuyển hướng...`;
+            successBox.style.display = 'block';
+
+            setTimeout(() => {
+                // Redirecting and applying query params
+                window.location.href = `checkout.html?custPhone=0987654321`;
+            }, 1200);
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('newName').value.trim();
+            const phone = document.getElementById('newPhone').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            if (name === "" || phone === "") {
+                errorBox.textContent = "Vui lòng điền đầy đủ Tên và Số điện thoại để đăng ký.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Phone length check
+            const phoneRegex = /^[0-9]{10,11}$/;
+            if (!phoneRegex.test(phone)) {
+                errorBox.textContent = "Số điện thoại đăng ký không hợp lệ (phải gồm 10 hoặc 11 chữ số).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success register simulation
+            successBox.textContent = `Đăng ký hội viên mới ${name} thành công! Đang gắn vào đơn...`;
+            successBox.style.display = 'block';
+
+            setTimeout(() => {
+                window.location.href = `checkout.html?custPhone=${phone}`;
+            }, 1200);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Category - HQ Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #fcfaf7; color: #2c1a11; margin: 0; padding: 0; }
+        .wrapper { display: flex; min-height: 100vh; flex-direction: row; }
+        .sidebar { width: 240px; background: #3d2314; color: white; padding: 25px 15px; box-sizing: border-box; }
+        .sidebar h2 { font-size: 20px; margin-bottom: 30px; text-align: center; color: #c89d7c; }
+        .sidebar a { display: block; color: #d1c4b9; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-bottom: 5px; }
+        .sidebar a.active, .sidebar a:hover { background: #5c3826; color: white; }
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 1px solid #eaddd3; padding-bottom: 15px; }
+        .header h1 { font-size: 24px; margin: 0; }
+        .form-container { background: white; padding: 30px; border-radius: 12px; border: 1px solid #eaddd3; max-width: 600px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #5c3826; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #e5dbcf; border-radius: 8px; box-sizing: border-box; font-size: 15px; font-family: inherit; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #c89d7c; }
+        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+        .btn { padding: 12px 24px; background: #3d2314; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn:hover { background: #5c3826; }
+        .btn-secondary { background: transparent; color: #8c766c; border: 1px solid #e5dbcf; }
+        .btn-secondary:hover { background: #fdfaf7; color: #3d2314; }
+        
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; padding: 15px; }
+            .sidebar h2 { margin-bottom: 15px; }
+            .sidebar-menu { display: flex; flex-wrap: wrap; gap: 5px; }
+            .sidebar a { padding: 8px 12px; font-size: 14px; }
+            .main-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h2>EspressoHQ Admin</h2>
+            <div class="sidebar-menu">
+                <a href="dashboard_web.html">Trang chủ</a>
+                <a href="users_web.html">Nhân sự</a>
+                <a href="menu_web.html" class="active">Thực đơn</a>
+                <a href="vouchers_web.html">Vouchers</a>
+                <a href="customers.html">Khách hàng</a>
+                <a href="reports_web.html">Báo cáo</a>
+                <a href="settings_web.html">Cấu hình</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1>Thêm Danh Mục Mới</h1>
+            </div>
+
+            <div class="form-container">
+                <div class="form-group">
+                    <label>Tên danh mục</label>
+                    <input type="text" id="cat-name" placeholder="Nhập tên danh mục (ví dụ: Trà trái cây)">
+                </div>
+                <div class="form-group">
+                    <label>Mô tả chi tiết</label>
+                    <textarea id="cat-desc" rows="4" placeholder="Nhập mô tả danh mục"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Trạng thái hiển thị</label>
+                    <select id="cat-status">
+                        <option value="ACTIVE">Hiển thị trên POS và ứng dụng đối tác</option>
+                        <option value="INACTIVE">Ẩn danh mục</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="saveCategory()">TẠO DANH MỤC</button>
+                    <button class="btn btn-secondary" onclick="location.href='menu_web.html'">HỦY BỎ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function saveCategory() {
+            const name = document.getElementById('cat-name').value;
+            if (name.trim() === "") {
+                alert("Vui lòng nhập tên danh mục.");
+                return;
+            }
+            alert("Thêm danh mục mới thành công!");
+            window.location.href = "menu_web.html";
+        }
+    </script>
+</body>
+</html>

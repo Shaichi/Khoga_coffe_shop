@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Ca Mới - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-select, .form-input { width: 100%; height: 44px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .form-select:focus, .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+
+        .error-message { background: #fff3e0; border: 1px solid rgba(255,152,0,0.3); border-radius: 12px; padding: 12px; color: #e65100; font-size: 13px; font-weight: 600; margin-bottom: 18px; display: none; line-height: 1.4; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Scrollable Form Area -->
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 2px;">
+            <div class="header">
+                <a href="scheduler.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Phân Ca Mới</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <form id="scheduleForm" onsubmit="handleSubmit(event)">
+                <!-- Employee Dropdown -->
+                <div class="form-group">
+                    <label class="form-label" for="employeeSelect">Nhân viên *</label>
+                    <select id="employeeSelect" class="form-select" required onchange="checkForConflict()">
+                        <option value="" disabled selected>Chọn nhân viên...</option>
+                        <option value="NguyenVanA" data-fullname="Nguyễn Văn A">Nguyễn Văn A (Thu ngân)</option>
+                        <option value="TranThiB" data-fullname="Trần Thị B">Trần Thị B (Pha chế)</option>
+                        <option value="PhamVanC" data-fullname="Phạm Văn C">Phạm Văn C (Thu ngân)</option>
+                        <option value="LeThiD" data-fullname="Lê Thị D">Lê Thị D (Pha chế)</option>
+                    </select>
+                </div>
+
+                <!-- Date -->
+                <div class="form-group">
+                    <label class="form-label" for="shiftDate">Ngày làm việc *</label>
+                    <input type="date" id="shiftDate" class="form-input" value="2026-05-25" required onchange="checkForConflict()">
+                </div>
+
+                <!-- Shift Type -->
+                <div class="form-group">
+                    <label class="form-label" for="shiftType">Ca làm việc *</label>
+                    <select id="shiftType" class="form-select" required>
+                        <option value="" disabled selected>Chọn ca...</option>
+                        <option value="MORNING">Ca Sáng (06:00 - 14:00)</option>
+                        <option value="AFTERNOON">Ca Chiều (14:00 - 22:00)</option>
+                        <option value="FULL_DAY">Cả Ngày (06:00 - 22:00)</option>
+                    </select>
+                </div>
+
+                <!-- Register Allocation -->
+                <div class="form-group">
+                    <label class="form-label" for="registerSelect">Máy POS phân bổ *</label>
+                    <select id="registerSelect" class="form-select" required>
+                        <option value="NONE" selected>Không phân bổ (Pha chế/Dự phòng)</option>
+                        <option value="REG-01">Máy POS 01 (REG-01)</option>
+                        <option value="REG-02">Máy POS 02 (REG-02)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="scheduler.html" class="btn btn-secondary">HỦY</a>
+            <button type="submit" form="scheduleForm" class="btn btn-primary">PHÂN CA</button>
+        </div>
+    </div>
+
+    <script>
+        function checkForConflict() {
+            const employee = document.getElementById('employeeSelect').value;
+            const date = document.getElementById('shiftDate').value;
+            const errorBox = document.getElementById('errorBox');
+
+            // Simulating schedule conflict AT1: Nguyễn Văn A is already assigned on 2026-05-25
+            if (employee === 'NguyenVanA' && date === '2026-05-25') {
+                errorBox.innerHTML = "⚠️ <strong>Cảnh báo trùng lịch:</strong> Nhân viên Nguyễn Văn A đã được phân công ca làm việc vào ngày 25/05/2026.";
+                errorBox.style.display = 'block';
+            } else {
+                errorBox.style.display = 'none';
+            }
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const employeeEl = document.getElementById('employeeSelect');
+            const employee = employeeEl.value;
+            const date = document.getElementById('shiftDate').value;
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            // AT1: Hard block if conflict exists
+            if (employee === 'NguyenVanA' && date === '2026-05-25') {
+                errorBox.innerHTML = "Không thể phân ca. Nhân viên đã có lịch làm việc trong ngày này và không được trùng lắp.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            const fullName = employeeEl.options[employeeEl.selectedIndex].getAttribute('data-fullname');
+            successBox.textContent = `Phân ca thành công cho nhân viên ${fullName}!`;
+            successBox.style.display = 'block';
+            
+            // Disable inputs
+            const inputs = document.querySelectorAll('input, select, button');
+            inputs.forEach(input => input.disabled = true);
+
+            setTimeout(() => {
+                window.location.href = "scheduler.html";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

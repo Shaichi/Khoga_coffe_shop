@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Profile - Staff Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 40px 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        h2 { color: #2c1a11; text-align: center; margin-top: 20px; font-size: 24px; font-weight: 700; }
+        .avatar-section { display: flex; flex-direction: column; align-items: center; margin-top: 15px; margin-bottom: 25px; }
+        .avatar { width: 80px; height: 80px; background: #eaddd3; color: #5c3826; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; font-weight: 700; border: 2px solid #c89d7c; }
+        .profile-list { margin-bottom: 20px; }
+        .profile-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2ede8; font-size: 15px; }
+        .profile-label { color: #8c766c; font-weight: 500; }
+        .profile-value { color: #2c1a11; font-weight: 600; }
+        .btn-outline { width: 100%; height: 46px; background: transparent; color: #5c3826; border: 1.5px solid #eaddd3; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; transition: all 0.2s; }
+        .btn-outline:hover { background: #fdfaf7; border-color: #c89d7c; }
+        .btn-danger { width: 100%; height: 46px; background: transparent; color: #cf6679; border: 1.5px solid rgba(207,102,121,0.2); border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; transition: all 0.2s; }
+        .btn-danger:hover { background: rgba(207,102,121,0.05); border-color: #cf6679; }
+        
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 60px 24px 40px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div>
+            <h2>Thông Tin Cá Nhân</h2>
+            
+            <div class="avatar-section">
+                <div class="avatar">NV</div>
+            </div>
+
+            <div class="profile-list">
+                <div class="profile-item">
+                    <span class="profile-label">Họ và tên</span>
+                    <span class="profile-value" id="disp-name">Nguyễn Văn Thu Ngân</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">Tên đăng nhập</span>
+                    <span class="profile-value">cashier01</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">Vai trò</span>
+                    <span class="profile-value">CASHIER</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">Chi nhánh</span>
+                    <span class="profile-value">Nguyễn Du Branch</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">Email</span>
+                    <span class="profile-value" id="disp-email">cashier01@espressomail.com</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">Số điện thoại</span>
+                    <span class="profile-value" id="disp-phone">0987654321</span>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <button class="btn-outline" onclick="location.href='edit_profile.html'">Chỉnh sửa thông tin</button>
+            <button class="btn-outline" onclick="location.href='change_password.html'">Đổi mật khẩu</button>
+            <button class="btn-danger" onclick="handleLogout()">Đăng xuất</button>
+        </div>
+    </div>
+
+    <script>
+        // Load customized profile data from localStorage if exists
+        window.onload = function() {
+            if (localStorage.getItem('staff_email')) {
+                document.getElementById('disp-email').innerText = localStorage.getItem('staff_email');
+            }
+            if (localStorage.getItem('staff_phone')) {
+                document.getElementById('disp-phone').innerText = localStorage.getItem('staff_phone');
+            }
+        }
+        function handleLogout() {
+            if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+                window.location.href = "login.html";
+            }
+        }
+    </script>
+</body>
+</html>

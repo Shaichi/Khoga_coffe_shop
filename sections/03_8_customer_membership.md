@@ -1,0 +1,253 @@
+# 3.8 Customer & Membership Management
+
+This section details specifications for loyalty membership profiles search, enrollment, and history views.
+
+---
+
+## 3.8.1 F40 - List Customer / UC-24 View Customer List
+
+### 3.8.1.1 Screen Mock-up (Mobile Portrait)
+```
++------------------------------------+
+|             Customers              |
+|                                    |
+|  Search: [ 0987654321            ] |
+|  Tier: [ All Tiers           ][v]  |
+|                                    |
+|  - Nguyen Van A (Gold)             |
+|    Phone: 0987654321  (340 pts)    |
+|                                    |
+|  - Tran Thi B (Silver)             |
+|    Phone: 0912345678  (120 pts)    |
+|                                    |
+|          [ + Add Customer ]        |
++------------------------------------+
+```
+
+#### Table 3-40: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Search | Text | No | 50 | Filter members by phone number or name. |
+| 2 | Tier | Dropdown | Yes | | Filter members list by loyalty tier. |
+| 3 | Add Customer | Button | | | Navigates to Add Customer registration screen. |
+
+### 3.8.1.2 Use Case Description
+
+| Use Case ID | UC-24 | Use Case Name | View Customer List |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-05-24 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Cashier, Store Manager, Admin |
+| **Description** | Displays the register of all enrolled loyalty members. |
+| **Precondition** | User is logged in. |
+| **Trigger** | User navigates to Customers module. |
+| **Post-Condition** | Displays membership registry. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | User | Opens Customers directory. |
+| 2 | Portal | Displays listing grid of enrolled members, tiers, and points. |
+
+---
+
+## 3.8.2 F41 - Add Customer / UC-25 Add Customer
+
+### 3.8.2.1 Screen Mock-up (Mobile Portrait)
+```
++------------------------------------+
+|            Add Customer            |
+|                                    |
+|  Full Name                         |
+|  [ Nguyen Van A                  ] |
+|                                    |
+|  Phone Number                      |
+|  [ 0987654321                    ] |
+|                                    |
+|  Contact Email (Optional)          |
+|  [ nva@example.com               ] |
+|                                    |
+|        [ REGISTER ]   [ CANCEL ]   |
++------------------------------------+
+```
+
+#### Table 3-41: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Full Name | Text | Yes | 100 | Customer's full name. |
+| 2 | Phone Number | Text | Yes | 20 | Customer phone number lookup key. |
+| 3 | Contact Email | Text | No | 100 | Customer email address. |
+| 4 | Register | Button | | | Submits details to enroll customer. |
+| 5 | Cancel | Button | | | Returns to Customers list. |
+
+### 3.8.2.2 Use Case Description
+
+| Use Case ID | UC-25 | Use Case Name | Add Customer |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-05-24 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Cashier, Store Manager, Admin |
+| **Description** | Registers a new customer into the membership loyalty program. |
+| **Precondition** | Customer is not enrolled. |
+| **Trigger** | User clicks "+ Add Customer". |
+| **Post-Condition** | Customer is registered as a Bronze loyalty member. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | User | Enters customer Name, Phone, and optional Email. Clicks "Register". |
+| 2 | Portal | Validates phone syntax format and checks for duplicates. |
+| 3 | Portal | Saves new customer record with 0 starting points and status Bronze, returning to list view. |
+
+#### Alternative Flows
+##### AT1: Phone Number Duplicate
+- **Trigger**: At step 2, phone number is already registered.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays warning message: `"A member with this phone number is already registered."` |
+
+##### AT2: Invalid Phone Format
+- **Trigger**: At step 2, phone number does not fit 10-11 digits pattern.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays warning message: `"Please enter a valid phone number (10-11 digits)."` |
+
+---
+
+## 3.8.3 F42 - Update Customer / UC-26 Update Customer
+
+### 3.8.3.1 Screen Mock-up (Mobile Portrait)
+```
++------------------------------------+
+|           Edit Customer            |
+|                                    |
+|  Full Name: Nguyen Van A           |
+|  Phone: 0987654321                 |
+|                                    |
+|  Contact Email                     |
+|  [ nva@example.com               ] |
+|                                    |
+|  Adjust Points (Admin only):       |
+|  Points: [ 340      ]              |
+|  Reason: [ Dispute Resolution    ] |
+|                                    |
+|        [ SAVE ]   [ CANCEL ]       |
++------------------------------------+
+```
+
+#### Table 3-42: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Contact Email | Text | Yes | 100 | Customer email address. |
+| 2 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
+| 3 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
+| 4 | Save | Button | | | Saves customer details changes. |
+| 5 | Cancel | Button | | | Returns to list page. |
+
+### 3.8.3.2 Use Case Description
+
+| Use Case ID | UC-26 | Use Case Name | Update Customer |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-05-24 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Cashier, Store Manager, Admin |
+| **Description** | Modifies membership contact details or adjusts points logs. |
+| **Precondition** | Customer profile exists. |
+| **Trigger** | User clicks edit row icon on list view. |
+| **Post-Condition** | Customer metadata is updated. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | User | Modifies contact details (or Admin inputs point changes) and clicks "Save". |
+| 2 | Portal | Validates inputs. |
+| 3 | Portal | Updates details, logs adjust audit notes (if point changes occur), and returns. |
+
+#### Alternative Flows
+##### AT1: Non-Admin Actor — Points Fields Hidden
+- **Trigger**: Cashier or Store Manager opens the Edit Customer screen.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1 | Portal | The "Points" and "Reason" fields are hidden from the form. Only "Contact Email" is editable. |
+
+##### AT2: Points Changed Without Reason
+- **Trigger**: Admin modifies the Points value but leaves Reason blank.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays error message: `"A reason is required when manually adjusting customer points."` |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-49 | Manual points adjustments require a recorded reason and are locked to Admin role. |
+
+---
+
+## 3.8.4 F43 - View Customer History / UC-27 View Customer History
+
+### 3.8.4.1 Screen Mock-up (Mobile Portrait)
+```
++------------------------------------+
+|          Customer History          |
+|                                    |
+|  Customer: Nguyen Van A (Gold)     |
+|  Phone: 0987654321  Points: 340    |
+|                                    |
+|  Completed Orders:                 |
+|  - 2026-05-24: #012  (Total: 30k)  |
+|    +3 points accumulated.          |
+|                                    |
+|  - 2026-05-20: #005  (Total: 70k)  |
+|    +7 points accumulated.          |
+|                                    |
+|                        [ Back ]    |
++------------------------------------+
+```
+
+#### Table 3-43: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Back | Button | | | Returns to Customer card. |
+
+### 3.8.4.2 Use Case Description
+
+| Use Case ID | UC-27 | Use Case Name | View Customer History |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-05-24 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Cashier, Store Manager, Admin |
+| **Description** | Lists all historical orders completed by the customer. |
+| **Precondition** | Customer is selected. |
+| **Trigger** | User navigates to Transaction History view in profile card. |
+| **Post-Condition** | Customer order logs are displayed. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | User | Opens customer transaction history screen. |
+| 2 | Portal | Retrieves and displays order details, item names, and points earned. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-34 | Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
+| BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
+
+
+

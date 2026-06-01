@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh Sửa Ca Làm - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-select, .form-input { width: 100%; height: 44px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .form-select:focus, .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+
+        .readonly-value { display: flex; align-items: center; background: #f5eee8; border-radius: 12px; height: 44px; padding: 0 16px; font-size: 14px; color: #3d2314; font-weight: 600; box-sizing: border-box; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .warning-box { background: #fff8e1; border: 1px solid rgba(255,179,0,0.3); border-radius: 12px; padding: 12px; color: #b78103; font-size: 12px; font-weight: 600; margin-bottom: 18px; display: none; line-height: 1.4; }
+
+        .action-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; width: 100%; box-sizing: border-box; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        
+        .btn-row-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-danger { background: white; color: #cf6679; border: 1.5px solid rgba(207,102,121,0.2); }
+        .btn-danger:hover { background: rgba(207,102,121,0.05); border-color: #cf6679; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Scrollable Form Area -->
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 2px;">
+            <div class="header">
+                <a href="scheduler.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Điều Chỉnh Ca</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="warningBox" class="warning-box"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <form id="editForm" onsubmit="handleSave(event)">
+                <!-- Employee Read-only -->
+                <div class="form-group">
+                    <label class="form-label">Nhân viên</label>
+                    <div id="employeeName" class="readonly-value">-</div>
+                </div>
+
+                <!-- Date Read-only -->
+                <div class="form-group">
+                    <label class="form-label">Ngày làm việc</label>
+                    <div id="shiftDate" class="readonly-value">-</div>
+                </div>
+
+                <!-- Shift Type -->
+                <div class="form-group">
+                    <label class="form-label" for="shiftType">Ca làm việc *</label>
+                    <select id="shiftType" class="form-select" required>
+                        <option value="MORNING">Ca Sáng (06:00 - 14:00)</option>
+                        <option value="AFTERNOON">Ca Chiều (14:00 - 22:00)</option>
+                        <option value="FULL_DAY">Cả Ngày (06:00 - 22:00)</option>
+                    </select>
+                </div>
+
+                <!-- Register -->
+                <div class="form-group">
+                    <label class="form-label" for="registerSelect">Máy POS phân bổ *</label>
+                    <select id="registerSelect" class="form-select" required>
+                        <option value="NONE">Không phân bổ (Pha chế/Dự phòng)</option>
+                        <option value="REG-01">Máy POS 01 (REG-01)</option>
+                        <option value="REG-02">Máy POS 02 (REG-02)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="action-buttons">
+            <button type="submit" form="editForm" id="btnSave" class="btn btn-primary">LƯU THAY ĐỔI</button>
+            <div class="btn-row-bottom">
+                <button type="button" id="btnDelete" onclick="handleDelete()" class="btn btn-danger">XÓA CA</button>
+                <a href="scheduler.html" class="btn btn-secondary">HỦY</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isPastShift = false;
+        let staffNameVal = "";
+
+        // Read query parameters
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            staffNameVal = urlParams.get('name') || "Nguyễn Văn A";
+            const role = urlParams.get('role') || "CASHIER";
+            const shift = urlParams.get('shift') || "MORNING";
+            const register = urlParams.get('register') || "NONE";
+            const dateVal = urlParams.get('date') || "25/05/2026";
+            
+            // Check if it's a simulated past shift (e.g. date is in past)
+            isPastShift = urlParams.get('past') === 'true';
+
+            document.getElementById('employeeName').textContent = `${staffNameVal} (${role === 'CASHIER' ? 'Thu ngân' : 'Pha chế'})`;
+            document.getElementById('shiftDate').textContent = dateVal;
+            document.getElementById('shiftType').value = shift;
+            document.getElementById('registerSelect').value = register;
+
+            // BR-36: Disable controls if shift occurred in the past
+            if (isPastShift) {
+                document.getElementById('shiftType').disabled = true;
+                document.getElementById('registerSelect').disabled = true;
+                document.getElementById('btnSave').disabled = true;
+                document.getElementById('btnSave').style.opacity = '0.5';
+                document.getElementById('btnDelete').disabled = true;
+                document.getElementById('btnDelete').style.opacity = '0.5';
+                
+                const warningBox = document.getElementById('warningBox');
+                warningBox.innerHTML = "⚠️ <strong>Ca làm đã diễn ra:</strong> Ca làm trong quá khứ không được phép điều chỉnh hoặc xóa (Theo BR-36).";
+                warningBox.style.display = 'block';
+            }
+        });
+
+        function handleSave(e) {
+            e.preventDefault();
+            if (isPastShift) return;
+
+            const successBox = document.getElementById('successBox');
+            successBox.textContent = "Cập nhật ca làm việc thành công!";
+            successBox.style.display = 'block';
+
+            disableAll();
+
+            setTimeout(() => {
+                window.location.href = "scheduler.html";
+            }, 1500);
+        }
+
+        function handleDelete() {
+            if (isPastShift) return;
+
+            // BR-37 confirmation
+            const confirmDelete = confirm(`Xác nhận xóa ca làm của nhân viên ${staffNameVal}? \nLưu ý: Hành động này sẽ gửi cảnh báo thông báo lập tức cho nhân viên (Theo BR-37).`);
+            
+            if (confirmDelete) {
+                const successBox = document.getElementById('successBox');
+                successBox.style.background = '#fde8eb';
+                successBox.style.color = '#cf6679';
+                successBox.style.borderColor = 'rgba(207,102,121,0.2)';
+                successBox.textContent = "Đã xóa ca làm việc & gửi thông báo cho nhân viên.";
+                successBox.style.display = 'block';
+
+                disableAll();
+
+                setTimeout(() => {
+                    window.location.href = "scheduler.html";
+                }, 1500);
+            }
+        }
+
+        function disableAll() {
+            const inputs = document.querySelectorAll('input, select, button, a');
+            inputs.forEach(input => {
+                if (input.tagName === 'A') {
+                    input.style.pointerEvents = 'none';
+                } else {
+                    input.disabled = true;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

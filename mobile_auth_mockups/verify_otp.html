@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - Staff Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 40px 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        h2 { color: #2c1a11; text-align: center; margin-top: 30px; font-size: 26px; font-weight: 700; }
+        .otp-container { display: flex; justify-content: space-between; gap: 8px; margin: 30px 0; }
+        .otp-input { width: 44px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border: 1px solid #e5dbcf; border-radius: 12px; background-color: #fdfdfd; transition: all 0.2s; }
+        .otp-input:focus { outline: none; border-color: #c89d7c; background-color: #fff; box-shadow: 0 0 0 3px rgba(200, 157, 124, 0.15); }
+        button { width: 100%; height: 50px; background: #3d2314; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
+        button:hover { background: #5c3826; }
+        button:active { background: #2c1a11; }
+        .links { text-align: center; margin-top: 20px; }
+        a { color: #c89d7c; text-decoration: none; font-size: 14px; font-weight: 600; }
+        
+        /* Mobile View Optimization */
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 60px 24px 40px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div>
+            <h2>Xác Thực OTP</h2>
+            <p style="color: #8c766c; font-size: 14px; text-align: center; margin-top: 10px; margin-bottom: 40px; line-height: 1.5;">Nhập mã xác thực gồm 6 chữ số đã được gửi tới email của bạn.</p>
+
+            <div class="otp-container">
+                <input type="text" class="otp-input" maxlength="1" oninput="moveToNext(this)" id="o1" autofocus>
+                <input type="text" class="otp-input" maxlength="1" oninput="moveToNext(this)" id="o2">
+                <input type="text" class="otp-input" maxlength="1" oninput="moveToNext(this)" id="o3">
+                <input type="text" class="otp-input" maxlength="1" oninput="moveToNext(this)" id="o4">
+                <input type="text" class="otp-input" maxlength="1" oninput="moveToNext(this)" id="o5">
+                <input type="text" class="otp-input" maxlength="1" oninput="moveToNext(this)" id="o6">
+            </div>
+        </div>
+
+        <div>
+            <button onclick="handleVerify()">XÁC NHẬN</button>
+            <div class="links">
+                <a href="forgot_password.html">Gửi lại mã xác thực</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function moveToNext(current) {
+            if (current.value.length >= 1) {
+                const inputs = document.getElementsByClassName('otp-input');
+                for (let i = 0; i < inputs.length; i++) {
+                    if (inputs[i] === current && i < inputs.length - 1) {
+                        inputs[i + 1].focus();
+                        break;
+                    }
+                }
+            }
+        }
+        function handleVerify() {
+            window.location.href = "set_new_password.html";
+        }
+    </script>
+</body>
+</html>

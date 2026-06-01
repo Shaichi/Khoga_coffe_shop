@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy Đổi Điểm Hội Viên - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-input { width: 100%; height: 44px; background: #fafafa; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 14px; box-sizing: border-box; font-size: 14px; color: #2c1a11; font-weight: 700; transition: all 0.2s; }
+        .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+
+        .readonly-value { display: flex; align-items: center; background: #f5eee8; border-radius: 12px; height: 44px; padding: 0 16px; font-size: 14px; color: #3d2314; font-weight: 600; box-sizing: border-box; }
+
+        .discount-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 8px; margin-top: 10px; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; line-height: 1.4; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Form Scroll -->
+        <div class="content-area">
+            <div class="header">
+                <a href="checkout.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Đổi Điểm Hội Viên</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <form id="pointsForm" onsubmit="handleSubmit(event)">
+                <!-- Linked Customer -->
+                <div class="form-group">
+                    <label class="form-label">Tên khách hàng</label>
+                    <div id="custName" class="readonly-value">Nguyễn Văn A</div>
+                </div>
+
+                <!-- Active Tier -->
+                <div class="form-group">
+                    <label class="form-label">Hạng thẻ hội viên</label>
+                    <div id="custTier" class="readonly-value">Gold (Được quyền quy đổi)</div>
+                </div>
+
+                <!-- Points Available -->
+                <div class="form-group">
+                    <label class="form-label">Điểm tích lũy khả dụng</label>
+                    <div id="custPoints" class="readonly-value">340 điểm</div>
+                </div>
+
+                <!-- Points to Redeem -->
+                <div class="form-group">
+                    <label class="form-label" for="pointsRedeem">Số điểm quy đổi *</label>
+                    <input type="number" id="pointsRedeem" class="form-input" value="100" placeholder="Nhập bội số của 100..." required oninput="calculateRedeemValue()">
+                    
+                    <div id="redeemValBadge" style="display: block;">
+                        <span class="discount-badge" id="redeemValText">Chiết khấu quy đổi: -10,000 VND</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="checkout.html" class="btn btn-secondary">HỦY</a>
+            <button type="submit" form="pointsForm" class="btn btn-primary">XÁC NHẬN</button>
+        </div>
+    </div>
+
+    <script>
+        let availablePointsVal = 340;
+        let customerTierVal = "GOLD";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const nameParam = urlParams.get('name');
+            const tierParam = urlParams.get('tier');
+            const pointsParam = parseInt(urlParams.get('points'));
+
+            if (nameParam) document.getElementById('custName').textContent = nameParam;
+            if (tierParam) {
+                customerTierVal = tierParam.toUpperCase();
+                document.getElementById('custTier').textContent = `${tierParam} (${customerTierVal === 'BRONZE' ? 'Chưa đủ điều kiện quy đổi' : 'Được quyền quy đổi'})`;
+            }
+            if (!isNaN(pointsParam)) {
+                availablePointsVal = pointsParam;
+                document.getElementById('custPoints').textContent = `${availablePointsVal} điểm`;
+            }
+        });
+
+        function calculateRedeemValue() {
+            const points = parseInt(document.getElementById('pointsRedeem').value);
+            const badge = document.getElementById('redeemValBadge');
+            const txt = document.getElementById('redeemValText');
+
+            if (isNaN(points) || points <= 0) {
+                badge.style.display = 'none';
+                return;
+            }
+
+            const discount = (points / 100) * 10000;
+            txt.textContent = `Chiết khấu quy đổi: -${discount.toLocaleString('vi-VN')} VND`;
+            badge.style.display = 'inline-block';
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const points = parseInt(document.getElementById('pointsRedeem').value);
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            // AT2: Ineligible Membership Tier check (BR-02)
+            if (customerTierVal === 'BRONZE') {
+                errorBox.textContent = "Lỗi: Khách hàng hạng Đồng (Bronze) chưa đủ điều kiện quy đổi điểm tích lũy. Yêu cầu tối thiểu từ Hạng Bạc trở lên (Theo AT2).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // AT1: Insufficient Points check
+            if (points > availablePointsVal) {
+                errorBox.textContent = `Lỗi: Điểm quy đổi (${points}) vượt quá số điểm tích lũy khả dụng của khách hàng (${availablePointsVal} điểm) (Theo AT1).`;
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // AT3: Multiple of 100 check (BR-02)
+            if (points % 100 !== 0 || points <= 0) {
+                errorBox.textContent = "Lỗi: Số điểm tích lũy quy đổi bắt buộc phải là bội số của 100 (Ví dụ: 100, 200, 300...) (Theo AT3).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success simulation
+            const discount = (points / 100) * 10000;
+            successBox.textContent = `Quy đổi ${points} điểm thành công (-${discount.toLocaleString('vi-VN')} VND)! Đang chuyển hướng...`;
+            successBox.style.display = 'block';
+
+            // Disable forms
+            document.getElementById('pointsRedeem').disabled = true;
+            document.querySelector('.btn-primary').disabled = true;
+
+            setTimeout(() => {
+                window.location.href = `checkout.html?pointsRedeemed=${points}`;
+            }, 1200);
+        }
+    </script>
+</body>
+</html>

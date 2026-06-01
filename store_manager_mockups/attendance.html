@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điểm Danh Nhân Viên - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; }
+        .empty-header-right { width: 60px; }
+
+        .controls-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+        .date-input { width: 100%; height: 40px; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 0 12px; font-size: 14px; font-weight: 600; color: #3d2314; outline: none; box-sizing: border-box; text-align: center; }
+        .date-input:focus { border-color: #c89d7c; }
+
+        .filter-select { width: 100%; height: 40px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 0 12px; box-sizing: border-box; font-size: 14px; color: #3d2314; font-weight: 600; outline: none; }
+        .filter-select:focus { border-color: #c89d7c; }
+
+        .logs-list { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+        .attendance-item { background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; transition: all 0.2s; }
+        .attendance-item:hover { border-color: #c89d7c; }
+        
+        .staff-details { display: flex; flex-direction: column; gap: 4px; }
+        .staff-name { font-weight: 700; color: #2c1a11; font-size: 14px; }
+        .staff-role { font-size: 11px; color: #8c766c; font-weight: 500; }
+        .time-detail { font-size: 12px; color: #5c3826; font-weight: 500; margin-top: 4px; }
+        
+        .status-col { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .status-badge { font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-ontime { background: #e8f5e9; color: #2e7d32; }
+        .status-late { background: #fff3e0; color: #e65100; }
+        .status-absent { background: #fde8eb; color: #cf6679; }
+        
+        .lateness-txt { font-size: 11px; font-weight: 600; color: #cf6679; }
+
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; width: 100%; margin-top: 15px; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; box-sizing: border-box; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Header & Date/Filter -->
+        <div>
+            <div class="header">
+                <a href="scheduler.html" class="back-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Quay lại
+                </a>
+                <h1 class="title">Báo Cáo Điểm Danh</h1>
+                <div class="empty-header-right"></div>
+            </div>
+
+            <div class="controls-row">
+                <input type="date" id="attendanceDate" class="date-input" value="2026-05-24" onchange="loadAttendanceData()">
+                <select id="statusFilter" class="filter-select" onchange="filterAttendance()">
+                    <option value="ALL">Tất cả nhân viên</option>
+                    <option value="LATE">Chỉ nhân viên đi muộn (LATE)</option>
+                    <option value="ABSENT">Chỉ nhân viên vắng mặt (ABSENT)</option>
+                    <option value="ON_TIME">Chỉ nhân viên đúng giờ (ON_TIME)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Attendance Logs List -->
+        <div class="logs-list" id="logsListContainer">
+            <!-- Staff 1 -->
+            <div class="attendance-item" data-status="LATE">
+                <div class="staff-details">
+                    <div class="staff-name">Nguyễn Văn A</div>
+                    <div class="staff-role">Thu Ngân - Ca Sáng</div>
+                    <div class="time-detail">
+                        Vào: 06:15 AM <br>
+                        Ra: 02:02 PM
+                    </div>
+                </div>
+                <div class="status-col">
+                    <span class="status-badge status-late">Đi Muộn</span>
+                    <span class="lateness-txt">Muộn 15 phút</span>
+                </div>
+            </div>
+
+            <!-- Staff 2 -->
+            <div class="attendance-item" data-status="ON_TIME">
+                <div class="staff-details">
+                    <div class="staff-name">Trần Thị B</div>
+                    <div class="staff-role">Pha Chế - Ca Sáng</div>
+                    <div class="time-detail">
+                        Vào: 05:58 AM <br>
+                        Ra: 02:00 PM
+                    </div>
+                </div>
+                <div class="status-col">
+                    <span class="status-badge status-ontime">Đúng Giờ</span>
+                </div>
+            </div>
+
+            <!-- Staff 3 -->
+            <div class="attendance-item" data-status="ABSENT">
+                <div class="staff-details">
+                    <div class="staff-name">Phạm Văn C</div>
+                    <div class="staff-role">Thu Ngân - Ca Chiều</div>
+                    <div class="time-detail" style="color: #8c766c;">
+                        Chưa ghi nhận check-in
+                    </div>
+                </div>
+                <div class="status-col">
+                    <span class="status-badge status-absent">Vắng Mặt</span>
+                </div>
+            </div>
+
+            <!-- Staff 4 -->
+            <div class="attendance-item" data-status="ON_TIME">
+                <div class="staff-details">
+                    <div class="staff-name">Lê Thị D</div>
+                    <div class="staff-role">Pha Chế - Ca Chiều</div>
+                    <div class="time-detail">
+                        Vào: 01:55 PM <br>
+                        Ra: 10:00 PM
+                    </div>
+                </div>
+                <div class="status-col">
+                    <span class="status-badge status-ontime">Đúng Giờ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div>
+            <a href="scheduler.html" class="btn btn-secondary">Quay lại Lịch biểu</a>
+        </div>
+    </div>
+
+    <script>
+        function filterAttendance() {
+            const filterVal = document.getElementById('statusFilter').value;
+            const items = document.querySelectorAll('.attendance-item');
+
+            items.forEach(item => {
+                const status = item.getAttribute('data-status');
+                if (filterVal === 'ALL' || status === filterVal) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function loadAttendanceData() {
+            // Simulated changing dates changes values slightly to look dynamic
+            const date = document.getElementById('attendanceDate').value;
+            const statusFilter = document.getElementById('statusFilter');
+            statusFilter.value = 'ALL'; // Reset filter
+            
+            // Just simulate a load action
+            console.log("Loading attendance logs for: ", date);
+            filterAttendance();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Hóa Đơn - POS Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #ddd; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative; overflow: hidden; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .bill-card { background: #fdfaf7; border: 1.5px solid #eaddd3; border-radius: 16px; padding: 16px; margin-bottom: 18px; text-align: center; }
+        .bill-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8c766c; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .bill-total { font-size: 26px; font-weight: 800; color: #3d2314; }
+        
+        .method-section { margin-bottom: 18px; }
+        .section-label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #8c766c; margin-bottom: 8px; letter-spacing: 0.5px; }
+        
+        .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .method-card { border: 1.5px solid #eaddd3; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; background: #fafafa; font-weight: 700; font-size: 13px; color: #5c3826; transition: all 0.2s; }
+        .method-card.selected { border-color: #3d2314; background: #f5eee8; color: #3d2314; }
+        .method-card svg { width: 24px; height: 24px; }
+
+        .payment-panel { background: #fafafa; border: 1px solid #eee; border-radius: 16px; padding: 16px; margin-bottom: 15px; display: none; }
+        .panel-active { display: block; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 12px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-input { width: 100%; height: 42px; background: white; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 0 14px; box-sizing: border-box; font-size: 14px; font-weight: 700; color: #2c1a11; }
+        
+        .cash-chips { display: flex; gap: 6px; margin-top: 8px; }
+        .chip { flex: 1; height: 32px; border-radius: 6px; border: 1px solid #eaddd3; background: white; font-size: 11px; font-weight: 700; color: #5c3826; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; }
+        .chip:hover { border-color: #c89d7c; }
+
+        .change-box { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; margin-top: 12px; border-top: 1px dashed #eaddd3; padding-top: 10px; color: #5c3826; }
+
+        /* QR Panel */
+        .qr-placeholder { text-align: center; padding: 10px 0; }
+        .qr-img-box { width: 130px; height: 130px; background: white; border: 1px solid #eaddd3; border-radius: 12px; margin: 0 auto 10px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #8c766c; font-weight: 600; padding: 8px; box-sizing: border-box; position: relative; }
+        .qr-countdown { font-size: 11px; color: #cf6679; font-weight: 700; margin-top: 4px; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1.1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; box-sizing: border-box; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Scroll Area -->
+        <div class="content-area">
+            <div class="header">
+                <a href="checkout.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Thanh Toán</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <!-- Amount Card -->
+            <div class="bill-card">
+                <div class="bill-title">Tổng tiền cần thanh toán</div>
+                <div class="bill-total" id="billTotalLabel">0 VND</div>
+            </div>
+
+            <!-- Payment Methods Grid -->
+            <div class="method-section">
+                <span class="section-label">Phương thức thanh toán</span>
+                <div class="method-grid">
+                    <!-- Cash -->
+                    <div class="method-card selected" id="method-CASH" onclick="selectMethod('CASH')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"/></svg>
+                        Tiền mặt
+                    </div>
+                    <!-- Card -->
+                    <div class="method-card" id="method-CARD" onclick="selectMethod('CARD')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        Thẻ (POS)
+                    </div>
+                    <!-- VietQR -->
+                    <div class="method-card" id="method-VIETQR" onclick="selectMethod('VIETQR')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M22 7h-6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+                        Chuyển VietQR
+                    </div>
+                    <!-- E-Wallet -->
+                    <div class="method-card" id="method-WALLET" onclick="selectMethod('WALLET')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4v-6z"/></svg>
+                        Ví điện tử
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interative Panels -->
+            
+            <!-- Cash Panel -->
+            <div class="payment-panel panel-active" id="panel-CASH">
+                <div class="form-group">
+                    <label class="form-label" for="cashReceived">Tiền mặt khách đưa (VND) *</label>
+                    <input type="number" id="cashReceived" class="form-input" placeholder="Nhập số tiền..." oninput="calculateChange()">
+                </div>
+                <div class="cash-chips">
+                    <button class="chip" onclick="applyQuickCash(50000)">50K</button>
+                    <button class="chip" onclick="applyQuickCash(100000)">100K</button>
+                    <button class="chip" onclick="applyQuickCash(200000)">200K</button>
+                    <button class="chip" onclick="applyQuickCash(500000)">500K</button>
+                </div>
+                <div class="change-box">
+                    <span>Tiền thối lại khách:</span>
+                    <span id="cashChangeLabel" style="color: #2e7d32; font-size:16px;">0 VND</span>
+                </div>
+            </div>
+
+            <!-- VietQR Panel -->
+            <div class="payment-panel" id="panel-VIETQR">
+                <div class="qr-placeholder">
+                    <div class="qr-img-box">
+                        <!-- Simulated QR Code -->
+                        <div style="width: 100px; height: 100px; background: repeating-conic-gradient(from 0deg, #3d2314 0deg 90deg, #fff 90deg 180deg) 0 0/10px 10px; opacity: 0.8; margin-bottom: 5px;"></div>
+                        Quét Mã VietQR
+                    </div>
+                    <div class="qr-countdown" id="countdownLabel">Mã QR hết hạn sau: 60s</div>
+                    
+                    <button class="btn btn-secondary" style="height:32px; width:120px; font-size:11px; margin: 10px auto 0 auto;" onclick="simulateQRScan()">Giả lập quét quét</button>
+                </div>
+            </div>
+
+            <!-- Card / E-Wallet generic instruction panel -->
+            <div class="payment-panel" id="panel-CARD-WALLET">
+                <div style="text-align:center; color:#5c3826; font-size:13px; padding: 20px 0;">
+                    <div style="margin-bottom:8px;">💳 Vui lòng cắm/chạm thẻ khách hàng hoặc quét ví tại thiết bị đọc thẻ quầy.</div>
+                    <div style="font-weight:700; color:#8c766c;">Đang chờ kết nối thiết bị...</div>
+                    <button class="btn btn-secondary" style="height:32px; width:120px; font-size:11px; margin: 15px auto 0 auto;" onclick="simulateCardSwipe()">Giả lập chạm thẻ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer actions -->
+        <div class="btn-row">
+            <button class="btn btn-secondary" id="btnRetryQR" style="display:none;" onclick="retryQR()">THỬ LẠI QR</button>
+            <a href="checkout.html" class="btn btn-secondary" id="btnCancel">HỦY</a>
+            <button class="btn btn-primary" onclick="confirmPayment()">XÁC NHẬN</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTotal = 0;
+        let selectedMethodVal = 'CASH';
+        let countdownTimer = null;
+        let countdownSec = 60;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentTotal = parseFloat(urlParams.get('total')) || 30000;
+            
+            document.getElementById('billTotalLabel').textContent = currentTotal.toLocaleString('vi-VN') + " VND";
+            
+            // Set default cash received input to match exact total
+            document.getElementById('cashReceived').value = currentTotal;
+            calculateChange();
+        });
+
+        function selectMethod(method) {
+            selectedMethodVal = method;
+            
+            // Highlight card
+            document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+            document.getElementById(`method-${method}`).classList.add('selected');
+
+            // Hide all panels
+            document.querySelectorAll('.payment-panel').forEach(panel => panel.classList.remove('panel-active'));
+            document.getElementById('btnRetryQR').style.display = 'none';
+
+            // Clear interval
+            clearInterval(countdownTimer);
+
+            if (method === 'CASH') {
+                document.getElementById('panel-CASH').classList.add('panel-active');
+            } else if (method === 'VIETQR') {
+                document.getElementById('panel-VIETQR').classList.add('panel-active');
+                document.getElementById('btnRetryQR').style.display = 'block';
+                startQRTimeoutCountdown();
+            } else {
+                // Card or E-wallet
+                document.getElementById('panel-CARD-WALLET').classList.add('panel-active');
+            }
+        }
+
+        // Cash Change logic
+        function applyQuickCash(amount) {
+            document.getElementById('cashReceived').value = amount;
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const received = parseFloat(document.getElementById('cashReceived').value);
+            const label = document.getElementById('cashChangeLabel');
+            const errorBox = document.getElementById('errorBox');
+            errorBox.style.display = 'none';
+
+            if (isNaN(received) || received < 0) {
+                label.textContent = "0 VND";
+                return;
+            }
+
+            const change = received - currentTotal;
+            if (change < 0) {
+                label.textContent = "Thiếu tiền...";
+                label.style.color = "#cf6679";
+            } else {
+                label.textContent = change.toLocaleString('vi-VN') + " VND";
+                label.style.color = "#2e7d32";
+            }
+        }
+
+        // VietQR Countdown Timer simulation
+        function startQRTimeoutCountdown() {
+            countdownSec = 60;
+            const label = document.getElementById('countdownLabel');
+            label.textContent = `Mã QR hết hạn sau: ${countdownSec}s`;
+            label.style.color = '#cf6679';
+
+            countdownTimer = setInterval(() => {
+                countdownSec--;
+                label.textContent = `Mã QR hết hạn sau: ${countdownSec}s`;
+                
+                // AT1: Gateway timeout simulation
+                if (countdownSec <= 0) {
+                    clearInterval(countdownTimer);
+                    label.textContent = "Mã QR đã hết hạn giao dịch!";
+                    const errorBox = document.getElementById('errorBox');
+                    errorBox.innerHTML = "⚠️ <strong>Lỗi kết nối cổng thanh toán:</strong> Thời gian chờ quét mã đã hết hạn. Hãy quét lại hoặc chọn phương thức khác (Theo AT1).";
+                    errorBox.style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        function retryQR() {
+            document.getElementById('errorBox').style.display = 'none';
+            startQRTimeoutCountdown();
+            alert("Đã cập nhật mã VietQR mới và bắt đầu lại thời gian chờ!");
+        }
+
+        // Simulation actions
+        function simulateQRScan() {
+            clearInterval(countdownTimer);
+            const successBox = document.getElementById('successBox');
+            successBox.textContent = "Đã nhận phản hồi cổng VietQR: Thanh toán thành công!";
+            successBox.style.display = 'block';
+            setTimeout(() => {
+                goToReceipt();
+            }, 1000);
+        }
+
+        function simulateCardSwipe() {
+            const successBox = document.getElementById('successBox');
+            successBox.textContent = "Nhận diện thẻ chip: Giao dịch thành công!";
+            successBox.style.display = 'block';
+            setTimeout(() => {
+                goToReceipt();
+            }, 1000);
+        }
+
+        // Confirm Payment submit
+        function confirmPayment() {
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            if (selectedMethodVal === 'CASH') {
+                const received = parseFloat(document.getElementById('cashReceived').value);
+                if (isNaN(received) || received < currentTotal) {
+                    errorBox.textContent = "Không thể xác nhận. Số tiền mặt nhận được chưa đủ so với giá trị hóa đơn.";
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                
+                successBox.textContent = "Thanh toán tiền mặt thành công! Đang in hóa đơn...";
+                successBox.style.display = 'block';
+                setTimeout(() => {
+                    goToReceipt();
+                }, 1000);
+            } else if (selectedMethodVal === 'VIETQR') {
+                if (countdownSec <= 0) {
+                    errorBox.textContent = "Mã QR đã hết hạn. Vui lòng bấm THỬ LẠI QR trước.";
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                simulateQRScan();
+            } else {
+                simulateCardSwipe();
+            }
+        }
+
+        function goToReceipt() {
+            // Read URL params and forward
+            const urlParams = new URLSearchParams(window.location.search);
+            const subtotal = urlParams.get('subtotal') || currentTotal;
+            const discount = urlParams.get('discount') || 0;
+            const pointDiscount = urlParams.get('pointDiscount') || 0;
+            
+            const redirectUrl = `print_invoice.html?total=${currentTotal}&subtotal=${subtotal}&discount=${discount}&pointDiscount=${pointDiscount}&method=${selectedMethodVal}`;
+            window.location.href = redirectUrl;
+        }
+    </script>
+</body>
+</html>

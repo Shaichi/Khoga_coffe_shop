@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Report Modal - HQ Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #fcfaf7; color: #2c1a11; margin: 0; padding: 0; }
+        /* Background reports page dimmed */
+        .page-bg { display: flex; min-height: 100vh; filter: blur(1px); opacity: 0.45; pointer-events: none; }
+        .sidebar-bg { width: 240px; background: #3d2314; flex-shrink: 0; }
+        .content-bg { flex: 1; padding: 30px; }
+        .header-bg { height: 60px; border-bottom: 1px solid #eaddd3; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; }
+        .header-bg h1 { font-size: 24px; color: #2c1a11; margin: 0; }
+        .chart-placeholder { background: white; border-radius: 12px; border: 1px solid #eaddd3; height: 200px; }
+
+        /* Modal overlay */
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal { background: white; border-radius: 14px; padding: 32px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eaddd3; }
+        .modal-header h2 { font-size: 20px; margin: 0; color: #2c1a11; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #8c766c; padding: 4px 8px; border-radius: 4px; }
+        .close-btn:hover { background: #f5ece1; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 10px; color: #3d2314; font-size: 14px; }
+        .radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .radio-opt { display: flex; align-items: center; gap: 8px; background: #f9f6f2; border: 2px solid #eaddd3; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 14px; flex: 1; min-width: 100px; transition: all 0.15s; }
+        .radio-opt:hover { border-color: #c89d7c; background: #fdf4ea; }
+        .radio-opt.selected { border-color: #3d2314; background: #f5ece1; color: #3d2314; }
+        .radio-opt input[type=radio] { margin: 0; accent-color: #3d2314; }
+        .form-group select { width: 100%; padding: 11px 14px; border: 1px solid #e5dbcf; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: inherit; background: white; }
+        .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .date-row input { width: 100%; padding: 10px 12px; border: 1px solid #e5dbcf; border-radius: 8px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
+        .btn-group { display: flex; gap: 12px; margin-top: 26px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px; text-align: center; }
+        .btn-cancel { background: #f5ece1; color: #3d2314; border: 1px solid #e5dbcf; }
+        .btn-cancel:hover { background: #ede0d0; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+
+        /* Annotation */
+        .annotation { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #3d2314; color: #c89d7c; font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 20px; z-index: 200; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+    <div class="annotation">MOCKUP: Modal Xuất Báo Cáo (hiển thị overlay)</div>
+
+    <!-- Background page (dimmed) -->
+    <div class="page-bg">
+        <div class="sidebar-bg"></div>
+        <div class="content-bg">
+            <div class="header-bg">
+                <h1>Báo Cáo Doanh Thu Chuỗi Cửa Hàng</h1>
+                <button style="padding:10px 18px; background:#3d2314; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Xuất Báo Cáo</button>
+            </div>
+            <div class="chart-placeholder"></div>
+        </div>
+    </div>
+
+    <!-- Modal overlay -->
+    <div class="overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📊 Xuất Báo Cáo</h2>
+                <button class="close-btn" onclick="alert('Đóng modal')">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label>Định dạng xuất file</label>
+                <div class="radio-group">
+                    <label class="radio-opt selected">
+                        <input type="radio" name="format" value="xlsx" checked> Excel (.xlsx)
+                    </label>
+                    <label class="radio-opt">
+                        <input type="radio" name="format" value="pdf"> PDF (.pdf)
+                    </label>
+                    <label class="radio-opt">
+                        <input type="radio" name="format" value="csv"> CSV (.csv)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Phạm vi báo cáo</label>
+                <select>
+                    <option>Toàn chuỗi (tất cả chi nhánh)</option>
+                    <option>Chi nhánh Nguyễn Du</option>
+                    <option>Chi nhánh Trần Hưng Đạo</option>
+                    <option>Chi nhánh Lý Tự Trọng</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Khoảng thời gian</label>
+                <div class="date-row">
+                    <input type="date" value="2026-05-01">
+                    <input type="date" value="2026-05-30">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-cancel" onclick="alert('Đã hủy.')">Hủy</button>
+                <button class="btn btn-primary" onclick="alert('Đang tải xuống báo cáo...')">⬇ Tải xuống</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.radio-opt').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.radio-opt').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác Thực Quản Lý - POS Terminal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 100vh;
+            max-height: 812px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            padding: 24px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #8c766c;
+            display: flex;
+            align-items: center;
+        }
+
+        .title {
+            color: #2c1a11;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+            margin-right: 24px;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .warning-card {
+            background: #fff3e0;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            color: #e65100;
+            font-size: 11.5px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #5c3826;
+            margin-bottom: 6px;
+        }
+
+        .form-select,
+        .form-input {
+            width: 100%;
+            height: 40px;
+            background: #fafafa;
+            border: 1.5px solid #eaddd3;
+            border-radius: 12px;
+            padding: 0 14px;
+            box-sizing: border-box;
+            font-size: 14px;
+            color: #2c1a11;
+            transition: all 0.2s;
+        }
+
+        .form-select:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: #c89d7c;
+            background: #fff;
+        }
+
+        textarea.form-input {
+            height: 60px;
+            padding: 10px 14px;
+            font-family: inherit;
+            resize: none;
+        }
+
+        .error-message {
+            background: #fde8eb;
+            border: 1px solid rgba(207, 102, 121, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            color: #cf6679;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            border: 1px solid rgba(46, 125, 50, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            color: #2e7d32;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            height: 48px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #cf6679;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b05161;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #3d2314;
+            border: 1.5px solid #eaddd3;
+            box-sizing: border-box;
+        }
+
+        .btn-secondary:hover {
+            border-color: #c89d7c;
+            background: #fdfaf7;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                background-color: white;
+            }
+
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                padding: 50px 20px 24px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="phone-container">
+        <!-- Main Form -->
+        <div class="content-area">
+            <div class="header">
+                <a href="order_history.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </a>
+                <h1 class="title">Hủy Đơn - Quản Lý</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <!-- BR-07 Notice -->
+            <div class="warning-card">
+                Cảnh báo: Đơn hàng này đang ở trạng thái pha chế. Nếu xác nhận hủy, nguyên liệu đã sử dụng sẽ tính là
+                hao hụt và KHÔNG hoàn lại kho.
+            </div>
+
+            <form id="overrideForm" onsubmit="handleConfirm(event)">
+                <!-- Target Order Info read-only -->
+                <div class="form-group">
+                    <label class="form-label">Thông tin đơn hủy</label>
+                    <div class="readonly-value" id="targetOrderText"
+                        style="height:auto; padding: 10px 14px; font-size:12px; line-height:1.4;">
+                        Đơn hàng: #012 <br>
+                        Tổng tiền hoàn trả: 30,000 đ
+                    </div>
+                </div>
+
+                <!-- Reason Selection -->
+                <div class="form-group">
+                    <label class="form-label" for="cancelReason">Lý do hủy đơn *</label>
+                    <select id="cancelReason" class="form-select" required>
+                        <option value="" disabled selected>Chọn lý do...</option>
+                        <option value="out_of_ingredient">Hết nguyên liệu pha chế (Out of Milk...)</option>
+                        <option value="customer_request">Khách hàng yêu cầu đổi/trả món</option>
+                        <option value="wrong_entry">Thu ngân nhập sai thông tin đơn</option>
+                        <option value="spilled_order">Hỏng/đổ sản phẩm khi đang chuẩn bị</option>
+                    </select>
+                </div>
+
+                <!-- Notes Explanation -->
+                <div class="form-group">
+                    <label class="form-label" for="cancelNotes">Ghi chú chi tiết *</label>
+                    <textarea id="cancelNotes" class="form-input" placeholder="Giải trình lý do hủy đơn bắt buộc..."
+                        required></textarea>
+                </div>
+
+                <!-- Manager PIN -->
+                <div class="form-group">
+                    <label class="form-label" for="managerPin">Mã PIN xác thực của Quản lý *</label>
+                    <input type="password" id="managerPin" class="form-input" placeholder="Mã PIN 4 số..." max="9999"
+                        required style="text-align: center; font-size: 20px; letter-spacing: 6px;">
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="order_history.html" class="btn btn-secondary">HỦY BỎ</a>
+            <button type="submit" form="overrideForm" class="btn btn-primary">XÁC NHẬN HỦY</button>
+        </div>
+    </div>
+
+    <script>
+        let orderId = "012";
+        let orderTotal = 30000;
+        let orderStatus = "PREPARING";
+
+        // BR-51: PIN lockout — max 3 consecutive failures, locked 5 minutes
+        let pinAttempts = 0;
+        const MAX_PIN_ATTEMPTS = 3;
+        const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
+        let lockoutTimer = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get('id') || "012";
+            orderTotal = parseFloat(urlParams.get('total')) || 30000;
+            orderStatus = urlParams.get('status') || "PREPARING";
+
+            document.getElementById('targetOrderText').innerHTML = `
+                <strong>Đơn hàng:</strong> #${orderId} (Trạng thái: ${orderStatus === 'PREPARING' ? 'Đang pha chế' : 'Chờ lấy hàng'}) <br>
+                <strong>Số tiền hoàn trả:</strong> ${orderTotal.toLocaleString('vi-VN')} VND
+            `;
+        });
+
+        function setFormLocked(locked) {
+            document.getElementById('cancelReason').disabled = locked;
+            document.getElementById('cancelNotes').disabled = locked;
+            document.getElementById('managerPin').disabled = locked;
+            document.querySelector('.btn-primary').disabled = locked;
+        }
+
+        function startLockout() {
+            setFormLocked(true);
+            const errorBox = document.getElementById('errorBox');
+            let remaining = LOCKOUT_MS / 1000;
+
+            function updateCountdown() {
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                errorBox.textContent = `Mã PIN bị khoá do nhập sai ${MAX_PIN_ATTEMPTS} lần. Vui lòng thử lại sau: ${mins}:${String(secs).padStart(2, '0')} (BR-51)`;
+                errorBox.style.display = 'block';
+                remaining--;
+                if (remaining < 0) {
+                    clearInterval(lockoutTimer);
+                    pinAttempts = 0;
+                    setFormLocked(false);
+                    document.getElementById('managerPin').value = '';
+                    errorBox.textContent = "Đã mở khoá. Bạn có thể thử nhập lại mã PIN.";
+                }
+            }
+            updateCountdown();
+            lockoutTimer = setInterval(updateCountdown, 1000);
+        }
+
+        function handleConfirm(e) {
+            e.preventDefault();
+            const reason = document.getElementById('cancelReason').value;
+            const notes = document.getElementById('cancelNotes').value.trim();
+            const pin = document.getElementById('managerPin').value.trim();
+
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            if (reason === "" || notes === "") {
+                errorBox.textContent = "Vui lòng chọn lý do và nhập ghi chú giải trình chi tiết.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // PIN check simulation — correct PIN is "1234"
+            if (pin !== '1234') {
+                pinAttempts++;
+                const remaining = MAX_PIN_ATTEMPTS - pinAttempts;
+                if (pinAttempts >= MAX_PIN_ATTEMPTS) {
+                    startLockout();
+                } else {
+                    errorBox.textContent = `Mã PIN không chính xác. Còn ${remaining} lần thử trước khi bị khoá 5 phút (BR-51).`;
+                    errorBox.style.display = 'block';
+                    document.getElementById('managerPin').value = '';
+                }
+                return;
+            }
+
+            // PIN correct — reset counter
+            pinAttempts = 0;
+
+            // Success — show BR-08 rollback summary
+            successBox.innerHTML = `✅ Hủy đơn thành công! <br><strong>Nhật ký:</strong> Khôi phục Voucher, hoàn trả điểm tích lũy & ghi nhận phí hao hụt nguyên liệu (Theo BR-07 & BR-08).`;
+            successBox.style.display = 'block';
+
+            setFormLocked(true);
+
+            setTimeout(() => {
+                window.location.href = "order_history.html";
+            }, 2500);
+        }
+    </script>
+</body>
+
+</html>

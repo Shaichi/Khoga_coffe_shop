@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhập Kho - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-select, .form-input { width: 100%; height: 44px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .form-select:focus, .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+        
+        textarea.form-input { height: 80px; padding: 12px 16px; font-family: inherit; resize: none; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Form Scroll Area -->
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 2px;">
+            <div class="header">
+                <a href="stock.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Nhập Kho</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <form id="importForm" onsubmit="handleSubmit(event)">
+                <!-- Item Selection -->
+                <div class="form-group">
+                    <label class="form-label" for="itemName">Tên nguyên liệu *</label>
+                    <select id="itemName" class="form-select" required>
+                        <option value="" disabled selected>Chọn nguyên liệu...</option>
+                        <option value="STK-01">Cà phê hạt Espresso</option>
+                        <option value="STK-02">Sữa tươi tiệt trùng</option>
+                        <option value="STK-03">Siro hương đào</option>
+                        <option value="STK-04">Ly giấy nóng 12oz</option>
+                        <option value="STK-05">Đường cát trắng túi</option>
+                    </select>
+                </div>
+
+                <!-- Quantity -->
+                <div class="form-group">
+                    <label class="form-label" id="qtyLabel" for="quantity">Số lượng nhập *</label>
+                    <input type="number" step="any" id="quantity" class="form-input" placeholder="Ví dụ: 15.0" required>
+                </div>
+
+                <!-- Supplier -->
+                <div class="form-group">
+                    <label class="form-label" for="supplier">Nhà cung cấp</label>
+                    <input type="text" id="supplier" class="form-input" placeholder="Ví dụ: Highlands Supplier">
+                </div>
+
+                <!-- Unit Price -->
+                <div class="form-group">
+                    <label class="form-label" for="unitPrice">Đơn giá nhập (VND) *</label>
+                    <input type="number" id="unitPrice" class="form-input" placeholder="Ví dụ: 180000" required>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label class="form-label" for="notes">Ghi chú</label>
+                    <textarea id="notes" class="form-input" placeholder="Nhập ghi chú chi tiết nếu có..."></textarea>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="stock.html" class="btn btn-secondary">HỦY</a>
+            <button type="submit" form="importForm" class="btn btn-primary">XÁC NHẬN</button>
+        </div>
+    </div>
+
+    <script>
+        // Update label or unit hint when item changes
+        document.getElementById('itemName').addEventListener('change', function() {
+            const label = document.getElementById('qtyLabel');
+            const selected = this.value;
+            if (selected === 'STK-01' || selected === 'STK-05') {
+                label.textContent = "Số lượng nhập (kg) *";
+            } else if (selected === 'STK-02' || selected === 'STK-03') {
+                label.textContent = "Số lượng nhập (lít) *";
+            } else if (selected === 'STK-04') {
+                label.textContent = "Số lượng nhập (cái) *";
+            } else {
+                label.textContent = "Số lượng nhập *";
+            }
+        });
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            const unitPrice = parseFloat(document.getElementById('unitPrice').value);
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            // AT1: Validation checks
+            if (isNaN(quantity) || quantity <= 0 || isNaN(unitPrice) || unitPrice <= 0) {
+                errorBox.textContent = "Vui lòng nhập số lượng và đơn giá là số dương lớn hơn 0.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success simulation
+            successBox.textContent = "Nhập kho thành công! Đang chuyển hướng...";
+            successBox.style.display = 'block';
+            
+            // Disable form interaction
+            const inputs = document.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(input => input.disabled = true);
+
+            setTimeout(() => {
+                window.location.href = "stock.html";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

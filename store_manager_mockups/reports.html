@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Doanh Thu - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative; overflow: hidden; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; }
+        .empty-header-right { width: 60px; }
+
+        .date-picker-row { margin-bottom: 20px; }
+        .date-input { width: 100%; height: 44px; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; font-size: 14px; font-weight: 600; color: #3d2314; outline: none; box-sizing: border-box; text-align: center; }
+        .date-input:focus { border-color: #c89d7c; }
+
+        .reports-content { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .section-card { background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 16px; padding: 16px; margin-bottom: 18px; }
+        .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #8c766c; letter-spacing: 0.5px; margin-bottom: 12px; border-bottom: 1px solid #f5eee8; padding-bottom: 6px; }
+        
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .metric-row:last-child { margin-bottom: 0; }
+        .metric-label { color: #5c3826; font-weight: 500; }
+        .metric-value { color: #2c1a11; font-weight: 700; }
+
+        .pay-breakdown { display: flex; flex-direction: column; gap: 8px; }
+        .pay-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .pay-name { display: flex; align-items: center; gap: 8px; color: #3d2314; font-weight: 500; }
+        .pay-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-cash { background: #4caf50; }
+        .dot-card { background: #2196f3; }
+        .dot-qr { background: #ff9800; }
+
+        /* Modal styling */
+        .modal-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(44,26,17,0.6); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-card { width: 310px; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); box-sizing: border-box; transform: scale(0.9); transition: transform 0.3s; }
+        .modal-overlay.active .modal-card { transform: scale(1); }
+        .modal-title { font-size: 16px; font-weight: 700; color: #2c1a11; margin: 0 0 15px 0; text-align: center; }
+        
+        .modal-group { margin-bottom: 12px; }
+        .modal-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8c766c; margin-bottom: 6px; }
+        
+        .radio-group { display: flex; flex-direction: column; gap: 6px; }
+        .radio-option { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #3d2314; cursor: pointer; }
+        .radio-option input { accent-color: #c89d7c; }
+
+        .modal-select { width: 100%; height: 38px; border: 1.5px solid #eaddd3; border-radius: 8px; padding: 0 8px; font-size: 13px; color: #3d2314; outline: none; }
+        
+        .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .modal-btn { height: 40px; border-radius: 10px; font-size: 13px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; border: none; }
+        .btn-modal-primary { background: #3d2314; color: white; }
+        .btn-modal-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; width: 100%; margin-bottom: 10px; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; width: 100%; box-sizing: border-box; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        /* Notification overlay */
+        .toast-notify { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); color: #2e7d32; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; display: none; z-index: 110; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Scroll Panel -->
+        <div style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <!-- Header -->
+            <div class="header">
+                <a href="dashboard.html" class="back-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Quay lại
+                </a>
+                <h1 class="title">Báo Cáo Doanh Thu</h1>
+                <div class="empty-header-right"></div>
+            </div>
+
+            <!-- Date picker -->
+            <div class="date-picker-row">
+                <input type="date" id="reportDate" class="date-input" value="2026-05-24" onchange="loadReportData()">
+            </div>
+
+            <!-- Report Cards Area -->
+            <div class="reports-content">
+                <!-- Summary Card -->
+                <div class="section-card">
+                    <div class="section-title">Tóm tắt doanh số chi nhánh</div>
+                    
+                    <div class="metric-row">
+                        <span class="metric-label">Doanh thu thuần</span>
+                        <span class="metric-value" style="color: #2e7d32; font-size: 16px;" id="valNetRevenue">12,450,000 VND</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span class="metric-label">Đơn hàng hoàn thành</span>
+                        <span class="metric-value" id="valOrders">345 đơn</span>
+                    </div>
+
+                    <div class="metric-row">
+                        <span class="metric-label">Tổng sai lệch két</span>
+                        <span class="metric-value" style="color: #3d2314;" id="valDiscrepancy">0 VND</span>
+                    </div>
+                </div>
+
+                <!-- Payment Breakdown Card -->
+                <div class="section-card">
+                    <div class="section-title">Hình thức thanh toán</div>
+                    
+                    <div class="pay-breakdown">
+                        <div class="pay-item">
+                            <span class="pay-name">
+                                <span class="pay-dot dot-cash"></span> Tiền mặt (Cash)
+                            </span>
+                            <span class="metric-value" id="valPayCash">4,500,000 VND</span>
+                        </div>
+                        
+                        <div class="pay-item">
+                            <span class="pay-name">
+                                <span class="pay-dot dot-card"></span> Thẻ ngân hàng (Card)
+                            </span>
+                            <span class="metric-value" id="valPayCard">3,950,000 VND</span>
+                        </div>
+
+                        <div class="pay-item">
+                            <span class="pay-name">
+                                <span class="pay-dot dot-qr"></span> Chuyển khoản VietQR
+                            </span>
+                            <span class="metric-value" id="valPayQR">4,000,000 VND</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div>
+            <button class="btn btn-primary" onclick="openExportModal()">XUẤT BÁO CÁO</button>
+            <a href="dashboard.html" class="btn btn-secondary">Quay lại Trang chủ</a>
+        </div>
+
+        <!-- Toast Notify -->
+        <div class="toast-notify" id="toastBox">Tải xuống báo cáo thành công!</div>
+
+        <!-- Export Report Modal -->
+        <div class="modal-overlay" id="exportModal">
+            <div class="modal-card">
+                <h3 class="modal-title">Xuất Báo Cáo</h3>
+                
+                <!-- Format Selection -->
+                <div class="modal-group">
+                    <span class="modal-label">Định dạng file xuất</span>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="exportFormat" value="pdf" checked>
+                            Tài liệu PDF (.pdf)
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="exportFormat" value="xlsx">
+                            Bảng tính Excel (.xlsx)
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="exportFormat" value="csv">
+                            File dữ liệu CSV (.csv)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Scope Selection -->
+                <div class="modal-group">
+                    <label class="modal-label" for="dataScope">Phạm vi dữ liệu</label>
+                    <select id="dataScope" class="modal-select">
+                        <option value="sales">Báo cáo Doanh thu Bán hàng</option>
+                        <option value="discrepancy">Báo cáo Lệch két ca trực</option>
+                        <option value="waste">Báo cáo Hao hụt & Huỷ nguyên liệu</option>
+                    </select>
+                </div>
+
+                <!-- Modal Buttons -->
+                <div class="modal-buttons">
+                    <button class="modal-btn btn-modal-secondary" onclick="closeExportModal()">HỦY</button>
+                    <button class="modal-btn btn-modal-primary" onclick="triggerDownload()">TẢI XUỐNG</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function triggerDownload() {
+            closeExportModal();
+            const format = document.querySelector('input[name="exportFormat"]:checked').value.toUpperCase();
+            const scope = document.getElementById('dataScope').value;
+            
+            const toast = document.getElementById('toastBox');
+            toast.textContent = `Đang tải file báo cáo ${scope} (${format})...`;
+            toast.style.display = 'block';
+
+            setTimeout(() => {
+                toast.textContent = `Tải báo cáo ${format} thành công!`;
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 1500);
+            }, 1000);
+        }
+
+        function loadReportData() {
+            const date = document.getElementById('reportDate').value;
+            // Simulated changing dates changes values slightly to look realistic
+            const netVal = document.getElementById('valNetRevenue');
+            const ordVal = document.getElementById('valOrders');
+            const cashVal = document.getElementById('valPayCash');
+            const cardVal = document.getElementById('valPayCard');
+            const qrVal = document.getElementById('valPayQR');
+
+            if (date === '2026-05-24') {
+                netVal.textContent = "12,450,000 VND";
+                ordVal.textContent = "345 đơn";
+                cashVal.textContent = "4,500,000 VND";
+                cardVal.textContent = "3,950,000 VND";
+                qrVal.textContent = "4,000,000 VND";
+            } else {
+                // Generate semi-random deterministic data based on day
+                const day = new Date(date).getDate() || 10;
+                const baseRevenue = (day * 380000 + 4000000);
+                const orderCount = Math.floor(baseRevenue / 36000);
+                
+                const cash = Math.floor(baseRevenue * 0.35);
+                const card = Math.floor(baseRevenue * 0.32);
+                const qr = baseRevenue - cash - card;
+
+                netVal.textContent = baseRevenue.toLocaleString('vi-VN') + " VND";
+                ordVal.textContent = orderCount + " đơn";
+                cashVal.textContent = cash.toLocaleString('vi-VN') + " VND";
+                cardVal.textContent = card.toLocaleString('vi-VN') + " VND";
+                qrVal.textContent = qr.toLocaleString('vi-VN') + " VND";
+            }
+        }
+    </script>
+</body>
+</html>

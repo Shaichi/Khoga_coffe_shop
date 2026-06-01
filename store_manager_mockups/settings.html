@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cấu Hình Chi Nhánh - Store Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+
+        .form-content { flex-grow: 1; overflow-y: auto; padding-right: 2px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
+        .form-select, .form-input { width: 100%; height: 40px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 14px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .form-select:focus, .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
+        
+        textarea.form-input { height: 60px; padding: 10px 14px; font-family: inherit; resize: none; }
+
+        .file-upload-row { display: flex; align-items: center; justify-content: space-between; border: 1.5px dashed #eaddd3; padding: 10px; border-radius: 12px; background: #fdfdfd; }
+        .logo-btn { background: #f5eee8; border: none; color: #3d2314; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .logo-txt { font-size: 12px; color: #8c766c; font-weight: 500; }
+
+        .hardware-section { background: #fdfaf7; border: 1.5px solid #eaddd3; border-radius: 14px; padding: 12px; margin-top: 15px; margin-bottom: 15px; }
+        .hw-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #8c766c; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1px solid #eaddd3; padding-bottom: 4px; }
+        
+        .hw-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .hw-group:last-child { margin-bottom: 0; }
+        .hw-input-row { display: flex; gap: 8px; }
+        .hw-input { flex-grow: 1; height: 38px; }
+        .hw-test-btn { width: 90px; height: 38px; background: #c89d7c; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .hw-test-btn:hover { background: #8c766c; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .btn-secondary:hover { border-color: #c89d7c; background: #fdfaf7; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 50px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Main Form Scroll -->
+        <div class="form-content">
+            <div class="header">
+                <a href="dashboard.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <h1 class="title">Cấu Hình Chi Nhánh</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <form id="settingsForm" onsubmit="handleSave(event)">
+                <!-- Branch Name -->
+                <div class="form-group">
+                    <label class="form-label" for="branchName">Tên chi nhánh *</label>
+                    <input type="text" id="branchName" class="form-input" value="Coffee Zone - Nguyễn Du Branch" required>
+                </div>
+
+                <!-- Timezone -->
+                <div class="form-group">
+                    <label class="form-label" for="timezone">Múi giờ hoạt động *</label>
+                    <select id="timezone" class="form-select" required>
+                        <option value="Asia/Ho_Chi_Minh" selected>Asia/Ho_Chi_Minh (GMT+7)</option>
+                        <option value="Asia/Bangkok">Asia/Bangkok (GMT+7)</option>
+                        <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>
+                    </select>
+                </div>
+
+                <!-- Hotline -->
+                <div class="form-group">
+                    <label class="form-label" for="hotline">Hotline liên hệ *</label>
+                    <input type="text" id="hotline" class="form-input" value="0283930001" required>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label" for="email">Địa chỉ Email *</label>
+                    <input type="email" id="email" class="form-input" value="nguyendu@coffeezone.vn" required>
+                </div>
+
+                <!-- Address -->
+                <div class="form-group">
+                    <label class="form-label" for="address">Địa chỉ chi nhánh *</label>
+                    <textarea id="address" class="form-input" required>123 Nguyễn Du, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh</textarea>
+                </div>
+
+                <!-- Logo Image -->
+                <div class="form-group">
+                    <label class="form-label">Logo hiển thị hóa đơn</label>
+                    <div class="file-upload-row">
+                        <button type="button" class="logo-btn" onclick="document.getElementById('fileInput').click()">CHỌN FILE</button>
+                        <span class="logo-txt" id="logoName">logo_nguyendu.png</span>
+                        <input type="file" id="fileInput" style="display:none" onchange="updateLogoName(this)">
+                    </div>
+                </div>
+
+                <!-- Hardware Settings -->
+                <div class="hardware-section">
+                    <div class="hw-title">Cấu hình thiết bị phần cứng</div>
+                    
+                    <!-- POS Printer -->
+                    <div class="hw-group">
+                        <label class="form-label" style="font-size:11px;" for="posPrinter">IP Máy in hóa đơn POS</label>
+                        <div class="hw-input-row">
+                            <input type="text" id="posPrinter" class="form-input hw-input" value="192.168.1.150" placeholder="192.168.1.XXX / COM1">
+                            <button type="button" class="hw-test-btn" onclick="testPrinter('POS')">TEST IN</button>
+                        </div>
+                    </div>
+
+                    <!-- Kitchen Printer -->
+                    <div class="hw-group">
+                        <label class="form-label" style="font-size:11px;" for="kitchenPrinter">Cổng Máy in nhãn pha chế</label>
+                        <div class="hw-input-row">
+                            <input type="text" id="kitchenPrinter" class="form-input hw-input" value="COM3" placeholder="COM3 / 192.168.1.XXX">
+                            <button type="button" class="hw-test-btn" onclick="testPrinter('KITCHEN')">TEST IN</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="dashboard.html" class="btn btn-secondary">HỦY</a>
+            <button type="submit" form="settingsForm" class="btn btn-primary">LƯU CÀI ĐẶT</button>
+        </div>
+    </div>
+
+    <script>
+        function updateLogoName(input) {
+            const fileName = input.files[0] ? input.files[0].name : "Chưa chọn file";
+            document.getElementById('logoName').textContent = fileName;
+        }
+
+        function testPrinter(type) {
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            let address = "";
+            let name = "";
+            if (type === 'POS') {
+                address = document.getElementById('posPrinter').value.trim();
+                name = "máy in hóa đơn POS";
+            } else {
+                address = document.getElementById('kitchenPrinter').value.trim();
+                name = "máy in nhãn pha chế (Bếp)";
+            }
+
+            if (!address) {
+                errorBox.textContent = `Vui lòng nhập địa chỉ cổng in cho ${name}.`;
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // AT2: Connection testing logic
+            // Success condition: IP starts with 192.168.1 or Port is COM3
+            const isSuccess = address.startsWith('192.168.1') || address.toUpperCase() === 'COM3' || address.toUpperCase() === 'COM1';
+
+            if (isSuccess) {
+                successBox.innerHTML = `✅ Kết nối thành công! Đã gửi lệnh in thử cho ${name}. <br><strong>Thiết bị in: "PRINTER CONNECTION OK"</strong>`;
+                successBox.style.display = 'block';
+            } else {
+                errorBox.textContent = `❌ Không thể kết nối đến máy in tại [${address}]. Vui lòng kiểm tra nguồn điện, dây mạng hoặc cấu hình COM port.`;
+                errorBox.style.display = 'block';
+            }
+        }
+
+        function handleSave(e) {
+            e.preventDefault();
+            const branchName = document.getElementById('branchName').value.trim();
+            const hotline = document.getElementById('hotline').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = document.getElementById('address').value.trim();
+
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            // AT1 validations
+            if (branchName === "" || address === "") {
+                errorBox.textContent = "Tên chi nhánh và địa chỉ không được phép để trống.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Hotline digits (10-12 digits)
+            const phoneRegex = /^[0-9]{10,12}$/;
+            if (!phoneRegex.test(hotline)) {
+                errorBox.textContent = "Vui lòng nhập hotline chi nhánh hợp lệ (chỉ chứa từ 10 đến 12 chữ số).";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Email check (basic HTML5 validator is active, but we can do a secondary check)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                errorBox.textContent = "Vui lòng nhập địa chỉ email chi nhánh hợp lệ.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Success scenario
+            successBox.textContent = "Lưu cấu hình chi nhánh thành công! Đang đồng bộ với máy POS...";
+            successBox.style.display = 'block';
+
+            // Disable forms
+            const inputs = document.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(input => input.disabled = true);
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
