@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Kiếm Hội Viên (Customer Lookup Modal) - Store Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; height: 100vh; max-height: 812px; background: #fff; border: 1px solid #ddd; border-radius: 24px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative; overflow: hidden; }
+        
+        /* Header */
+        .pos-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0e6df; padding-bottom: 8px; margin-bottom: 10px; }
+        .pos-info { font-size: 11px; font-weight: 700; color: #8c766c; text-transform: uppercase; }
+        .pos-links { display: flex; gap: 10px; }
+        .pos-link { font-size: 11px; text-decoration: none; color: #c89d7c; font-weight: 700; }
+
+        /* Search input */
+        .search-row { margin-bottom: 10px; }
+        .search-input { width: 100%; height: 36px; border: 1.5px solid #eaddd3; border-radius: 8px; padding: 0 12px; box-sizing: border-box; font-size: 13px; color: #2c1a11; }
+
+        /* Categories tabs */
+        .categories-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        .cat-tab { flex: 1; height: 32px; border-radius: 6px; border: 1.5px solid #eaddd3; background: #fdfdfd; color: #5c3826; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .cat-tab.active { background: #3d2314; color: white; border-color: #3d2314; }
+
+        /* Product catalog */
+        .product-grid { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; margin-bottom: 10px; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; background: #fafafa; border: 1px solid #eee; border-radius: 10px; padding: 8px 12px; }
+        .prod-info { display: flex; flex-direction: column; }
+        .prod-name { font-size: 13px; font-weight: 700; color: #2c1a11; }
+        .prod-price { font-size: 12px; color: #8c766c; font-weight: 600; margin-top: 2px; }
+        .add-btn { background: #c89d7c; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; }
+
+        /* Cart Area */
+        .cart-section { flex-grow: 1; border-top: 1px solid #f0e6df; padding-top: 8px; display: flex; flex-direction: column; overflow: hidden; margin-bottom: 10px; }
+        .cart-title { font-size: 11px; font-weight: 700; color: #8c766c; text-transform: uppercase; margin-bottom: 6px; }
+        .cart-list { flex-grow: 1; overflow-y: auto; margin-bottom: 6px; }
+
+        /* Calculation Details */
+        .totals-section { background: #fdfaf7; border: 1px solid #eaddd3; border-radius: 12px; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+        .total-row { display: flex; justify-content: space-between; }
+        .total-row.grand { border-top: 1.5px solid #eaddd3; padding-top: 6px; margin-top: 4px; font-weight: 800; font-size: 14px; color: #2c1a11; }
+
+        /* Checkout buttons */
+        .pos-actions { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 6px; margin-top: 8px; }
+        .btn { height: 40px; border-radius: 8px; font-size: 12px; font-weight: 700; border: none; display: flex; justify-content: center; align-items: center; text-decoration: none; box-sizing: border-box; }
+        .btn-pay { background: #3d2314; color: white; }
+        .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+
+        /* General overlay modal style - FORCED ACTIVE FOR FIGMA */
+        .overlay-modal { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(44,26,17,0.6); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 1; pointer-events: auto; }
+        
+        .modal-card { width: 310px; background: white; border-radius: 20px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); box-sizing: border-box; transform: scale(1); }
+        .modal-header { font-size: 15px; font-weight: 700; color: #2c1a11; margin-bottom: 12px; border-bottom: 1px solid #f0e6df; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-close { background: none; border: none; color: #8c766c; font-size: 16px; cursor: pointer; }
+
+        .modal-group { margin-bottom: 12px; }
+        .modal-label { display: block; font-size: 12px; font-weight: 700; color: #5c3826; margin-bottom: 4px; }
+        .modal-input { width: 100%; height: 38px; border: 1.5px solid #eaddd3; border-radius: 8px; padding: 0 10px; box-sizing: border-box; font-size: 13px; color: #2c1a11; }
+        
+        .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .modal-btn { height: 38px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; justify-content: center; align-items: center; border: none; }
+        .btn-primary-m { background: #3d2314; color: white; }
+        .btn-secondary-m { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+
+        .modal-result { background: #fdfaf7; border: 1px dashed #c89d7c; border-radius: 8px; padding: 10px; font-size: 12px; margin-bottom: 12px; color: #5c3826; display: block; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Mock Background Screen (dimmed) -->
+        <div style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; opacity: 0.5;">
+            <div class="pos-header">
+                <div class="pos-info">Máy: REG-01 | TN: Cashier_01</div>
+                <div class="pos-links">
+                    <span class="pos-link">Lịch sử đơn</span>
+                </div>
+            </div>
+
+            <div class="search-row">
+                <input type="text" class="search-input" placeholder="Tìm kiếm..." readonly>
+            </div>
+
+            <div class="categories-row">
+                <button class="cat-tab active">Cà phê</button>
+                <button class="cat-tab">Trà</button>
+                <button class="cat-tab">Bánh ngọt</button>
+            </div>
+
+            <div class="cart-section">
+                <div class="cart-title">Giỏ Hàng Thanh Toán</div>
+                <div class="cart-list"></div>
+                <div class="totals-section">
+                    <div class="total-row grand">
+                        <span>Tổng cộng cần trả</span>
+                        <span>0 VND</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pos-actions">
+                <button class="btn btn-secondary">HỘI VIÊN</button>
+                <button class="btn btn-secondary">KHUYẾN MÃI</button>
+                <button class="btn btn-pay">THANH TOÁN</button>
+            </div>
+        </div>
+
+        <!-- Customer Lookup Modal (Forced Visible with search result) -->
+        <div class="overlay-modal" id="customerModal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span>Tìm Kiếm Hội Viên</span>
+                    <button class="modal-close">&times;</button>
+                </div>
+                
+                <div class="modal-group">
+                    <label class="modal-label">Số điện thoại hội viên</label>
+                    <input type="text" id="custPhoneInput" class="modal-input" value="0987654321">
+                </div>
+                <button class="modal-btn btn-primary-m" style="width: 100%; height:40px; margin-bottom:12px;">TÌM KIẾM</button>
+                
+                <div class="modal-result" id="custResultBox">
+                    <strong>Hội viên tìm thấy:</strong><br>
+                    Tên: <span id="resCustName">Nguyễn Văn A</span><br>
+                    Hạng: <span id="resCustTier">Gold (Chiết khấu 10%)</span><br>
+                    Tích điểm: <span id="resCustPoints">340 điểm</span>
+                </div>
+
+                <div style="text-align: right; margin-bottom: 10px;">
+                    <span style="font-size: 11px; color:#c89d7c; font-weight:700; text-decoration:none; cursor: pointer;">Xem trang riêng</span>
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="modal-btn btn-secondary-m">BỎ QUA</button>
+                    <button class="modal-btn btn-primary-m" id="btnLinkCustomer">GẮN HỘI VIÊN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
