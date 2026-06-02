@@ -131,9 +131,9 @@ Tài liệu này ánh xạ chi tiết các file giao diện mẫu (HTML mockups)
   - Hàng đợi đơn cần pha chế: [barista_queue.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/barista_monitor_mockups/barista_queue.html)
   - Báo lỗi hết nguyên liệu / hỏng máy: [report_issue.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/barista_monitor_mockups/report_issue.html)
 
-#### **3.7.6 F40 - Dynamic Override & Remote Authentication (Hệ thống phê duyệt hủy đơn nhạy cảm)**
+#### **3.7.6 Void & Cancellation Audit Logging (Nhật ký hủy đơn hàng)**
 * **Mobile App (Cashier POS)**: [cancel_override.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/cashier_pos_mockups/cancel_override.html)
-  *(Bao gồm: Popup đếm ngược chờ Quản lý duyệt từ xa qua Firebase Push & OTP 6 số ngoại tuyến).*
+  *(Hủy đơn hàng trực tiếp kèm lý do và ghi chú để lưu vết kiểm toán).*
 
 ---
 
@@ -204,7 +204,7 @@ Tài liệu này ánh xạ chi tiết các file giao diện mẫu (HTML mockups)
 
 ### Chương 3.13: Cấu Hình Hệ Thống & Chi Nhánh (System Configurations)
 
-#### **3.13.1 F55 - Centralized Settings (Cấu hình tổng thể & Thiết bị phê duyệt đặc quyền POS)**
+#### **3.13.1 F55 - Centralized Settings (Cấu hình tổng thể hệ thống)**
 * **Web Portal (HQ Admin)**: [settings_web.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/admin_hq_mockups/settings_web.html)
 
 #### **3.13.2 F56 - Branch Console Config (Cấu hình cục bộ tại chi nhánh)**

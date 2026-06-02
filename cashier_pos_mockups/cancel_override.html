@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác Thực Quản Lý - POS Terminal</title>
+    <title>Hủy Đơn Hàng - POS Terminal</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -107,8 +107,8 @@
         }
 
         textarea.form-input {
-            height: 54px;
-            padding: 8px 14px;
+            height: 80px;
+            padding: 10px 14px;
             font-family: inherit;
             resize: none;
         }
@@ -145,118 +145,6 @@
             font-weight: 500;
             margin-bottom: 15px;
             display: none;
-        }
-
-        /* Remote Approval Waiting Section */
-        .waiting-status-box {
-            background: #fdfaf7;
-            border: 1.5px solid #eaddd3;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            text-align: center;
-        }
-
-        .waiting-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #eaddd3;
-            border-top-color: #c89d7c;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .waiting-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #8c766c;
-        }
-
-        .countdown-timer {
-            font-size: 13px;
-            color: #e65100;
-            font-weight: 700;
-        }
-
-        .simulator-btn {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid rgba(46, 125, 50, 0.3);
-            font-size: 11px;
-            font-weight: 700;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .simulator-btn:hover {
-            background: #c8e6c9;
-        }
-
-        /* OTP Section directly on screen */
-        .otp-section {
-            border-top: 1.5px solid #f2ede8;
-            padding-top: 12px;
-            margin-bottom: 10px;
-        }
-
-        .otp-input-container {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .otp-digit {
-            width: 32px;
-            height: 38px;
-            border: 1.5px solid #eaddd3;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: #2c1a11;
-            background: #fafafa;
-        }
-
-        .numpad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
-        .numpad-btn {
-            height: 34px;
-            border-radius: 8px;
-            border: 1px solid #eaddd3;
-            background: #fdfaf7;
-            font-size: 15px;
-            font-weight: 600;
-            color: #3d2314;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background 0.1s;
-        }
-
-        .numpad-btn:active {
-            background: #eaddd3;
         }
 
         .btn-row {
@@ -331,7 +219,7 @@
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
                 </a>
-                <h1 class="title">Hủy Đơn - Quản Lý</h1>
+                <h1 class="title">Hủy Đơn Hàng</h1>
             </div>
 
             <div id="errorBox" class="error-message"></div>
@@ -343,7 +231,7 @@
                 hao hụt và KHÔNG hoàn lại kho.
             </div>
 
-            <form id="overrideForm" onsubmit="triggerRemoteApproval(event)">
+            <form id="cancelForm" onsubmit="handleCancel(event)">
                 <!-- Target Order Info read-only -->
                 <div class="form-group">
                     <label class="form-label">Thông tin đơn hủy</label>
@@ -372,53 +260,12 @@
                         required></textarea>
                 </div>
             </form>
-
-            <!-- Remote Waiting Status Box (Displayed after sending request) -->
-            <div class="waiting-status-box" id="waitingBox">
-                <div class="waiting-header">
-                    <div class="spinner"></div>
-                    <div class="waiting-title">Đang chờ quản lý duyệt từ xa...</div>
-                </div>
-                <div class="countdown-timer" id="countdownDisplay">Thời gian còn lại: 60 giây</div>
-                <button type="button" class="simulator-btn" onclick="simulateRemoteApproval()">
-                    [ Giả Lập ] Quản Lý Duyệt Từ Xa
-                </button>
-            </div>
-
-            <!-- Offline TOTP Section directly outside -->
-            <div class="otp-section">
-                <label class="form-label" style="text-align: center;">Mã OTP xác thực của Quản lý (nếu duyệt tại quầy)</label>
-                <div class="otp-input-container">
-                    <input type="text" class="otp-digit" id="otp_0" readonly maxlength="1">
-                    <input type="text" class="otp-digit" id="otp_1" readonly maxlength="1">
-                    <input type="text" class="otp-digit" id="otp_2" readonly maxlength="1">
-                    <input type="text" class="otp-digit" id="otp_3" readonly maxlength="1">
-                    <input type="text" class="otp-digit" id="otp_4" readonly maxlength="1">
-                    <input type="text" class="otp-digit" id="otp_5" readonly maxlength="1">
-                </div>
-
-                <!-- Onscreen Numpad -->
-                <div class="numpad">
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(1)">1</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(2)">2</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(3)">3</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(4)">4</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(5)">5</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(6)">6</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(7)">7</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(8)">8</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(9)">9</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad('CLR')" style="font-size: 11px; font-weight: bold; background: #feebe8; color: #cf6679;">XÓA</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad(0)">0</button>
-                    <button type="button" class="numpad-btn" onclick="pressNumpad('OK')" style="font-size: 11px; font-weight: bold; background: #e8f5e9; color: #2e7d32;">OK</button>
-                </div>
-            </div>
         </div>
 
         <!-- Footer Buttons -->
         <div class="btn-row">
             <a href="order_history.html" class="btn btn-secondary">HỦY BỎ</a>
-            <button type="submit" form="overrideForm" class="btn btn-primary" id="btnSubmit">GỬI CHO QUẢN LÝ</button>
+            <button type="submit" form="cancelForm" class="btn btn-primary">XÁC NHẬN HỦY</button>
         </div>
     </div>
 
@@ -426,10 +273,6 @@
         let orderId = "012";
         let orderTotal = 30000;
         let orderStatus = "PREPARING";
-
-        let countdown = 60;
-        let timerInterval = null;
-        let enteredOtp = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -443,126 +286,31 @@
             `;
         });
 
-        function triggerRemoteApproval(e) {
+        function handleCancel(e) {
             e.preventDefault();
             const reasonSelect = document.getElementById('cancelReason');
             const notes = document.getElementById('cancelNotes').value.trim();
+            const successBox = document.getElementById('successBox');
+            const errorBox = document.getElementById('errorBox');
 
             if (!reasonSelect.value || !notes) {
-                alert("Vui lòng nhập lý do và giải trình chi tiết trước khi xác nhận!");
+                alert("Vui lòng nhập lý do và giải trình chi tiết!");
                 return;
             }
 
-            // Disable inputs during active request
+            // Disable all form inputs
             reasonSelect.disabled = true;
             document.getElementById('cancelNotes').disabled = true;
-            document.getElementById('btnSubmit').disabled = true;
-            document.getElementById('btnSubmit').style.opacity = '0.5';
+            document.querySelector('.btn-primary').disabled = true;
 
-            // Display inline waiting box
-            document.getElementById('waitingBox').style.display = 'flex';
-
-            // Start countdown
-            countdown = 60;
-            document.getElementById('countdownDisplay').textContent = `Thời gian còn lại: ${countdown} giây`;
-            document.getElementById('countdownDisplay').style.color = '#e65100';
-
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                countdown--;
-                document.getElementById('countdownDisplay').textContent = `Thời gian còn lại: ${countdown} giây`;
-                if (countdown <= 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById('countdownDisplay').textContent = `Yêu cầu đã hết hạn!`;
-                    document.getElementById('countdownDisplay').style.color = '#cf6679';
-                    
-                    // Re-enable
-                    reasonSelect.disabled = false;
-                    document.getElementById('cancelNotes').disabled = false;
-                    document.getElementById('btnSubmit').disabled = false;
-                    document.getElementById('btnSubmit').style.opacity = '1';
-                }
-            }, 1000);
-        }
-
-        function pressNumpad(val) {
-            if (val === 'CLR') {
-                enteredOtp = [];
-                updateOtpFields();
-            } else if (val === 'OK') {
-                verifyOtp();
-            } else {
-                if (enteredOtp.length < 6) {
-                    enteredOtp.push(val);
-                    updateOtpFields();
-                }
-                if (enteredOtp.length === 6) {
-                    // Auto-verify when 6 digits are reached
-                    verifyOtp();
-                }
-            }
-        }
-
-        function updateOtpFields() {
-            for (let i = 0; i < 6; i++) {
-                const input = document.getElementById(`otp_${i}`);
-                input.value = (enteredOtp[i] !== undefined) ? enteredOtp[i] : "";
-            }
-        }
-
-        function verifyOtp() {
-            const otpCode = enteredOtp.join("");
-            const errorBox = document.getElementById('errorBox');
-            const successBox = document.getElementById('successBox');
-
-            if (otpCode.length < 6) {
-                alert("Vui lòng nhập đầy đủ mã OTP 6 số!");
-                return;
-            }
-
-            // Correct simulation OTP is 123456
-            if (otpCode === "123456") {
-                if (timerInterval) clearInterval(timerInterval);
-                document.getElementById('waitingBox').style.display = 'none';
-
-                successBox.innerHTML = `✅ Phê duyệt thành công qua OTP ngoại tuyến! <br><strong>Nhật ký:</strong> Khôi phục Voucher, hoàn trả điểm tích lũy & ghi nhận phí hao hụt nguyên liệu (Theo BR-07 & BR-08).`;
-                successBox.style.display = 'block';
-                errorBox.style.display = 'none';
-                
-                // Disable all form inputs
-                document.getElementById('cancelReason').disabled = true;
-                document.getElementById('cancelNotes').disabled = true;
-                document.getElementById('btnSubmit').disabled = true;
-
-                setTimeout(() => {
-                    window.location.href = "order_history.html";
-                }, 2500);
-            } else {
-                alert("Mã OTP không chính xác. Thử lại với mã '123456' để chạy giả lập.");
-                enteredOtp = [];
-                updateOtpFields();
-            }
-        }
-
-        function simulateRemoteApproval() {
-            if (timerInterval) clearInterval(timerInterval);
-            document.getElementById('waitingBox').style.display = 'none';
-
-            const successBox = document.getElementById('successBox');
-            const errorBox = document.getElementById('errorBox');
-
-            successBox.innerHTML = `✅ Đã phê duyệt từ xa thành công bởi Quản lý! <br><strong>Nhật ký:</strong> Khôi phục Voucher, hoàn trả điểm tích lũy & ghi nhận phí hao hụt nguyên liệu (Theo BR-07 & BR-08).`;
+            // Direct success without manager approval
+            successBox.innerHTML = `✅ Hủy đơn hàng thành công! <br><strong>Nhật ký:</strong> Khôi phục Voucher, hoàn trả điểm tích lũy & ghi nhận phí hao hụt nguyên liệu (Theo BR-07 & BR-08).`;
             successBox.style.display = 'block';
             errorBox.style.display = 'none';
 
-            // Disable all form inputs
-            document.getElementById('cancelReason').disabled = true;
-            document.getElementById('cancelNotes').disabled = true;
-            document.getElementById('btnSubmit').disabled = true;
-
             setTimeout(() => {
                 window.location.href = "order_history.html";
-            }, 2500);
+            }, 2000);
         }
     </script>
 </body>

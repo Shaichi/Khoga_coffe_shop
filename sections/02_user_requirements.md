@@ -187,7 +187,7 @@ graph LR
         UC_ExportStoreRev([Export Store Reports])
         
         UC_ConfigBranch([Configure Local Branch Settings])
-        UC_ApproveOverride([Approve Cashier Override / Refund])
+        UC_ApproveOverride([Cancel Preparing/Ready Order])
         UC_ViewStaffList([View Branch Staff List])
     end
 
@@ -240,7 +240,6 @@ graph LR
         
         UC_ViewLocalHistory([View Local Order History])
         UC_RequestRefund([Request Transaction Refund])
-        UC_RequestOverride([Request Manager Override])
     end
 
     %% Connections
@@ -258,7 +257,6 @@ graph LR
     %% Extends & Includes
     UC_UpdateCart -.-> |"&lt;&lt;extend&gt;&gt;"| UC_AddCart
     UC_RequestRefund -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
-    UC_RequestRefund -.-> |"&lt;&lt;include&gt;&gt;"| UC_RequestOverride
 ```
 
 
@@ -338,8 +336,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-66** | Staff & Schedule | View Branch Staff List | Store Manager | **Description**: Reviews the roster list and contact profiles of staff assigned to their branch.<br>**Main Flow**:<br>1. Store Manager opens the Branch Staff list module.<br>2. Portal retrieves active and deactivated users whose assigned branch matches the manager's branch.<br>3. Portal shows aggregated stats and lists cards containing Names, Roles, Contacts and Badges. |
 | **UC-40** | Reports & Analytics | View Store Revenue Reports | Store Manager | **Description**: Accesses local branch reports.<br>**Main Flow**:<br>1. Manager opens store report panel.<br>2. Manager reviews local sales revenue, shift closures, and payment breakdowns. |
 | **UC-41** | Reports & Analytics | Export Store Reports | Store Manager | **Description**: Exports store-specific files.<br>**Main Flow**:<br>1. Manager exports local sales and inventory spreadsheets.<br>2. Report files are generated and downloaded. |
-| **UC-42** | System Configuration | Configure Local Branch Settings | Store Manager | **Description**: Manages branch-level hardware/network.<br>**Main Flow**:<br>1. Manager configures printer IPs or local POS register IDs.<br>2. Branch configurations are saved. |
-| **UC-43** | POS Sales & Billing | Approve Cashier Override / Refund | Store Manager | **Description**: Approves cashier privileged transactions via remote push notification or TOTP code.<br>**Main Flow**:<br>1. Cashier triggers override request on POS; Manager receives push notification on mobile app or is asked for TOTP code.<br>2. Manager reviews override details (action, order ID, amount) and approves remotely or provides 6-digit OTP. |
+| **UC-43** | POS Sales & Billing | Approve Cashier Override / Refund | Store Manager | **Description**: Allows Store Manager to cancel orders in preparing/ready states directly on the POS terminal.<br>**Main Flow**:<br>1. Manager logs into the POS or accesses the active order.<br>2. Manager selects the order, enters cancellation reason/notes, and voids the transaction. |
 | **UC-44** | POS Sales & Billing | Open Shift | Cashier | **Description**: Opens cashier POS session.<br>**Main Flow**:<br>1. Cashier inputs POS register ID and opening drawer cash float (VND).<br>2. The shift state is validated and the session is opened. |
 | **UC-45** | POS Sales & Billing | Add Item to Order | Cashier | **Description**: Adds product to checkout cart.<br>**Main Flow**:<br>1. Cashier clicks a menu item or scans SKU barcode.<br>2. Availability is validated and the item is added to the order cart. |
 | **UC-46** | POS Sales & Billing | Update Cart Item | Cashier | **Description**: Modifies quantity or toppings in cart.<br>**Main Flow**:<br>1. Cashier adjusts quantity or selects option toppings.<br>2. The cart items are updated and the subtotal is recalculated. |
@@ -351,8 +348,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-52** | POS Sales & Billing | Issue Invoice | Cashier | **Description**: Prints receipt and kitchen sticker.<br>**Main Flow**:<br>1. The receipt is printed upon payment completion.<br>2. Cashier hands invoice and sequential order sticker to client. |
 | **UC-53** | POS Sales & Billing | Close Shift | Cashier | **Description**: Closes POS session.<br>**Main Flow**:<br>1. Cashier counts cash and inputs closing float.<br>2. Discrepancies are calculated and flagged, and the session is closed. |
 | **UC-54** | POS Sales & Billing | View Local Order History | Cashier | **Description**: Displays local branch orders.<br>**Main Flow**:<br>1. Cashier opens order history grid.<br>2. Cash drawer orders processed during the current shift are displayed. |
-| **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund process.<br>**Main Flow**:<br>1. Cashier selects order and clicks Refund Request.<br>2. POS sends a remote approval request to the Store Manager's mobile app and displays approval-waiting modal with OTP fallback input. |
-| **UC-56** | POS Sales & Billing | Request Manager Override | Cashier | **Description**: Requests dynamic authorization override via remote push or TOTP.<br>**Main Flow**:<br>1. Cashier triggers the override request on POS screen; a push notification is sent to the Manager's mobile device.<br>2. Cashier waits for remote approval or enters the Manager's 6-digit TOTP code as offline fallback. |
+| **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund and cancellation process for PENDING orders.<br>**Main Flow**:<br>1. Cashier selects a pending order and clicks Cancel Order.<br>2. Cashier inputs cancellation reason and details, then confirms cancellation. POS voids transaction and updates stock immediately. |
 | **UC-57** | Order Prep & Queue | View Order Queue Display | Barista | **Description**: Monitors preparation queue.<br>**Main Flow**:<br>1. Barista opens queue display.<br>2. Pending, preparing, and ready orders are displayed. |
 | **UC-58** | Order Prep & Queue | Update Preparation Status | Barista | **Description**: Modifies preparation flags.<br>**Main Flow**:<br>1. Barista selects active order and moves it to preparing/ready.<br>2. Timestamps are logged and the cashier status is updated. |
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
