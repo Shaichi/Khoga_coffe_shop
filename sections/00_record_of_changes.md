@@ -108,6 +108,7 @@ This section tracks the revision history and modifications made to the Software 
      - 3.9.2 View Staff Schedule
      - 3.9.3 Update/Delete Staff Schedule
      - 3.9.4 View Staff Attendance Report
+     - 3.9.5 View Branch Staff List
 
    - **3.10 Promotion & Campaign Management**
      - 3.10.1 List Voucher / Promotion

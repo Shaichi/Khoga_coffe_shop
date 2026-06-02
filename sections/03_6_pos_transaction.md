@@ -1,4 +1,4 @@
-# 3.6 POS Transaction
+﻿# 3.6 POS Transaction
 
 This section details specifications for cashier POS checkout sessions, order processing, and cash reconciliation.
 
@@ -22,7 +22,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-28: Screen Definition
+#### Table 3-29: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Register ID | Dropdown | Yes | | POS Terminal/Register selection. |
@@ -92,7 +92,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-29: Screen Definition
+#### Table 3-30: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search/SKU | Text | No | 100 | Fast search autocomplete or barcode scan lookup. |
@@ -147,7 +147,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-30: Screen Definition
+#### Table 3-31: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Phone Number | Text | Yes | 20 | Look up membership details using phone number. |
@@ -209,7 +209,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-31: Screen Definition
+#### Table 3-32: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Voucher Code | Text | No | 50 | Alphanumeric coupon code. |
@@ -276,7 +276,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-32: Screen Definition
+#### Table 3-33: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Customer Info | Label | | | Displays linked customer name and active membership tier. |
@@ -360,7 +360,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-33: Screen Definition
+#### Table 3-34: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `E_WALLET`. |
@@ -456,7 +456,7 @@ This section outlines the business logic for calculating and applying discounts 
 +------------------------------------+
 ```
 
-#### Table 3-34: Screen Definition
+#### Table 3-35: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Done | Button | | | Completes order flow and opens blank checkout screen. |
@@ -506,7 +506,7 @@ This section outlines the business logic for calculating and applying discounts 
 +------------------------------------+
 ```
 
-#### Table 3-35: Screen Definition
+#### Table 3-36: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Actual Cash Counted | Text | Yes | 15 | Drawer cash count in VND at end of shift. |
@@ -550,6 +550,7 @@ This section outlines the business logic for calculating and applying discounts 
 |---|---|
 | BR-03 | A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation/delivery. |
 | BR-04 | Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. |
+
 
 
 

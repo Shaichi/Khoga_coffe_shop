@@ -1,4 +1,4 @@
-# 3.13 System Configuration
+﻿# 3.13 System Configuration
 
 This section details specifications for system settings, store branding profiles, taxation rules, invoice layouts, and local hardware connections.
 
@@ -24,7 +24,7 @@ This section details specifications for system settings, store branding profiles
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-54: Screen Definition
+#### Table 3-58: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Brand Name | Text | Yes | 100 | The name of the brand/HQ coffee shop. |
@@ -115,7 +115,7 @@ This section details specifications for system settings, store branding profiles
 +------------------------------------+
 ```
 
-#### Table 3-55: Screen Definition
+#### Table 3-59: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Branch Name | Text | Yes | 100 | Local name for the branch. |
@@ -211,7 +211,7 @@ This section specifies the branch lifecycle management functionality available e
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-56: Screen Definition
+#### Table 3-60: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 100 | Filter branches by name or address. |
@@ -259,7 +259,7 @@ This section specifies the branch lifecycle management functionality available e
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-57: Screen Definition
+#### Table 3-61: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Branch Name | Text | Yes | 100 | Name of the new store branch. |
@@ -333,7 +333,7 @@ This section specifies the branch lifecycle management functionality available e
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-58: Screen Definition
+#### Table 3-62: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Branch ID | Label | | | Unique branch identifier (read-only). |
@@ -405,6 +405,7 @@ This section specifies the branch lifecycle management functionality available e
 | BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously. Deactivated branches do not count toward this limit. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
+
 
 
 

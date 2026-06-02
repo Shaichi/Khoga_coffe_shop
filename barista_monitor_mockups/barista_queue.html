@@ -80,7 +80,7 @@
             <div class="column">
                 <div class="column-header">
                     <span>Đơn Chờ Pha Chế (Pending)</span>
-                    <span class="badge-count" id="pendingCount">2</span>
+                    <span class="badge-count" id="pendingCount">3</span>
                 </div>
                 
                 <div class="column-content" id="pendingContainer">
@@ -111,6 +111,24 @@
                         </div>
                         <div class="card-actions">
                             <button class="btn-sm btn-primary" onclick="startPrep('14')">BẮT ĐẦU PHA CHẾ</button>
+                        </div>
+                    </div>
+
+                    <!-- Order 15 (Online Order) -->
+                    <div class="queue-card" id="card-15" style="border-left: 4px solid #e65100;">
+                        <div class="card-header">
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <strong style="color: #e65100;">Đơn #015</strong>
+                                <span style="background: #fff3e0; color: #e65100; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(230,81,0,0.2);">ĐƠN SHOPEEFOOD</span>
+                            </span>
+                            <span class="card-time">09:27 (Vừa vào)</span>
+                        </div>
+                        <div class="card-items">
+                            1x Trà đào cam sả
+                            <div class="card-mods">- 70% đá, 50% đường | Đóng gói mang đi</div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-sm btn-primary" onclick="startPrep('15')">BẮT ĐẦU PHA CHẾ</button>
                         </div>
                     </div>
                 </div>
@@ -151,7 +169,7 @@
             <div class="modal-card">
                 <h3 class="modal-title">In Nhãn Dán Ly (Sticker)</h3>
                 <div class="modal-body" id="printStickerBody">
-                    COFFEE ZONE <br>
+                    KHOGA CAFÉ <br>
                     Món: Espresso <br>
                     Đơn: #012 <br>
                     Lưu ý: Không đường <br>
@@ -180,9 +198,13 @@
             
             // Update card actions
             const actions = card.querySelector('.card-actions');
+            let itemName = 'Espresso';
+            if (id === '13') itemName = 'Cà phê sữa đá';
+            if (id === '15') itemName = 'Trà đào cam sả';
+            
             actions.innerHTML = `
                 <a href="report_issue.html?id=0${id}" class="btn-sm btn-danger">BÁO LỖI</a>
-                <button class="btn-sm btn-success" onclick="completePrep('${id}', '${id === '13' ? 'Cà phê sữa đá' : 'Espresso'}')">HOÀN THÀNH</button>
+                <button class="btn-sm btn-success" onclick="completePrep('${id}', '${itemName}')">HOÀN THÀNH</button>
             `;
 
             // Update times
@@ -198,9 +220,9 @@
             currentTargetName = itemName;
 
             // Prepare sticker body details
-            const modText = id === '13' ? '50% đường, Sữa yến mạch' : (id === '12' ? 'Không đường' : '100% đường');
+            const modText = id === '13' ? '50% đường, Sữa yến mạch' : (id === '12' ? 'Không đường' : (id === '15' ? '70% đá, 50% đường | Đóng gói mang đi' : '100% đường'));
             document.getElementById('printStickerBody').innerHTML = `
-                === COFFEE ZONE === <br>
+                === KHOGA CAFÉ === <br>
                 Món: ${itemName} <br>
                 Đơn: #0${id} <br>
                 Yêu cầu: ${modText} <br>

@@ -1,4 +1,4 @@
-# 3.9 Staff Management
+﻿# 3.9 Staff Management
 
 This section details specifications for staff shifts assignment, schedules views, and schedules cancellations.
 
@@ -27,7 +27,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-44: Screen Definition
+#### Table 3-46: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Employee | Dropdown | Yes | | Active employee user accounts list. |
@@ -89,7 +89,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-45: Screen Definition
+#### Table 3-47: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Filter | Dropdown | Yes | | Filters list by employee roles. |
@@ -141,7 +141,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-46: Screen Definition
+#### Table 3-48: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Shift Type | Dropdown | Yes | | Select shift hours. |
@@ -202,7 +202,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-46: Screen Definition
+#### Table 3-49: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Date | Date | Yes | | Target scheduling date calendar. |
@@ -237,3 +237,70 @@ This section details specifications for staff shifts assignment, schedules views
 | BR-38 | **Attendance Check-in Registration**: A check-in record is automatically created based on the employee's first successful login at a local terminal station within their scheduled shift time window. Subsequent logins within the same shift window do not create duplicate check-in records. If no scheduled shift exists for the login time, no check-in record is created. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
 | BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
+
+---
+
+## 3.9.5 F46.2 - View Branch Staff List / UC-66 View Branch Staff List
+
+### 3.9.5.1 Screen Mock-up (Mobile Portrait)
+```
++------------------------------------+
+|            Branch Staff            |
+|                      [Nguyen Du]   |
+|                                    |
+|  [ 8 ]      [ 3 ]      [ 4 ]       |
+|  Total      Cashier    Barista     |
+|                                    |
+|  Filter: [ All ][ Cashier ][ Barista ]
+|                                    |
+|  - Nguyen Van An (Cashier)     [C] |
+|    Phone: 0901 234 567             |
+|    Status: Active                  |
+|                                    |
+|  - Tran Thi Binh (Cashier)     [C] |
+|    Phone: 0912 345 678             |
+|    Status: Active                  |
+|                                    |
+|                           [ Back ] |
++------------------------------------+
+```
+
+#### Table 3-50: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Stats Grid | Display | - | | Shows counts of Total Staff, Cashiers, Baristas, Managers. |
+| 2 | Filter Tabs | Button Row | Yes | | Filters list by roles (`All`, `Cashier`, `Barista`, `Manager`). |
+| 3 | Call Action (C) | Button | No | | Triggers mobile native phone call to the staff member. |
+| 4 | Staff Card Click | Interactive | - | | Opens detailed information modal overlay. |
+| 5 | Back | Button | - | | Returns to Manager Dashboard console. |
+
+### 3.9.5.2 Use Case Description
+
+| Use Case ID | UC-66 | Use Case Name | View Branch Staff List |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Store Manager |
+| **Description** | Reviews the roster list and contact profiles of staff assigned to their branch. |
+| **Precondition** | Manager is logged in and viewing their local branch dashboard. |
+| **Trigger** | Manager taps the "Nhân Viên" menu button on the Dashboard. |
+| **Post-Condition** | Displays active/inactive local branch employee profiles. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Store Manager | Opens the Branch Staff list module. |
+| 2 | Portal | Retrieves active and deactivated users whose assigned branch matches the manager's branch. |
+| 3 | Portal | Shows aggregated stats and lists cards containing Names, Roles, Contacts and Badges. |
+| 4 | Store Manager | (Optional) Taps on a Staff Card to open detail modal or triggers instant call link. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+
+
+

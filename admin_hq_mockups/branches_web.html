@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -46,7 +46,7 @@
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h2>EspressoHQ Admin</h2>
+            <h2>Khoga Café Admin</h2>
                                                 <div class="sidebar-menu">
                 <a href="dashboard_web.html">Trang chủ</a>
                 <a href="users_web.html">Nhân sự</a>
@@ -91,7 +91,7 @@
                 <tbody>
                     <tr class="branch-row" data-status="active">
                         <td>STR-001</td>
-                        <td><strong>Coffee Zone - District 1</strong></td>
+                        <td><strong>Khoga Café - District 1</strong></td>
                         <td>123 Nguyễn Huệ, Quận 1, TP. HCM</td>
                         <td>0283930001</td>
                         <td><span class="badge badge-active">Hoạt động</span></td>
@@ -101,7 +101,7 @@
                     </tr>
                     <tr class="branch-row" data-status="active">
                         <td>STR-002</td>
-                        <td><strong>Coffee Zone - District 7</strong></td>
+                        <td><strong>Khoga Café - District 7</strong></td>
                         <td>45 Nguyễn Thị Thập, Quận 7, TP. HCM</td>
                         <td>0283930002</td>
                         <td><span class="badge badge-active">Hoạt động</span></td>
@@ -111,7 +111,7 @@
                     </tr>
                     <tr class="branch-row" data-status="inactive">
                         <td>STR-003</td>
-                        <td><strong>Coffee Zone - Thủ Đức</strong></td>
+                        <td><strong>Khoga Café - Thủ Đức</strong></td>
                         <td>78 Võ Văn Ngân, TP. Thủ Đức, TP. HCM</td>
                         <td>0283930003</td>
                         <td><span class="badge badge-inactive">Tạm đóng</span></td>
@@ -129,9 +129,9 @@
         let branches = JSON.parse(localStorage.getItem('coffee_branches'));
         if (!branches) {
             branches = [
-                { id: 'STR-001', name: 'Coffee Zone - District 1', address: '123 Nguyễn Huệ, Quận 1, TP. HCM', phone: '0283930001', is_active: true },
-                { id: 'STR-002', name: 'Coffee Zone - District 7', address: '45 Nguyễn Thị Thập, Quận 7, TP. HCM', phone: '0283930002', is_active: true },
-                { id: 'STR-003', name: 'Coffee Zone - Thủ Đức', address: '78 Võ Văn Ngân, TP. Thủ Đức, TP. HCM', phone: '0283930003', is_active: false }
+                { id: 'STR-001', name: 'Khoga Café - District 1', address: '123 Nguyễn Huệ, Quận 1, TP. HCM', phone: '0283930001', is_active: true },
+                { id: 'STR-002', name: 'Khoga Café - District 7', address: '45 Nguyễn Thị Thập, Quận 7, TP. HCM', phone: '0283930002', is_active: true },
+                { id: 'STR-003', name: 'Khoga Café - Thủ Đức', address: '78 Võ Văn Ngân, TP. Thủ Đức, TP. HCM', phone: '0283930003', is_active: false }
             ];
             localStorage.setItem('coffee_branches', JSON.stringify(branches));
         }

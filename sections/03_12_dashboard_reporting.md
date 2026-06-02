@@ -1,4 +1,4 @@
-# 3.12 Dashboard & Reporting
+﻿# 3.12 Dashboard & Reporting
 
 This section details specifications for business reports views, sales analytics dashboards, and export spreadsheets.
 
@@ -27,7 +27,7 @@ This section details specifications for business reports views, sales analytics 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-51: Screen Definition
+#### Table 3-55: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Date Range | Date Picker | Yes | | Sets start and end range boundaries for search query. |
@@ -75,7 +75,7 @@ This section details specifications for business reports views, sales analytics 
 +------------------------------------+
 ```
 
-#### Table 3-52: Screen Definition
+#### Table 3-56: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Export Format | Radio | Yes | | Select target file format (`Excel`, `PDF`, `CSV`). |
@@ -138,7 +138,7 @@ This section details specifications for business reports views, sales analytics 
 +------------------------------------+
 ```
 
-#### Table 3-53: Screen Definition
+#### Table 3-57: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | From Date | Date Picker | Yes | | Start of the target date range for local store reports. |
@@ -171,5 +171,6 @@ This section details specifications for business reports views, sales analytics 
 | ID | Rule Description |
 |---|---|
 | BR-44 | Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+
 
 

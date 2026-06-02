@@ -37,7 +37,7 @@
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h2>EspressoHQ Admin</h2>
+            <h2>Khoga Café Admin</h2>
                                                 <div class="sidebar-menu">
                 <a href="dashboard_web.html">Trang chủ</a>
                 <a href="users_web.html">Nhân sự</a>
@@ -104,23 +104,6 @@
                     <button class="btn" onclick="savePassword()">CẬP NHẬT MẬT KHẨU</button>
                 </div>
 
-                <!-- Admin Override PIN Section -->
-                <div class="form-container">
-                    <h2>Đổi Mã PIN Xác Thực Quản Trị (Admin PIN)</h2>
-                    <div class="form-group">
-                        <label>Mã PIN hiện tại</label>
-                        <input type="password" id="oldpin" placeholder="Mã PIN hiện tại (4 chữ số)" maxlength="4">
-                    </div>
-                    <div class="form-group">
-                        <label>Mã PIN mới</label>
-                        <input type="password" id="newpin" placeholder="Mã PIN mới (4 chữ số)" maxlength="4">
-                    </div>
-                    <div class="form-group">
-                        <label>Xác nhận Mã PIN mới</label>
-                        <input type="password" id="confirmpin" placeholder="Nhập lại Mã PIN mới (4 chữ số)" maxlength="4">
-                    </div>
-                    <button class="btn" onclick="savePin()">CẬP NHẬT MÃ PIN</button>
-                </div>
             </div>
         </div>
     </div>
@@ -152,30 +135,6 @@
             document.getElementById('oldpass').value = "";
             document.getElementById('newpass').value = "";
             document.getElementById('confirm').value = "";
-        }
-
-        function savePin() {
-            const old = document.getElementById('oldpin').value;
-            const newp = document.getElementById('newpin').value;
-            const conf = document.getElementById('confirmpin').value;
-            
-            if (old === "" || newp === "" || conf === "") {
-                alert("Vui lòng điền đầy đủ các trường thông tin PIN.");
-                return;
-            }
-            if (!/^\d{4}$/.test(newp)) {
-                alert("Mã PIN mới phải gồm đúng 4 chữ số.");
-                return;
-            }
-            if (newp !== conf) {
-                alert("Xác nhận mã PIN mới không khớp.");
-                return;
-            }
-
-            alert("Đổi mã PIN xác thực (Admin PIN) thành công!");
-            document.getElementById('oldpin').value = "";
-            document.getElementById('newpin').value = "";
-            document.getElementById('confirmpin').value = "";
         }
     </script>
 </body>

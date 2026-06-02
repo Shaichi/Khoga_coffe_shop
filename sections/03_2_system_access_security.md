@@ -1,4 +1,4 @@
-# 3.2 System Access & Security
+﻿# 3.2 System Access & Security
 
 This section details the functional requirements for authentication, user profiles, and employee account administration.
 
@@ -782,6 +782,9 @@ This section details the functional requirements for authentication, user profil
 | ID | Rule Description |
 |---|---|
 | BR-22 | Created accounts default status to active, and force a password change on next login. |
+| BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
+
 
 ---
 
@@ -849,6 +852,7 @@ This section details the functional requirements for authentication, user profil
 |---|---|
 | BR-23 | System must block any attempt to deactivate or change the role of the last active Admin account. |
 | BR-18 | Password change or setting status to Inactive terminates active session tokens on all other devices immediately. |
+
 
 
 

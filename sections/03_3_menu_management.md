@@ -1,4 +1,4 @@
-# 3.3 Menu Management
+﻿# 3.3 Menu Management
 
 This section details specifications for viewing, adding, updating, and deactivating menu items and optional toppings.
 
@@ -23,7 +23,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-13: Screen Definition
+#### Table 3-14: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 100 | Filter catalog items by product name or code. |
@@ -81,7 +81,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-14: Screen Definition
+#### Table 3-15: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Edit Item | Button | | | Navigates to Edit Menu Item view. |
@@ -135,7 +135,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-15: Screen Definition
+#### Table 3-16: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
@@ -211,7 +211,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-16: Screen Definition
+#### Table 3-17: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
@@ -278,7 +278,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +--------------------------------------------------------+
 ```
 
-#### Table 3-17: Screen Definition
+#### Table 3-18: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Cancel | Button | | | Cancels soft deletion and closes modal. |
@@ -331,7 +331,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-18: Screen Definition
+#### Table 3-19: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Name | Text | Yes | 100 | Name of the topping option. |
@@ -365,6 +365,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | ID | Rule Description |
 |---|---|
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
+
 
 
 

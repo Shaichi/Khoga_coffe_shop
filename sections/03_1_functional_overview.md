@@ -70,6 +70,8 @@ graph LR
     ManagerHome --> BranchReports[32. Store Revenue & Order Reports Screen]
     
     ManagerHome --> BranchSettings[33. Branch Local Settings Screen]
+    
+    ManagerHome --> ViewBranchStaff[48. View Branch Staff List Screen]
 ```
 
 ### 4. Cashier POS Terminal Screen Flow
@@ -149,6 +151,7 @@ The system comprises the following screens across its user portals:
 | | | Stock Audit Screen | Grid to count physical stock and reconcile discrepancies. |
 | 9 | Staff & Shift Management | Staff Shift Scheduler Screen | Calendar to schedule cashiers and baristas into shift blocks. |
 | | | Staff Attendance Report Screen | Logs check-in/out times and attendance details. |
+| | | View Branch Staff List Screen | Roster directory showing assigned branch staff contact details and operational roles. |
 | 10 | POS Sales & Billing | Shift Initiation Open Shift Screen | Prompts cashier for register ID and starting cash float. |
 | | | POS Checkout Grid & Cart Screen | Main sales screen with catalog search and cart grid. |
 | | | Membership Search & Add Pop-up | Modal to look up or register membership customers. |
@@ -164,7 +167,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 47 screens:
+The table below specifies access control policies across all 48 screens:
 
 | Screen Name | Admin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|
@@ -217,6 +220,7 @@ The table below specifies access control policies across all 47 screens:
 | 45. Branch Management List | **Yes** | No | No | No |
 | 46. Add Branch Form | **Yes** | No | No | No |
 | 47. Edit / Deactivate Branch | **Yes** | No | No | No |
+| 48. View Branch Staff List Screen | No | **Yes** | No | No |
 
 ---
 

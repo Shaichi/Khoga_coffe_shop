@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân Viên Chi Nhánh - Store Manager</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; }
+        .phone-container { width: 375px; min-height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; box-sizing: border-box; overflow-y: auto; }
+
+        /* Top Bar */
+        .top-bar { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #f0e8df; position: sticky; top: 0; background: white; z-index: 10; }
+        .top-bar .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
+        .top-bar .title { color: #2c1a11; font-size: 19px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
+        .top-bar .branch-label { font-size: 11px; color: #8c766c; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; position: absolute; right: 20px; top: 22px; }
+
+        /* Stats Summary */
+        .stats-row { display: flex; gap: 10px; padding: 16px 20px; }
+        .stat-card { flex: 1; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 12px 6px; text-align: center; }
+        .stat-val { font-size: 20px; font-weight: 700; color: #3d2314; }
+        .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #8c766c; letter-spacing: 0.5px; margin-top: 2px; }
+
+        /* Filter Tabs */
+        .filter-tabs { display: flex; gap: 8px; padding: 0 20px 12px 20px; overflow-x: auto; }
+        .filter-tab { padding: 7px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1.5px solid #eaddd3; background: #fdfdfd; color: #5c3826; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .filter-tab.active { background: #3d2314; color: white; border-color: #3d2314; }
+        .filter-tab:hover:not(.active) { border-color: #c89d7c; background: #fdfaf7; color: #3d2314; }
+
+        /* Staff List */
+        .staff-list { padding: 0 20px 20px 20px; }
+        .staff-card { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1.5px solid #eaddd3; border-radius: 14px; margin-bottom: 10px; background: #fdfdfd; transition: all 0.2s; cursor: pointer; }
+        .staff-card:hover { border-color: #c89d7c; }
+        .staff-card:active { transform: scale(0.98); }
+
+        .avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: white; flex-shrink: 0; }
+        .avatar-cashier { background: #eaddd3; color: #5c3826; border: 1.5px solid #c89d7c; }
+        .avatar-barista { background: #3d2314; color: white; border: 1.5px solid #3d2314; }
+        .avatar-manager { background: #8c766c; color: white; border: 1.5px solid #8c766c; }
+
+        .staff-info { flex: 1; min-width: 0; }
+        .staff-name { font-size: 15px; font-weight: 700; color: #2c1a11; margin-bottom: 2px; }
+        .staff-role { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .role-cashier { color: #8c766c; }
+        .role-barista { color: #3d2314; }
+        .role-manager { color: #c89d7c; }
+
+        .staff-contact { font-size: 12px; color: #8c766c; margin-top: 3px; font-weight: 500; }
+
+        .staff-status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .badge { padding: 3px 8px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-active { background: #e8f5e9; color: #2e7d32; }
+        .badge-inactive { background: #fde8eb; color: #cf6679; }
+
+        .call-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #eaddd3; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .call-btn:hover { background: #e8f5e9; border-color: #2e7d32; }
+        .call-btn svg { width: 14px; height: 14px; color: #2e7d32; }
+
+        /* Staff Detail Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { width: 335px; background: white; border-radius: 20px; padding: 28px 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); animation: modalIn 0.25s ease-out; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .modal-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: white; margin: 0 auto 16px auto; }
+        .modal-name { font-size: 18px; font-weight: 700; color: #2c1a11; text-align: center; margin-bottom: 4px; }
+        .modal-role { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; margin-bottom: 20px; }
+        
+        .modal-info { background: #fdfaf7; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1.5px solid #eaddd3; }
+        .modal-info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eaddd3; }
+        .modal-info-row:last-child { border-bottom: none; }
+        .modal-info-label { font-size: 13px; color: #8c766c; font-weight: 600; }
+        .modal-info-val { font-size: 13px; color: #2c1a11; font-weight: 700; }
+
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-btn { flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .modal-btn-call { background: #e8f5e9; color: #2e7d32; border: 1.5px solid rgba(46,125,50,0.2); }
+        .modal-btn-call:hover { background: #c8e6c9; }
+        .modal-btn-close { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
+        .modal-btn-close:hover { background: #fdfaf7; border-color: #c89d7c; }
+
+        @media (max-width: 480px) {
+            body { background-color: white; }
+            .phone-container { width: 100%; min-height: 100vh; max-height: none; border-radius: 0; border: none; box-shadow: none; padding: 40px 20px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <a href="dashboard.html" class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <h1 class="title">Nhân Viên</h1>
+            <span class="branch-label">Nguyễn Du</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-val">8</div>
+                <div class="stat-label">Tổng NV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">3</div>
+                <div class="stat-label">Cashier</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">4</div>
+                <div class="stat-label">Barista</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">1</div>
+                <div class="stat-label">Manager</div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <div class="filter-tab active" onclick="filterStaff('all', this)">Tất cả</div>
+            <div class="filter-tab" onclick="filterStaff('cashier', this)">Cashier</div>
+            <div class="filter-tab" onclick="filterStaff('barista', this)">Barista</div>
+            <div class="filter-tab" onclick="filterStaff('manager', this)">Manager</div>
+        </div>
+
+        <!-- Staff List -->
+        <div class="staff-list">
+            <!-- Cashiers -->
+            <div class="staff-card" data-role="cashier" onclick="showDetail('Nguyễn Văn An', 'CASHIER', '0901 234 567', 'cashier01', 'Hoạt động', '12/01/2025')">
+                <div class="avatar avatar-cashier">NA</div>
+                <div class="staff-info">
+                    <div class="staff-name">Nguyễn Văn An</div>
+                    <div class="staff-role role-cashier">Cashier</div>
+                    <div class="staff-contact">0901 234 567</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-active">Hoạt động</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0901234567'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="staff-card" data-role="cashier" onclick="showDetail('Trần Thị Bình', 'CASHIER', '0912 345 678', 'cashier02', 'Hoạt động', '03/05/2025')">
+                <div class="avatar avatar-cashier">TB</div>
+                <div class="staff-info">
+                    <div class="staff-name">Trần Thị Bình</div>
+                    <div class="staff-role role-cashier">Cashier</div>
+                    <div class="staff-contact">0912 345 678</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-active">Hoạt động</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0912345678'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="staff-card" data-role="cashier" onclick="showDetail('Phạm Minh Cường', 'CASHIER', '0923 456 789', 'cashier03', 'Vô hiệu hóa', '20/08/2024')">
+                <div class="avatar avatar-cashier">MC</div>
+                <div class="staff-info">
+                    <div class="staff-name">Phạm Minh Cường</div>
+                    <div class="staff-role role-cashier">Cashier</div>
+                    <div class="staff-contact">0923 456 789</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-inactive">Vô hiệu hóa</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0923456789'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Baristas -->
+            <div class="staff-card" data-role="barista" onclick="showDetail('Lê Hoàng Dũng', 'BARISTA', '0934 567 890', 'barista01', 'Hoạt động', '15/02/2025')">
+                <div class="avatar avatar-barista">HD</div>
+                <div class="staff-info">
+                    <div class="staff-name">Lê Hoàng Dũng</div>
+                    <div class="staff-role role-barista">Barista</div>
+                    <div class="staff-contact">0934 567 890</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-active">Hoạt động</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0934567890'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="staff-card" data-role="barista" onclick="showDetail('Võ Thị Linh', 'BARISTA', '0945 678 901', 'barista02', 'Hoạt động', '01/03/2025')">
+                <div class="avatar avatar-barista">TL</div>
+                <div class="staff-info">
+                    <div class="staff-name">Võ Thị Linh</div>
+                    <div class="staff-role role-barista">Barista</div>
+                    <div class="staff-contact">0945 678 901</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-active">Hoạt động</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0945678901'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="staff-card" data-role="barista" onclick="showDetail('Đỗ Quang Huy', 'BARISTA', '0956 789 012', 'barista03', 'Hoạt động', '10/04/2025')">
+                <div class="avatar avatar-barista">QH</div>
+                <div class="staff-info">
+                    <div class="staff-name">Đỗ Quang Huy</div>
+                    <div class="staff-role role-barista">Barista</div>
+                    <div class="staff-contact">0956 789 012</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-active">Hoạt động</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0956789012'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="staff-card" data-role="barista" onclick="showDetail('Ngô Thanh Mai', 'BARISTA', '0967 890 123', 'barista04', 'Vô hiệu hóa', '05/11/2024')">
+                <div class="avatar avatar-barista">TM</div>
+                <div class="staff-info">
+                    <div class="staff-name">Ngô Thanh Mai</div>
+                    <div class="staff-role role-barista">Barista</div>
+                    <div class="staff-contact">0967 890 123</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-inactive">Vô hiệu hóa</span>
+                    <button class="call-btn" onclick="event.stopPropagation(); window.location.href='tel:0967890123'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Manager (self) -->
+            <div class="staff-card" data-role="manager" onclick="showDetail('Lê Văn Quản Lý', 'STORE_MANAGER', '0978 901 234', 'manager01', 'Hoạt động', '01/06/2024')">
+                <div class="avatar avatar-manager">QL</div>
+                <div class="staff-info">
+                    <div class="staff-name">Lê Văn Quản Lý</div>
+                    <div class="staff-role role-manager">Store Manager</div>
+                    <div class="staff-contact">0978 901 234</div>
+                </div>
+                <div class="staff-status">
+                    <span class="badge badge-active">Hoạt động</span>
+                    <span style="font-size: 10px; color: #8c766c; font-weight: 600;">BẠN</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Detail Modal -->
+    <div class="modal-overlay" id="staffModal">
+        <div class="modal">
+            <div class="modal-avatar avatar-cashier" id="modalAvatar">NA</div>
+            <div class="modal-name" id="modalName">Nguyễn Văn An</div>
+            <div class="modal-role" id="modalRole" style="color: #6a994e;">CASHIER</div>
+
+            <div class="modal-info">
+                <div class="modal-info-row">
+                    <span class="modal-info-label">Username</span>
+                    <span class="modal-info-val" id="modalUsername">cashier01</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">Số điện thoại</span>
+                    <span class="modal-info-val" id="modalPhone">0901 234 567</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">Trạng thái</span>
+                    <span class="modal-info-val" id="modalStatus">Hoạt động</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">Ngày vào</span>
+                    <span class="modal-info-val" id="modalDate">12/01/2025</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-call" id="modalCallBtn" onclick="alert('Đang gọi...')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    Gọi Điện
+                </button>
+                <button class="modal-btn modal-btn-close" onclick="closeModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Filter staff by role
+        function filterStaff(role, tab) {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            document.querySelectorAll('.staff-card').forEach(card => {
+                if (role === 'all' || card.dataset.role === role) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Show staff detail modal
+        function showDetail(name, role, phone, username, status, date) {
+            const modal = document.getElementById('staffModal');
+            const avatar = document.getElementById('modalAvatar');
+
+            // Set text
+            document.getElementById('modalName').textContent = name;
+            document.getElementById('modalRole').textContent = role;
+            document.getElementById('modalUsername').textContent = username;
+            document.getElementById('modalPhone').textContent = phone;
+            document.getElementById('modalStatus').textContent = status;
+            document.getElementById('modalDate').textContent = date;
+
+            // Set avatar initials (last 2 words)
+            const nameParts = name.split(' ');
+            avatar.textContent = nameParts.length >= 2 
+                ? nameParts[nameParts.length - 2][0] + nameParts[nameParts.length - 1][0] 
+                : name.substring(0, 2);
+
+            // Set role-specific styles
+            avatar.className = 'modal-avatar';
+            const roleEl = document.getElementById('modalRole');
+            if (role === 'CASHIER') {
+                avatar.classList.add('avatar-cashier');
+                roleEl.style.color = '#8c766c';
+            } else if (role === 'BARISTA') {
+                avatar.classList.add('avatar-barista');
+                roleEl.style.color = '#3d2314';
+            } else {
+                avatar.classList.add('avatar-manager');
+                roleEl.style.color = '#c89d7c';
+            }
+
+            // Status color
+            const statusEl = document.getElementById('modalStatus');
+            statusEl.style.color = status === 'Hoạt động' ? '#2e7d32' : '#c62828';
+
+            // Call button
+            document.getElementById('modalCallBtn').onclick = function() {
+                window.location.href = 'tel:' + phone.replace(/\s/g, '');
+            };
+
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('staffModal').classList.remove('show');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('staffModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>

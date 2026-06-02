@@ -21,9 +21,19 @@
         .card h3 { margin-top: 0; color: #3d2314; margin-bottom: 20px; font-size: 16px; border-bottom: 1px solid #f9f6f3; padding-bottom: 8px; }
         .chart-mock { height: 200px; display: flex; align-items: flex-end; gap: 15px; padding: 10px 0; border-left: 2px solid #eaddd3; border-bottom: 2px solid #eaddd3; }
         .bar { flex: 1; background: #c89d7c; border-radius: 4px 4px 0 0; position: relative; min-height: 20px; transition: height 0.5s; }
-        .bar::after { content: attr(data-val); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: bold; }
         .bar-label { text-align: center; font-size: 11px; color: #8c766c; margin-top: 5px; font-weight: 600; }
         
+        .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #eaddd3; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .kpi-value { font-size: 22px; font-weight: bold; color: #3d2314; margin: 10px 0 5px 0; }
+        .kpi-badge { background: #e8f5e9; color: #2e7d32; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 600; }
+        
+        .btn-outline { padding: 6px 12px; background: transparent; color: #8c766c; border: 1px solid #e5dbcf; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+        .btn-outline:hover, .btn-outline.active { background: #fdfaf7; color: #3d2314; border-color: #c89d7c; }
+
+        @media (max-width: 1200px) {
+            .kpi-container { grid-template-columns: 1fr 1fr; }
+        }
         @media (max-width: 992px) {
             .grid { grid-template-columns: 1fr; }
         }
@@ -35,12 +45,15 @@
             .sidebar a { padding: 8px 12px; font-size: 14px; }
             .main-content { padding: 20px; }
         }
+        @media (max-width: 576px) {
+            .kpi-container { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h2>EspressoHQ Admin</h2>
+            <h2>Khoga Café Admin</h2>
                                                 <div class="sidebar-menu">
                 <a href="dashboard_web.html">Trang chủ</a>
                 <a href="users_web.html">Nhân sự</a>
@@ -56,85 +69,279 @@
                 <h1>Báo Cáo Doanh Thu Chuỗi Cửa Hàng</h1>
                 <a href="export_report_modal.html" class="btn">Xuất Báo Cáo</a>
             </div>
-            <div style="display:flex; gap:12px; margin-bottom:25px; flex-wrap:wrap; align-items:center;">
-                <label style="font-size:13px; font-weight:600; color:#8c766c;">Khoảng thời gian:</label>
-                <input type="date" value="2026-05-01" style="padding:8px 12px; border:1px solid #e5dbcf; border-radius:8px; font-size:14px; font-family:inherit;">
-                <span style="color:#8c766c;">—</span>
-                <input type="date" value="2026-05-30" style="padding:8px 12px; border:1px solid #e5dbcf; border-radius:8px; font-size:14px; font-family:inherit;">
-                <select style="height:42px; padding:0 14px; border:1px solid #e5dbcf; border-radius:8px; font-size:14px; font-family:inherit; background:white;">
-                    <option>Tất cả chi nhánh</option>
-                    <option>Chi nhánh Nguyễn Du</option>
-                    <option>Chi nhánh Trần Hưng Đạo</option>
-                </select>
+            <!-- Filter Bar & Presets -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:25px; flex-wrap:wrap; background: white; padding: 15px 20px; border-radius: 12px; border: 1px solid #eaddd3;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <button class="btn-outline">Hôm nay</button>
+                    <button class="btn-outline">7 ngày qua</button>
+                    <button class="btn-outline active">Tháng này</button>
+                    <button class="btn-outline">Tháng trước</button>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <label style="font-size:13px; font-weight:600; color:#8c766c;">Từ:</label>
+                    <input type="date" value="2026-05-01" style="height:38px; padding:0 10px; border:1px solid #e5dbcf; border-radius:8px; font-size:14px; font-family:inherit;">
+                    <label style="font-size:13px; font-weight:600; color:#8c766c;">Đến:</label>
+                    <input type="date" value="2026-05-31" style="height:38px; padding:0 10px; border:1px solid #e5dbcf; border-radius:8px; font-size:14px; font-family:inherit;">
+                    <select style="height:38px; padding:0 10px; border:1px solid #e5dbcf; border-radius:8px; font-size:14px; font-family:inherit; background:white; cursor:pointer;">
+                        <option>Tất cả chi nhánh</option>
+                        <option>Chi nhánh Nguyễn Du</option>
+                        <option>Chi nhánh Trần Hưng Đạo</option>
+                        <option>Chi nhánh Lý Tự Trọng</option>
+                        <option>Chi nhánh Lê Lai</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- KPI Dashboard Summary -->
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <div style="font-size: 12px; font-weight: 600; color: #8c766c; letter-spacing: 0.5px;">DOANH THU THUẦN</div>
+                    <div class="kpi-value">134,800,000 đ</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="kpi-badge">↑ +8.4%</span>
+                        <span style="font-size: 11px; color: #8c766c;">so với tháng trước</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div style="font-size: 12px; font-weight: 600; color: #8c766c; letter-spacing: 0.5px;">TỔNG ĐƠN HÀNG</div>
+                    <div class="kpi-value">1,349 đơn</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="kpi-badge">↑ +5.2%</span>
+                        <span style="font-size: 11px; color: #8c766c;">so với tháng trước</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div style="font-size: 12px; font-weight: 600; color: #8c766c; letter-spacing: 0.5px;">GIÁ TRỊ TRUNG BÌNH (AOV)</div>
+                    <div class="kpi-value">99,925 đ</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="kpi-badge">↑ +3.1%</span>
+                        <span style="font-size: 11px; color: #8c766c;">so với tháng trước</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div style="font-size: 12px; font-weight: 600; color: #8c766c; letter-spacing: 0.5px;">CHI PHÍ N.LIỆU (COGS)</div>
+                    <div class="kpi-value" style="color: #2e7d32;">31.2%</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="kpi-badge" style="background: #e8f5e9; color: #2e7d32;">↓ -1.5%</span>
+                        <span style="font-size: 11px; color: #2e7d32; font-weight: 500;">Tối ưu định lượng</span>
+                    </div>
+                </div>
             </div>
 
             <div class="grid">
-                <!-- Bar chart card -->
+                <!-- Comparative Chart Card -->
                 <div class="card">
-                    <h3>Doanh thu 5 tháng gần nhất (Tr. VND)</h3>
-                    <div style="padding: 10px;">
-                        <div class="chart-mock">
-                            <div class="bar" style="height: 60%;" data-val="120"></div>
-                            <div class="bar" style="height: 75%;" data-val="150"></div>
-                            <div class="bar" style="height: 70%;" data-val="140"></div>
-                            <div class="bar" style="height: 85%;" data-val="170"></div>
-                            <div class="bar" style="height: 95%;" data-val="190"></div>
+                    <h3>Xu Hướng Doanh Thu & Chi Phí Nguyên Liệu (Tr. VND)</h3>
+                    <div style="padding: 10px 0;">
+                        <div class="chart-mock" style="height: 220px; align-items: flex-end; justify-content: space-around; gap: 20px; padding: 15px 15px 5px 15px; box-sizing: border-box; border-left: 2px solid #eaddd3; border-bottom: 2px solid #eaddd3;">
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="display: flex; align-items: flex-end; gap: 4px; height: 160px; width: 100%; justify-content: center;">
+                                    <div style="height: 60%; background: #3d2314; width: 16px; border-radius: 3px 3px 0 0;" title="Doanh thu: 120 Tr."></div>
+                                    <div style="height: 20%; background: #c89d7c; width: 16px; border-radius: 3px 3px 0 0;" title="COGS: 40 Tr."></div>
+                                </div>
+                                <div class="bar-label" style="margin-top: 5px;">T1</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="display: flex; align-items: flex-end; gap: 4px; height: 160px; width: 100%; justify-content: center;">
+                                    <div style="height: 75%; background: #3d2314; width: 16px; border-radius: 3px 3px 0 0;" title="Doanh thu: 150 Tr."></div>
+                                    <div style="height: 24%; background: #c89d7c; width: 16px; border-radius: 3px 3px 0 0;" title="COGS: 48 Tr."></div>
+                                </div>
+                                <div class="bar-label" style="margin-top: 5px;">T2</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="display: flex; align-items: flex-end; gap: 4px; height: 160px; width: 100%; justify-content: center;">
+                                    <div style="height: 70%; background: #3d2314; width: 16px; border-radius: 3px 3px 0 0;" title="Doanh thu: 140 Tr."></div>
+                                    <div style="height: 21%; background: #c89d7c; width: 16px; border-radius: 3px 3px 0 0;" title="COGS: 42 Tr."></div>
+                                </div>
+                                <div class="bar-label" style="margin-top: 5px;">T3</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="display: flex; align-items: flex-end; gap: 4px; height: 160px; width: 100%; justify-content: center;">
+                                    <div style="height: 85%; background: #3d2314; width: 16px; border-radius: 3px 3px 0 0;" title="Doanh thu: 170 Tr."></div>
+                                    <div style="height: 25%; background: #c89d7c; width: 16px; border-radius: 3px 3px 0 0;" title="COGS: 51 Tr."></div>
+                                </div>
+                                <div class="bar-label" style="margin-top: 5px;">T4</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="display: flex; align-items: flex-end; gap: 4px; height: 160px; width: 100%; justify-content: center;">
+                                    <div style="height: 95%; background: #3d2314; width: 16px; border-radius: 3px 3px 0 0;" title="Doanh thu: 190 Tr."></div>
+                                    <div style="height: 28%; background: #c89d7c; width: 16px; border-radius: 3px 3px 0 0;" title="COGS: 55 Tr."></div>
+                                </div>
+                                <div class="bar-label" style="margin-top: 5px;">T5</div>
+                            </div>
                         </div>
-                        <div style="display: flex; gap: 15px; margin-top: 8px;">
-                            <div style="flex:1;" class="bar-label">T1</div>
-                            <div style="flex:1;" class="bar-label">T2</div>
-                            <div style="flex:1;" class="bar-label">T3</div>
-                            <div style="flex:1;" class="bar-label">T4</div>
-                            <div style="flex:1;" class="bar-label">T5</div>
+                        <div style="display: flex; justify-content: center; gap: 20px; font-size: 11px; margin-top: 15px; font-weight: 500;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #3d2314; border-radius: 2px;"></span>
+                                <span>Doanh thu thuần</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #c89d7c; border-radius: 2px;"></span>
+                                <span>Chi phí nguyên liệu (COGS)</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Payment methods card -->
+                <!-- Product & Channel Mix Card -->
                 <div class="card">
-                    <h3>Phương thức thanh toán</h3>
-                    <ul style="padding: 0; list-style: none; line-height: 2;">
-                        <li style="display: flex; justify-content: space-between;">
-                            <span>Chuyển khoản VietQR</span>
-                            <b>65%</b>
-                        </li>
-                        <li style="display: flex; justify-content: space-between;">
-                            <span>Tiền mặt (Cash)</span>
-                            <b>25%</b>
-                        </li>
-                        <li style="display: flex; justify-content: space-between;">
-                            <span>Thẻ ngân hàng (Card)</span>
-                            <b>10%</b>
-                        </li>
-                    </ul>
+                    <h3>Cơ Cấu Doanh Thu & Kênh Bán Hàng</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #8c766c; margin-bottom: 8px; letter-spacing: 0.5px;">THEO DANH MỤC SẢN PHẨM</div>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span>Cà phê (Coffee)</span>
+                                <strong>45% (60.66 Tr)</strong>
+                            </div>
+                            <div style="background: #f2ede8; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                                <div style="height: 100%; background: #3d2314; width: 45%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span>Trà (Tea)</span>
+                                <strong>35% (47.18 Tr)</strong>
+                            </div>
+                            <div style="background: #f2ede8; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                                <div style="height: 100%; background: #c89d7c; width: 35%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span>Bánh ngọt (Pastry)</span>
+                                <strong>20% (26.96 Tr)</strong>
+                            </div>
+                            <div style="background: #f2ede8; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                                <div style="height: 100%; background: #8c766c; width: 20%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #f2ede8; margin: 15px 0;">
+
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #8c766c; margin-bottom: 8px; letter-spacing: 0.5px;">THEO KÊNH BÁN HÀNG</div>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span>Tại cửa hàng (Dine-in)</span>
+                                <strong>42%</strong>
+                            </div>
+                            <div style="background: #f2ede8; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                                <div style="height: 100%; background: #3d2314; width: 42%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span>Mang đi (Takeaway)</span>
+                                <strong>38%</strong>
+                            </div>
+                            <div style="background: #f2ede8; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                                <div style="height: 100%; background: #c89d7c; width: 38%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span>Giao hàng (Delivery)</span>
+                                <strong>20%</strong>
+                            </div>
+                            <div style="background: #f2ede8; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                                <div style="height: 100%; background: #8c766c; width: 20%;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="grid" style="grid-template-columns:1fr 1fr; margin-top:24px;">
-                <!-- Best Sellers -->
+                <!-- Best Profit Contributors -->
                 <div class="card">
-                    <h3>Top 5 Món Bán Chạy</h3>
+                    <h3>Top 5 Món Đóng Góp Lợi Nhuận Gộp</h3>
                     <table>
-                        <thead><tr><th>Hạng</th><th>Tên Món</th><th>Số lượng</th><th>Doanh thu</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Món Ăn</th>
+                                <th>SL Bán</th>
+                                <th>Doanh Thu</th>
+                                <th>Lợi Nhuận Gộp</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>🥇 1</td><td>Trà đào cam sả</td><td>312 ly</td><td>14,040,000 VND</td></tr>
-                            <tr><td>🥈 2</td><td>Espresso</td><td>278 ly</td><td>9,730,000 VND</td></tr>
-                            <tr><td>🥉 3</td><td>Latte (Oat Milk)</td><td>195 ly</td><td>10,725,000 VND</td></tr>
-                            <tr><td>4</td><td>Cappuccino</td><td>143 ly</td><td>6,435,000 VND</td></tr>
-                            <tr><td>5</td><td>Bánh croissant</td><td>98 cái</td><td>2,940,000 VND</td></tr>
+                            <tr>
+                                <td><b>Trà đào cam sả</b></td>
+                                <td>312 ly</td>
+                                <td>14,040,000 đ</td>
+                                <td style="color:#2e7d32; font-weight:600;">10,530,000 đ <span style="font-size:11px; font-weight:normal; color:#8c766c;">(75%)</span></td>
+                            </tr>
+                            <tr>
+                                <td><b>Espresso</b></td>
+                                <td>278 ly</td>
+                                <td>9,730,000 đ</td>
+                                <td style="color:#2e7d32; font-weight:600;">8,270,500 đ <span style="font-size:11px; font-weight:normal; color:#8c766c;">(85%)</span></td>
+                            </tr>
+                            <tr>
+                                <td><b>Latte (Oat Milk)</b></td>
+                                <td>195 ly</td>
+                                <td>10,725,000 đ</td>
+                                <td style="color:#2e7d32; font-weight:600;">6,971,250 đ <span style="font-size:11px; font-weight:normal; color:#8c766c;">(65%)</span></td>
+                            </tr>
+                            <tr>
+                                <td><b>Cappuccino</b></td>
+                                <td>143 ly</td>
+                                <td>6,435,000 đ</td>
+                                <td style="color:#2e7d32; font-weight:600;">4,504,500 đ <span style="font-size:11px; font-weight:normal; color:#8c766c;">(70%)</span></td>
+                            </tr>
+                            <tr>
+                                <td><b>Bánh croissant</b></td>
+                                <td>98 cái</td>
+                                <td>2,940,000 đ</td>
+                                <td style="color:#2e7d32; font-weight:600;">1,764,000 đ <span style="font-size:11px; font-weight:normal; color:#8c766c;">(60%)</span></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-                <!-- Branch Comparison -->
+                <!-- Branch Performance Comparison -->
                 <div class="card">
-                    <h3>So Sánh Doanh Thu Chi Nhánh (Tháng 5)</h3>
+                    <h3>So Sánh Hiệu Suất Chi Nhánh</h3>
                     <table>
-                        <thead><tr><th>Chi nhánh</th><th>Số đơn</th><th>Doanh thu</th><th>vs. Tháng 4</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Chi Nhánh</th>
+                                <th>Doanh Thu</th>
+                                <th>Số Đơn</th>
+                                <th>AOV</th>
+                                <th>Tăng Trưởng</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td><b>Nguyễn Du</b></td><td>423</td><td>42,300,000</td><td style="color:#2e7d32;font-weight:600">↑ +8%</td></tr>
-                            <tr><td><b>Trần Hưng Đạo</b></td><td>387</td><td>38,700,000</td><td style="color:#2e7d32;font-weight:600">↑ +12%</td></tr>
-                            <tr><td><b>Lý Tự Trọng</b></td><td>298</td><td>29,800,000</td><td style="color:#c62828;font-weight:600">↓ −3%</td></tr>
-                            <tr><td><b>Lê Lai</b></td><td>241</td><td>24,100,000</td><td style="color:#2e7d32;font-weight:600">↑ +5%</td></tr>
+                            <tr>
+                                <td><b>Nguyễn Du</b></td>
+                                <td>42,300,000 đ</td>
+                                <td>412 đơn</td>
+                                <td>102,670 đ</td>
+                                <td style="color:#2e7d32;font-weight:600">↑ +8.2%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Trần Hưng Đạo</b></td>
+                                <td>38,700,000 đ</td>
+                                <td>352 đơn</td>
+                                <td>109,940 đ</td>
+                                <td style="color:#2e7d32;font-weight:600">↑ +12.4%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Lý Tự Trọng</b></td>
+                                <td>29,800,000 đ</td>
+                                <td>315 đơn</td>
+                                <td>94,600 đ</td>
+                                <td style="color:#c62828;font-weight:600">↓ −3.1%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Lê Lai</b></td>
+                                <td>24,100,000 đ</td>
+                                <td>270 đơn</td>
+                                <td>89,260 đ</td>
+                                <td style="color:#2e7d32;font-weight:600">↑ +5.0%</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

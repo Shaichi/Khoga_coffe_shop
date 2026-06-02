@@ -14,7 +14,32 @@
         .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 1px solid #eaddd3; padding-bottom: 15px; }
         .header h1 { font-size: 24px; margin: 0; }
-        .form-container { background: white; padding: 30px; border-radius: 12px; border: 1px solid #eaddd3; max-width: 600px; }
+        .form-container { background: white; padding: 30px; border-radius: 12px; border: 1px solid #eaddd3; max-width: 1000px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .form-column { display: flex; flex-direction: column; }
+        .image-upload-box {
+            border: 2px dashed #c89d7c;
+            background: #faf8f5;
+            border-radius: 8px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s, background-color 0.2s;
+            margin-bottom: 10px;
+        }
+        .image-upload-box:hover {
+            border-color: #5c3826;
+            background: #f5efe8;
+        }
+        .upload-placeholder {
+            text-align: center;
+            color: #8c766c;
+        }
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 600; margin-bottom: 8px; color: #5c3826; }
         input, select, textarea { width: 100%; height: 42px; padding: 10px; border: 1px solid #e5dbcf; border-radius: 8px; box-sizing: border-box; font-size: 15px; font-family: inherit; }
@@ -33,13 +58,14 @@
             .sidebar-menu { display: flex; flex-wrap: wrap; gap: 5px; }
             .sidebar a { padding: 8px 12px; font-size: 14px; }
             .main-content { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; gap: 20px; }
         }
     </style>
 </head>
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h2>EspressoHQ Admin</h2>
+            <h2>Khoga Café Admin</h2>
                                                 <div class="sidebar-menu">
                 <a href="dashboard_web.html">Trang chủ</a>
                 <a href="users_web.html">Nhân sự</a>
@@ -56,70 +82,127 @@
             </div>
 
             <div class="form-container">
-                <div class="form-group">
-                    <label>Tên món</label>
-                    <input type="text" id="menu-name" value="Espresso">
-                </div>
-                <div class="form-group">
-                    <label>Danh mục</label>
-                    <select id="menu-cat">
-                        <option value="1" selected>Cà Phê</option>
-                        <option value="2">Trà</option>
-                        <option value="3">Bánh ngọt</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Giá bán (VND)</label>
-                    <input type="number" id="menu-price" value="35000">
-                </div>
-                <div class="form-group">
-                    <label>Mã vạch (SKU/Barcode)</label>
-                    <input type="text" id="menu-sku" value="CFE-ESP-01">
-                </div>
-                <div class="form-group">
-                    <label>Mô tả món ăn</label>
-                    <textarea id="menu-desc" rows="3">Cà phê Espresso chiết xuất máy nguyên chất vị đậm đà thơm nồng.</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Topping đi kèm được phép sử dụng</label>
-                    <div id="topping-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #faf8f5; padding: 12px; border-radius: 8px; border: 1px solid #eaddd3; margin-bottom: 10px;">
-                        <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
-                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
-                                <input type="checkbox" style="width: auto; height: auto;" value="1"> Trân châu trắng
-                            </label>
-                            <span style="display: flex; align-items: center; gap: 2px;">
-                                +<input type="number" value="10000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
-                            </span>
+                <div class="form-grid">
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label>Tên món</label>
+                            <input type="text" id="menu-name" value="Espresso">
                         </div>
-                        <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
-                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
-                                <input type="checkbox" style="width: auto; height: auto;" value="2"> Thạch đào
-                            </label>
-                            <span style="display: flex; align-items: center; gap: 2px;">
-                                +<input type="number" value="10000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
-                            </span>
+                        <div class="form-group">
+                            <label>Danh mục</label>
+                            <select id="menu-cat">
+                                <option value="1" selected>Cà Phê</option>
+                                <option value="2">Trà</option>
+                                <option value="3">Bánh ngọt</option>
+                            </select>
                         </div>
-                        <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
-                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
-                                <input type="checkbox" style="width: auto; height: auto;" value="3" checked> Sữa yến mạch
-                            </label>
-                            <span style="display: flex; align-items: center; gap: 2px;">
-                                +<input type="number" value="10000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
-                            </span>
+                        <div class="form-group">
+                            <label>Giá bán (VND)</label>
+                            <input type="number" id="menu-price" value="35000">
                         </div>
-                        <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
-                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
-                                <input type="checkbox" style="width: auto; height: auto;" value="4" checked> Kem Macchiato
-                            </label>
-                            <span style="display: flex; align-items: center; gap: 2px;">
-                                +<input type="number" value="12000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
-                            </span>
+                        <div class="form-group">
+                            <label>Mã vạch (SKU/Barcode)</label>
+                            <input type="text" id="menu-sku" value="CFE-ESP-01">
+                        </div>
+                        <div class="form-group">
+                            <label>Mô tả món ăn</label>
+                            <textarea id="menu-desc" rows="5" style="resize: vertical;">Cà phê Espresso chiết xuất máy nguyên chất vị đậm đà thơm nồng.</textarea>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="new-topping-name" placeholder="Tên topping mới..." style="flex: 2; height: 36px; font-size: 13px;">
-                        <input type="number" id="new-topping-price" placeholder="Giá cộng thêm..." style="flex: 1.2; height: 36px; font-size: 13px;">
-                        <button type="button" onclick="addNewTopping()" style="padding: 0 15px; background: #3d2314; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; height: 36px;">+ Thêm</button>
+                    
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label>Hình ảnh món ăn</label>
+                            <div class="image-upload-box" onclick="document.getElementById('menu-image-input').click()">
+                                <input type="file" id="menu-image-input" accept="image/*" style="display: none;" onchange="previewImage(event)">
+                                <div id="image-preview-placeholder" class="upload-placeholder" style="display: none;">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8c766c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 5px;">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                    <p style="margin: 4px 0; font-size: 13px; font-weight: 600; color: #5c3826;">Tải ảnh món ăn</p>
+                                    <p style="margin: 0; font-size: 11px; color: #8c766c;">Hỗ trợ JPG, PNG (Tối đa 2MB)</p>
+                                </div>
+                                <img id="image-preview" src="https://images.unsplash.com/photo-151097252790b-af4f982c7867?auto=format&fit=crop&w=400&q=80" alt="Espresso" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Topping đi kèm được phép sử dụng</label>
+                            <div id="topping-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #faf8f5; padding: 12px; border-radius: 8px; border: 1px solid #eaddd3; margin-bottom: 10px;">
+                                <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
+                                        <input type="checkbox" style="width: auto; height: auto;" value="1"> Trân châu trắng
+                                    </label>
+                                    <span style="display: flex; align-items: center; gap: 2px;">
+                                        +<input type="number" value="10000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
+                                    </span>
+                                </div>
+                                <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
+                                        <input type="checkbox" style="width: auto; height: auto;" value="2"> Thạch đào
+                                    </label>
+                                    <span style="display: flex; align-items: center; gap: 2px;">
+                                        +<input type="number" value="10000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
+                                    </span>
+                                </div>
+                                <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
+                                        <input type="checkbox" style="width: auto; height: auto;" value="3" checked> Sữa yến mạch
+                                    </label>
+                                    <span style="display: flex; align-items: center; gap: 2px;">
+                                        +<input type="number" value="10000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
+                                    </span>
+                                </div>
+                                <div style="font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf;">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; text-transform: none;">
+                                        <input type="checkbox" style="width: auto; height: auto;" value="4" checked> Kem Macchiato
+                                    </label>
+                                    <span style="display: flex; align-items: center; gap: 2px;">
+                                        +<input type="number" value="12000" style="width: 70px; height: 24px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid #e5dbcf; border-radius: 4px; font-family: inherit;">
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="new-topping-name" placeholder="Tên topping mới..." style="flex: 2; height: 36px; font-size: 13px;">
+                                <input type="number" id="new-topping-price" placeholder="Giá cộng thêm..." style="flex: 1.2; height: 36px; font-size: 13px;">
+                                <button type="button" onclick="addNewTopping()" style="padding: 0 15px; background: #3d2314; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; height: 36px;">+ Thêm</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Công thức định lượng nguyên liệu (Recipe Mappings)</label>
+                            <div id="recipe-list" style="background: #faf8f5; padding: 12px; border-radius: 8px; border: 1px solid #eaddd3; margin-bottom: 10px;">
+                                <!-- Dữ liệu định lượng có sẵn của món Espresso -->
+                                <div class="recipe-row" style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 500; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf; margin-bottom: 6px;">
+                                    <span><strong>Cà phê hạt Espresso</strong></span>
+                                    <span style="display: flex; align-items: center; gap: 8px;">
+                                        <span>0.018 kg</span>
+                                        <button type="button" onclick="this.parentElement.parentElement.remove(); checkRecipeEmpty();" style="background: none; border: none; color: #cf6679; cursor: pointer; font-weight: bold; font-size: 12px;">Xóa</button>
+                                    </span>
+                                </div>
+                                <div class="recipe-row" style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 500; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf; margin-bottom: 6px;">
+                                    <span><strong>Ly giấy nóng/lạnh</strong></span>
+                                    <span style="display: flex; align-items: center; gap: 8px;">
+                                        <span>1 cái</span>
+                                        <button type="button" onclick="this.parentElement.parentElement.remove(); checkRecipeEmpty();" style="background: none; border: none; color: #cf6679; cursor: pointer; font-weight: bold; font-size: 12px;">Xóa</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <select id="recipe-ingredient" style="flex: 2; height: 36px; font-size: 13px; padding: 0 10px;">
+                                    <option value="Cà phê hạt Espresso" data-unit="kg">Cà phê hạt Espresso (kg)</option>
+                                    <option value="Sữa tươi tiệt trùng" data-unit="lít">Sữa tươi tiệt trùng (lít)</option>
+                                    <option value="Sữa yến mạch" data-unit="lít">Sữa yến mạch (lít)</option>
+                                    <option value="Bột trà xanh Matcha" data-unit="kg">Bột trà xanh Matcha (kg)</option>
+                                    <option value="Hạt trân châu" data-unit="kg">Hạt trân châu (kg)</option>
+                                    <option value="Ly giấy nóng/lạnh" data-unit="cái">Ly giấy nóng/lạnh (cái)</option>
+                                </select>
+                                <input type="number" id="recipe-qty" placeholder="Lượng..." step="0.001" style="flex: 1; height: 36px; font-size: 13px; padding: 0 10px;">
+                                <button type="button" onclick="addRecipeIngredient()" style="padding: 0 15px; background: #3d2314; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; height: 36px;">+ Định lượng</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -132,6 +215,61 @@
     </div>
 
     <script>
+        function previewImage(event) {
+            const input = event.target;
+            const preview = document.getElementById('image-preview');
+            const placeholder = document.getElementById('image-preview-placeholder');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function addRecipeIngredient() {
+            const ingredientSelect = document.getElementById('recipe-ingredient');
+            const qtyInput = document.getElementById('recipe-qty');
+            const ingredient = ingredientSelect.value;
+            const unit = ingredientSelect.options[ingredientSelect.selectedIndex].getAttribute('data-unit');
+            const qty = qtyInput.value.trim();
+            
+            if (qty === "" || parseFloat(qty) <= 0) {
+                alert("Vui lòng nhập lượng nguyên liệu hợp lệ (> 0).");
+                return;
+            }
+            
+            // Xóa thông báo trống nếu có
+            const noMsg = document.getElementById('no-recipe-msg');
+            if (noMsg) noMsg.remove();
+            
+            const list = document.getElementById('recipe-list');
+            const newDiv = document.createElement('div');
+            newDiv.className = 'recipe-row';
+            newDiv.style.cssText = 'display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 500; color: #2c1a11; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e5dbcf; margin-bottom: 6px;';
+            
+            newDiv.innerHTML = `
+                <span><strong>${ingredient}</strong></span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <span>${qty} ${unit}</span>
+                    <button type="button" onclick="this.parentElement.parentElement.remove(); checkRecipeEmpty();" style="background: none; border: none; color: #cf6679; cursor: pointer; font-weight: bold; font-size: 12px;">Xóa</button>
+                </span>
+            `;
+            list.appendChild(newDiv);
+            qtyInput.value = "";
+        }
+        
+        function checkRecipeEmpty() {
+            const list = document.getElementById('recipe-list');
+            if (list.getElementsByClassName('recipe-row').length === 0) {
+                list.innerHTML = `<div id="no-recipe-msg" style="color: #8c766c; font-size: 13px; font-style: italic; text-align: center; padding: 10px 0;">Chưa cấu hình nguyên liệu định lượng.</div>`;
+            }
+        }
+
         function addNewTopping() {
             const nameInput = document.getElementById('new-topping-name');
             const priceInput = document.getElementById('new-topping-price');

@@ -1,4 +1,4 @@
-# 3.7 Order Management
+﻿# 3.7 Order Management
 
 This section details specifications for tracking orders, barista queue controls, stickers printing, and cancellation flows.
 
@@ -28,7 +28,7 @@ All orders follow the state transitions below:
 
 ---
 
-## 3.7.1 F35 - View Order List / UC-40/54 View Order List
+## 3.7.1 F35 - View Order List / UC-54 View Local Order History
 
 ### 3.7.1.1 Screen Mock-up (Mobile Portrait)
 ```
@@ -48,7 +48,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-35: Screen Definition
+#### Table 3-37: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Search by Order ID, sequence number, or customer name. |
@@ -78,7 +78,7 @@ All orders follow the state transitions below:
 
 ---
 
-## 3.7.2 F36 - View Order Detail / UC-40/54 View Order Detail
+## 3.7.2 F36 - View Order Detail / UC-54b View Order Detail
 
 ### 3.7.2.1 Screen Mock-up (Mobile Portrait)
 ```
@@ -100,7 +100,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-36: Screen Definition
+#### Table 3-38: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Cancel | Button | | | Opens Cancel Order view screen. |
@@ -147,7 +147,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-37: Screen Definition
+#### Table 3-39: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | START PREP | Button | | | Transitions order status from Pending to Preparing. |
@@ -191,7 +191,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-38: Screen Definition
+#### Table 3-40: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Print | Button | | | Dispatches print job to sticker printer. |
@@ -240,7 +240,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-39: Screen Definition
+#### Table 3-41: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Reason | Dropdown | Yes | | Cancellation reason mapping. |
@@ -300,3 +300,4 @@ Manager Override PIN is a 4-digit numeric credential used to authorize cashier a
 | ID | Rule Description |
 |---|---|
 | BR-51 | **Manager Override PIN**: Each Store Manager account has a 4-digit Override PIN, stored as a salted hash, separate from the login password. The PIN is required for Cashier-initiated cancel/refund actions. Failed PIN entry is limited to 3 consecutive attempts before a 5-minute lockout. |
+

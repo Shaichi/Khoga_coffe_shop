@@ -1,4 +1,4 @@
-# 3.10 Promotion & Campaign Management
+﻿# 3.10 Promotion & Campaign Management
 
 This section details specifications for managing discount codes and promotional campaigns.
 
@@ -23,7 +23,7 @@ This section details specifications for managing discount codes and promotional 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-47: Screen Definition
+#### Table 3-51: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Filter | Dropdown | Yes | | Filters list by voucher status (`Active`, `Scheduled`, `Expired`). |
@@ -74,7 +74,7 @@ This section details specifications for managing discount codes and promotional 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-48: Screen Definition
+#### Table 3-52: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Voucher Code | Text | Yes | 50 | Alphanumeric code (e.g. "COFFEE20"). |
@@ -137,7 +137,7 @@ This section details specifications for managing discount codes and promotional 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-49: Screen Definition
+#### Table 3-53: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Voucher Code | Text | | | Read-only. Alphanumeric code — cannot be modified after creation (BR-40). |
@@ -180,3 +180,4 @@ This section details specifications for managing discount codes and promotional 
 | BR-40 | Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | Deactivating a voucher immediately stops all checkout redemptions. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed as follows: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive, and voucher is not deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
+

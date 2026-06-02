@@ -1,4 +1,4 @@
-# 3.8 Customer & Membership Management
+﻿# 3.8 Customer & Membership Management
 
 This section details specifications for loyalty membership profiles search, enrollment, and history views.
 
@@ -24,7 +24,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-40: Screen Definition
+#### Table 3-42: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Filter members by phone number or name. |
@@ -74,7 +74,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-41: Screen Definition
+#### Table 3-43: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Full Name | Text | Yes | 100 | Customer's full name. |
@@ -143,7 +143,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-42: Screen Definition
+#### Table 3-44: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Contact Email | Text | Yes | 100 | Customer email address. |
@@ -217,7 +217,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-43: Screen Definition
+#### Table 3-45: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Back | Button | | | Returns to Customer card. |
@@ -248,6 +248,7 @@ This section details specifications for loyalty membership profiles search, enro
 |---|---|
 | BR-34 | Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
 | BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
+
 
 
 

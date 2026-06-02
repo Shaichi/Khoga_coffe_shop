@@ -1,4 +1,4 @@
-# 3.11 Delivery Partner Integration
+﻿# 3.11 Delivery Partner Integration
 
 This section details specifications for background order synchronization and manual review screens for delivery partners.
 
@@ -26,7 +26,7 @@ This section details specifications for background order synchronization and man
 +------------------------------------+
 ```
 
-#### Table 3-50: Screen Definition
+#### Table 3-54: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Call Customer/Rider | Button | | | Triggers phone call connection using the rider/customer hotline. |
@@ -110,4 +110,5 @@ This section details specifications for background order synchronization and man
 - **Retry Policy**: Failed outbound synchronization requests are retried up to 3 times. After 3 failures, the issue is logged and the Store Manager is notified.
 - **Failed Synchronizations**: Failed events that exhaust all retries are logged for manual review by the Administrator.
 - **Offline Handling**: If the local store is offline, synchronization events are queued locally and sent chronologically once connectivity is restored.
+
 

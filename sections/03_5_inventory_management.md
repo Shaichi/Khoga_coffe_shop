@@ -1,4 +1,4 @@
-# 3.5 Inventory & Stock Management
+﻿# 3.5 Inventory & Stock Management
 
 This section details specifications for viewing inventory, managing imports/exports, and reconciling discrepancies.
 
@@ -24,7 +24,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-23: Screen Definition
+#### Table 3-24: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Filter stock list by item name. |
@@ -81,7 +81,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-24: Screen Definition
+#### Table 3-25: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Item Name | Dropdown | Yes | | Scopes stock items list available for branch. |
@@ -147,7 +147,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-25: Screen Definition
+#### Table 3-26: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Item Name | Dropdown | Yes | | Scopes stock items list. |
@@ -211,7 +211,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-26: Screen Definition
+#### Table 3-27: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Filter | Dropdown | Yes | | Filters by transaction type (`IMPORT`, `EXPORT`, `AUDIT`). |
@@ -261,7 +261,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-27: Screen Definition
+#### Table 3-28: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Actual Count | Text | Yes | 10 | Physically counted quantity of the stock item. |
@@ -348,3 +348,4 @@ This section details specifications for viewing inventory, managing imports/expo
 |---|---|
 | BR-32 | *(Applies)* Any discrepancy between expected and actual counts must be noted. |
 | BR-07 | If an order is cancelled in `PREPARING` or `READY` state, stock is **not** restored (consumed ingredients are logged as operational waste). If cancelled in `PENDING` state (before stock deduction occurs), no deduction was made, so no rollback is needed. |
+

@@ -113,6 +113,7 @@ This section tracks the revision history and modifications made to the Software 
      - 3.9.2 View Staff Schedule
      - 3.9.3 Update/Delete Staff Schedule
      - 3.9.4 View Staff Attendance Report
+     - 3.9.5 View Branch Staff List
 
    - **3.10 Promotion & Campaign Management**
      - 3.10.1 List Voucher / Promotion
@@ -441,6 +442,7 @@ graph LR
         
         UC_ConfigBranch([Configure Local Branch Settings])
         UC_ApproveOverride([Approve Cashier Override / Refund])
+        UC_ViewStaffList([View Branch Staff List])
     end
 
     %% Connections
@@ -449,6 +451,7 @@ graph LR
     Actor_Manager --> UC_ViewRevStore
     Actor_Manager --> UC_ConfigBranch
     Actor_Manager --> UC_ApproveOverride
+    Actor_Manager --> UC_ViewStaffList
 
     %% Stock extends
     UC_ImportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
@@ -586,6 +589,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-37** | Staff & Schedule | Update Staff Schedule | Store Manager | **Description**: Modifies schedule assignments.<br>**Main Flow**:<br>1. Manager adjusts shift dates or employee assignments on the calendar.<br>2. The scheduling calendar is updated. |
 | **UC-38** | Staff & Schedule | Delete Staff Schedule | Store Manager | **Description**: Removes shift assignments.<br>**Main Flow**:<br>1. Manager deletes a shift assignment.<br>2. The shift assignment is removed and the calendar is updated. |
 | **UC-39** | Staff & Schedule | View Staff Attendance Report | Store Manager | **Description**: Accesses attendance sheets.<br>**Main Flow**:<br>1. Manager displays attendance details.<br>2. Manager reviews check-in/out logs, showing late times. |
+| **UC-66** | Staff & Schedule | View Branch Staff List | Store Manager | **Description**: Reviews the roster list and contact profiles of staff assigned to their branch.<br>**Main Flow**:<br>1. Store Manager opens the Branch Staff list module.<br>2. Portal retrieves active and deactivated users whose assigned branch matches the manager's branch.<br>3. Portal shows aggregated stats and lists cards containing Names, Roles, Contacts and Badges. |
 | **UC-40** | Reports & Analytics | View Store Revenue Reports | Store Manager | **Description**: Accesses local branch reports.<br>**Main Flow**:<br>1. Manager opens store report panel.<br>2. Manager reviews local sales revenue, shift closures, and payment breakdowns. |
 | **UC-41** | Reports & Analytics | Export Store Reports | Store Manager | **Description**: Exports store-specific files.<br>**Main Flow**:<br>1. Manager exports local sales and inventory spreadsheets.<br>2. Report files are generated and downloaded. |
 | **UC-42** | System Configuration | Configure Local Branch Settings | Store Manager | **Description**: Manages branch-level hardware/network.<br>**Main Flow**:<br>1. Manager configures printer IPs or local POS register IDs.<br>2. Branch configurations are saved. |
@@ -608,6 +612,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
 | **UC-60** | Order Prep & Queue | Report Issue / Escalate Order | Barista | **Description**: Flags order preparation errors.<br>**Main Flow**:<br>1. Barista reports machine/ingredient issue.<br>2. The order is marked with an issue flag, notifying POS cashiers. |
 | **UC-61** | Inventory Management | View Import/Export History | Store Manager | **Description**: Reviews past stock movements.<br>**Main Flow**:<br>1. Manager opens history logs.<br>2. Details of stock imports and exports are displayed. |
+| **UC-62** | Inventory Management | Auto-Deduct Inventory on Order Completion | System (automated) | **Description**: Automatically deducts ingredient quantities from stock based on the recipe formulation when an order transitions to the PREPARING state.<br>**Main Flow**:<br>1. Barista taps "START PREP" on an order.<br>2. System retrieves recipes for each menu item.<br>3. System deducts corresponding ingredient quantities and logs transactions. |
 | **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
 | **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
 | **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
@@ -689,6 +694,8 @@ graph LR
     ManagerHome --> BranchReports[32. Store Revenue & Order Reports Screen]
     
     ManagerHome --> BranchSettings[33. Branch Local Settings Screen]
+    
+    ManagerHome --> ViewBranchStaff[48. View Branch Staff List Screen]
 ```
 
 ### 4. Cashier POS Terminal Screen Flow
@@ -768,6 +775,7 @@ The system comprises the following screens across its user portals:
 | | | Stock Audit Screen | Grid to count physical stock and reconcile discrepancies. |
 | 9 | Staff & Shift Management | Staff Shift Scheduler Screen | Calendar to schedule cashiers and baristas into shift blocks. |
 | | | Staff Attendance Report Screen | Logs check-in/out times and attendance details. |
+| | | View Branch Staff List Screen | Roster directory showing assigned branch staff contact details and operational roles. |
 | 10 | POS Sales & Billing | Shift Initiation Open Shift Screen | Prompts cashier for register ID and starting cash float. |
 | | | POS Checkout Grid & Cart Screen | Main sales screen with catalog search and cart grid. |
 | | | Membership Search & Add Pop-up | Modal to look up or register membership customers. |
@@ -783,7 +791,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 47 screens:
+The table below specifies access control policies across all 48 screens:
 
 | Screen Name | Admin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|
@@ -836,6 +844,7 @@ The table below specifies access control policies across all 47 screens:
 | 45. Branch Management List | **Yes** | No | No | No |
 | 46. Add Branch Form | **Yes** | No | No | No |
 | 47. Edit / Deactivate Branch | **Yes** | No | No | No |
+| 48. View Branch Staff List Screen | No | **Yes** | No | No |
 
 ---
 
@@ -1920,6 +1929,9 @@ This section details the functional requirements for authentication, user profil
 | ID | Rule Description |
 |---|---|
 | BR-22 | Created accounts default status to active, and force a password change on next login. |
+| BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
+
 
 ---
 
@@ -1992,6 +2004,7 @@ This section details the functional requirements for authentication, user profil
 
 
 
+
 ---
 
 # 3.3 Menu Management
@@ -2019,7 +2032,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-13: Screen Definition
+#### Table 3-14: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 100 | Filter catalog items by product name or code. |
@@ -2077,7 +2090,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-14: Screen Definition
+#### Table 3-15: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Edit Item | Button | | | Navigates to Edit Menu Item view. |
@@ -2131,7 +2144,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-15: Screen Definition
+#### Table 3-16: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
@@ -2207,7 +2220,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-16: Screen Definition
+#### Table 3-17: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
@@ -2274,7 +2287,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +--------------------------------------------------------+
 ```
 
-#### Table 3-17: Screen Definition
+#### Table 3-18: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Cancel | Button | | | Cancels soft deletion and closes modal. |
@@ -2327,7 +2340,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-18: Screen Definition
+#### Table 3-19: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Name | Text | Yes | 100 | Name of the topping option. |
@@ -2366,6 +2379,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 
 
+
 ---
 
 # 3.4 Category Management
@@ -2393,7 +2407,7 @@ This section details specifications for managing product categories.
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-19: Screen Definition
+#### Table 3-20: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Add Category | Button | | | Navigates to Add Category view. |
@@ -2440,7 +2454,7 @@ This section details specifications for managing product categories.
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-20: Screen Definition
+#### Table 3-21: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Category Name | Text | Yes | 50 | Unique name of the category. |
@@ -2498,7 +2512,7 @@ This section details specifications for managing product categories.
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-21: Screen Definition
+#### Table 3-22: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Category Name | Text | Yes | 50 | Unique name of the category. |
@@ -2549,7 +2563,7 @@ This section details specifications for managing product categories.
 +--------------------------------------------------------+
 ```
 
-#### Table 3-22: Screen Definition
+#### Table 3-23: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Cancel | Button | | | Closes modal without deleting. |
@@ -2595,6 +2609,7 @@ This section details specifications for managing product categories.
 
 
 
+
 ---
 
 # 3.5 Inventory & Stock Management
@@ -2623,7 +2638,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-23: Screen Definition
+#### Table 3-24: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Filter stock list by item name. |
@@ -2680,7 +2695,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-24: Screen Definition
+#### Table 3-25: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Item Name | Dropdown | Yes | | Scopes stock items list available for branch. |
@@ -2746,7 +2761,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-25: Screen Definition
+#### Table 3-26: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Item Name | Dropdown | Yes | | Scopes stock items list. |
@@ -2810,7 +2825,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-26: Screen Definition
+#### Table 3-27: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Filter | Dropdown | Yes | | Filters by transaction type (`IMPORT`, `EXPORT`, `AUDIT`). |
@@ -2860,7 +2875,7 @@ This section details specifications for viewing inventory, managing imports/expo
 +------------------------------------+
 ```
 
-#### Table 3-27: Screen Definition
+#### Table 3-28: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Actual Count | Text | Yes | 10 | Physically counted quantity of the stock item. |
@@ -2949,6 +2964,7 @@ This section details specifications for viewing inventory, managing imports/expo
 | BR-07 | If an order is cancelled in `PREPARING` or `READY` state, stock is **not** restored (consumed ingredients are logged as operational waste). If cancelled in `PENDING` state (before stock deduction occurs), no deduction was made, so no rollback is needed. |
 
 
+
 ---
 
 # 3.6 POS Transaction
@@ -2975,7 +2991,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-28: Screen Definition
+#### Table 3-29: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Register ID | Dropdown | Yes | | POS Terminal/Register selection. |
@@ -3045,7 +3061,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-29: Screen Definition
+#### Table 3-30: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search/SKU | Text | No | 100 | Fast search autocomplete or barcode scan lookup. |
@@ -3100,7 +3116,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-30: Screen Definition
+#### Table 3-31: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Phone Number | Text | Yes | 20 | Look up membership details using phone number. |
@@ -3162,7 +3178,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-31: Screen Definition
+#### Table 3-32: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Voucher Code | Text | No | 50 | Alphanumeric coupon code. |
@@ -3229,7 +3245,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-32: Screen Definition
+#### Table 3-33: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Customer Info | Label | | | Displays linked customer name and active membership tier. |
@@ -3313,7 +3329,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 ```
 
-#### Table 3-33: Screen Definition
+#### Table 3-34: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `E_WALLET`. |
@@ -3409,7 +3425,7 @@ This section outlines the business logic for calculating and applying discounts 
 +------------------------------------+
 ```
 
-#### Table 3-34: Screen Definition
+#### Table 3-35: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Done | Button | | | Completes order flow and opens blank checkout screen. |
@@ -3459,7 +3475,7 @@ This section outlines the business logic for calculating and applying discounts 
 +------------------------------------+
 ```
 
-#### Table 3-35: Screen Definition
+#### Table 3-36: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Actual Cash Counted | Text | Yes | 15 | Drawer cash count in VND at end of shift. |
@@ -3508,6 +3524,7 @@ This section outlines the business logic for calculating and applying discounts 
 
 
 
+
 ---
 
 # 3.7 Order Management
@@ -3540,7 +3557,7 @@ All orders follow the state transitions below:
 
 ---
 
-## 3.7.1 F35 - View Order List / UC-40/54 View Order List
+## 3.7.1 F35 - View Order List / UC-54 View Local Order History
 
 ### 3.7.1.1 Screen Mock-up (Mobile Portrait)
 ```
@@ -3560,7 +3577,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-35: Screen Definition
+#### Table 3-37: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Search by Order ID, sequence number, or customer name. |
@@ -3590,7 +3607,7 @@ All orders follow the state transitions below:
 
 ---
 
-## 3.7.2 F36 - View Order Detail / UC-40/54 View Order Detail
+## 3.7.2 F36 - View Order Detail / UC-54b View Order Detail
 
 ### 3.7.2.1 Screen Mock-up (Mobile Portrait)
 ```
@@ -3612,7 +3629,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-36: Screen Definition
+#### Table 3-38: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Cancel | Button | | | Opens Cancel Order view screen. |
@@ -3659,7 +3676,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-37: Screen Definition
+#### Table 3-39: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | START PREP | Button | | | Transitions order status from Pending to Preparing. |
@@ -3703,7 +3720,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-38: Screen Definition
+#### Table 3-40: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Print | Button | | | Dispatches print job to sticker printer. |
@@ -3752,7 +3769,7 @@ All orders follow the state transitions below:
 +------------------------------------+
 ```
 
-#### Table 3-39: Screen Definition
+#### Table 3-41: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Reason | Dropdown | Yes | | Cancellation reason mapping. |
@@ -3814,6 +3831,7 @@ Manager Override PIN is a 4-digit numeric credential used to authorize cashier a
 | BR-51 | **Manager Override PIN**: Each Store Manager account has a 4-digit Override PIN, stored as a salted hash, separate from the login password. The PIN is required for Cashier-initiated cancel/refund actions. Failed PIN entry is limited to 3 consecutive attempts before a 5-minute lockout. |
 
 
+
 ---
 
 # 3.8 Customer & Membership Management
@@ -3842,7 +3860,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-40: Screen Definition
+#### Table 3-42: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Filter members by phone number or name. |
@@ -3892,7 +3910,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-41: Screen Definition
+#### Table 3-43: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Full Name | Text | Yes | 100 | Customer's full name. |
@@ -3961,7 +3979,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-42: Screen Definition
+#### Table 3-44: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Contact Email | Text | Yes | 100 | Customer email address. |
@@ -4035,7 +4053,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 ```
 
-#### Table 3-43: Screen Definition
+#### Table 3-45: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Back | Button | | | Returns to Customer card. |
@@ -4066,6 +4084,7 @@ This section details specifications for loyalty membership profiles search, enro
 |---|---|
 | BR-34 | Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
 | BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
+
 
 
 
@@ -4102,7 +4121,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-44: Screen Definition
+#### Table 3-46: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Employee | Dropdown | Yes | | Active employee user accounts list. |
@@ -4164,7 +4183,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-45: Screen Definition
+#### Table 3-47: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Filter | Dropdown | Yes | | Filters list by employee roles. |
@@ -4216,7 +4235,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-46: Screen Definition
+#### Table 3-48: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Shift Type | Dropdown | Yes | | Select shift hours. |
@@ -4277,7 +4296,7 @@ This section details specifications for staff shifts assignment, schedules views
 +------------------------------------+
 ```
 
-#### Table 3-46: Screen Definition
+#### Table 3-49: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Date | Date | Yes | | Target scheduling date calendar. |
@@ -4313,6 +4332,73 @@ This section details specifications for staff shifts assignment, schedules views
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
 | BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
 
+---
+
+## 3.9.5 F46.2 - View Branch Staff List / UC-66 View Branch Staff List
+
+### 3.9.5.1 Screen Mock-up (Mobile Portrait)
+```
++------------------------------------+
+|            Branch Staff            |
+|                      [Nguyen Du]   |
+|                                    |
+|  [ 8 ]      [ 3 ]      [ 4 ]       |
+|  Total      Cashier    Barista     |
+|                                    |
+|  Filter: [ All ][ Cashier ][ Barista ]
+|                                    |
+|  - Nguyen Van An (Cashier)     [C] |
+|    Phone: 0901 234 567             |
+|    Status: Active                  |
+|                                    |
+|  - Tran Thi Binh (Cashier)     [C] |
+|    Phone: 0912 345 678             |
+|    Status: Active                  |
+|                                    |
+|                           [ Back ] |
++------------------------------------+
+```
+
+#### Table 3-50: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Stats Grid | Display | - | | Shows counts of Total Staff, Cashiers, Baristas, Managers. |
+| 2 | Filter Tabs | Button Row | Yes | | Filters list by roles (`All`, `Cashier`, `Barista`, `Manager`). |
+| 3 | Call Action (C) | Button | No | | Triggers mobile native phone call to the staff member. |
+| 4 | Staff Card Click | Interactive | - | | Opens detailed information modal overlay. |
+| 5 | Back | Button | - | | Returns to Manager Dashboard console. |
+
+### 3.9.5.2 Use Case Description
+
+| Use Case ID | UC-66 | Use Case Name | View Branch Staff List |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Store Manager |
+| **Description** | Reviews the roster list and contact profiles of staff assigned to their branch. |
+| **Precondition** | Manager is logged in and viewing their local branch dashboard. |
+| **Trigger** | Manager taps the "Nhân Viên" menu button on the Dashboard. |
+| **Post-Condition** | Displays active/inactive local branch employee profiles. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Store Manager | Opens the Branch Staff list module. |
+| 2 | Portal | Retrieves active and deactivated users whose assigned branch matches the manager's branch. |
+| 3 | Portal | Shows aggregated stats and lists cards containing Names, Roles, Contacts and Badges. |
+| 4 | Store Manager | (Optional) Taps on a Staff Card to open detail modal or triggers instant call link. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+
+
+
+
 
 ---
 
@@ -4341,7 +4427,7 @@ This section details specifications for managing discount codes and promotional 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-47: Screen Definition
+#### Table 3-51: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Filter | Dropdown | Yes | | Filters list by voucher status (`Active`, `Scheduled`, `Expired`). |
@@ -4392,7 +4478,7 @@ This section details specifications for managing discount codes and promotional 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-48: Screen Definition
+#### Table 3-52: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Voucher Code | Text | Yes | 50 | Alphanumeric code (e.g. "COFFEE20"). |
@@ -4455,7 +4541,7 @@ This section details specifications for managing discount codes and promotional 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-49: Screen Definition
+#### Table 3-53: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Voucher Code | Text | | | Read-only. Alphanumeric code — cannot be modified after creation (BR-40). |
@@ -4500,6 +4586,7 @@ This section details specifications for managing discount codes and promotional 
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed as follows: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive, and voucher is not deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
 
 
+
 ---
 
 # 3.11 Delivery Partner Integration
@@ -4530,7 +4617,7 @@ This section details specifications for background order synchronization and man
 +------------------------------------+
 ```
 
-#### Table 3-50: Screen Definition
+#### Table 3-54: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Call Customer/Rider | Button | | | Triggers phone call connection using the rider/customer hotline. |
@@ -4617,6 +4704,7 @@ This section details specifications for background order synchronization and man
 
 
 
+
 ---
 
 # 3.12 Dashboard & Reporting
@@ -4648,7 +4736,7 @@ This section details specifications for business reports views, sales analytics 
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-51: Screen Definition
+#### Table 3-55: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Date Range | Date Picker | Yes | | Sets start and end range boundaries for search query. |
@@ -4696,7 +4784,7 @@ This section details specifications for business reports views, sales analytics 
 +------------------------------------+
 ```
 
-#### Table 3-52: Screen Definition
+#### Table 3-56: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Export Format | Radio | Yes | | Select target file format (`Excel`, `PDF`, `CSV`). |
@@ -4759,7 +4847,7 @@ This section details specifications for business reports views, sales analytics 
 +------------------------------------+
 ```
 
-#### Table 3-53: Screen Definition
+#### Table 3-57: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | From Date | Date Picker | Yes | | Start of the target date range for local store reports. |
@@ -4796,6 +4884,7 @@ This section details specifications for business reports views, sales analytics 
 
 
 
+
 ---
 
 # 3.13 System Configuration
@@ -4824,7 +4913,7 @@ This section details specifications for system settings, store branding profiles
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-54: Screen Definition
+#### Table 3-58: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Brand Name | Text | Yes | 100 | The name of the brand/HQ coffee shop. |
@@ -4915,7 +5004,7 @@ This section details specifications for system settings, store branding profiles
 +------------------------------------+
 ```
 
-#### Table 3-55: Screen Definition
+#### Table 3-59: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Branch Name | Text | Yes | 100 | Local name for the branch. |
@@ -5011,7 +5100,7 @@ This section specifies the branch lifecycle management functionality available e
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-56: Screen Definition
+#### Table 3-60: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 100 | Filter branches by name or address. |
@@ -5059,7 +5148,7 @@ This section specifies the branch lifecycle management functionality available e
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-57: Screen Definition
+#### Table 3-61: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Branch Name | Text | Yes | 100 | Name of the new store branch. |
@@ -5133,7 +5222,7 @@ This section specifies the branch lifecycle management functionality available e
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-58: Screen Definition
+#### Table 3-62: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Branch ID | Label | | | Unique branch identifier (read-only). |
@@ -5205,6 +5294,7 @@ This section specifies the branch lifecycle management functionality available e
 | BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously. Deactivated branches do not count toward this limit. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
+
 
 
 
@@ -5404,6 +5494,10 @@ This section contains business rules, global requirements, common application me
 | BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
+| BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
+| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+
 
 
 ## 5.2 Common Requirements
@@ -5460,6 +5554,7 @@ The matrix below maps operational modules and system features to employee roles,
 | Feature / Functional Module | HQ Admin | Store Manager | POS Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|
 | **User Account Management (CRUD)** | C / R / U / D | — | — | — |
+| **Branch Staff Profile List** | — | R (Read-Only) | — | — |
 | **Catalog Menu & Category (CRUD)** | C / R / U / D | R (Read-Only) | R (Read-Only) | R (Read-Only) |
 | **Menu Availability Status toggle** | C / R / U | C / R / U | — | — |
 | **Voucher & Campaign (CRUD)** | C / R / U / D | — | — | — |

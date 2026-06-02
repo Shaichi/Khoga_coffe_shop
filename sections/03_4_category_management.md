@@ -1,4 +1,4 @@
-# 3.4 Category Management
+﻿# 3.4 Category Management
 
 This section details specifications for managing product categories.
 
@@ -23,7 +23,7 @@ This section details specifications for managing product categories.
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-19: Screen Definition
+#### Table 3-20: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Add Category | Button | | | Navigates to Add Category view. |
@@ -70,7 +70,7 @@ This section details specifications for managing product categories.
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-20: Screen Definition
+#### Table 3-21: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Category Name | Text | Yes | 50 | Unique name of the category. |
@@ -128,7 +128,7 @@ This section details specifications for managing product categories.
 +---------------------------------------------------------------------------------+
 ```
 
-#### Table 3-21: Screen Definition
+#### Table 3-22: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Category Name | Text | Yes | 50 | Unique name of the category. |
@@ -179,7 +179,7 @@ This section details specifications for managing product categories.
 +--------------------------------------------------------+
 ```
 
-#### Table 3-22: Screen Definition
+#### Table 3-23: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Cancel | Button | | | Closes modal without deleting. |
@@ -220,6 +220,7 @@ This section details specifications for managing product categories.
 | ID | Rule Description |
 |---|---|
 | BR-31 | Cannot delete a category if it currently contains active menu items. |
+
 
 
 
