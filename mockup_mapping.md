@@ -114,11 +114,13 @@ Tài liệu này ánh xạ chi tiết các file giao diện mẫu (HTML mockups)
 
 ### Chương 3.7: Quản Lý Đơn Hàng & Phê Duyệt Đặc Quyền (Order & Approval Management)
 
-#### **3.7.1 F35 - View Local Order History (Lịch sử đơn hàng POS)**
+#### **3.7.1 F35 - View Local Order History (Lịch sử đơn hàng POS & Chi nhánh)**
 * **Mobile App (Cashier POS)**: [order_history.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/cashier_pos_mockups/order_history.html)
+* **Mobile App (Store Manager)**: [order_history.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/store_manager_mockups/order_history.html)
 
 #### **3.7.2 F36 - View Order Detail (Chi tiết đơn hàng cũ)**
 * **Mobile App (Cashier POS)**: [order_detail.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/cashier_pos_mockups/order_detail.html)
+* **Mobile App (Store Manager)**: [order_detail.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/store_manager_mockups/order_detail.html)
 
 #### **3.7.3 & 3.7.4 F37/F38 - Apply Voucher / Points to Order (Áp dụng ưu đãi vào đơn)**
 * **Mobile App (Cashier POS)**:
@@ -133,6 +135,7 @@ Tài liệu này ánh xạ chi tiết các file giao diện mẫu (HTML mockups)
 
 #### **3.7.6 Void & Cancellation Audit Logging (Nhật ký hủy đơn hàng)**
 * **Mobile App (Cashier POS)**: [cancel_override.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/cashier_pos_mockups/cancel_override.html)
+* **Mobile App (Store Manager)**: [cancel_override.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/store_manager_mockups/cancel_override.html)
   *(Hủy đơn hàng trực tiếp kèm lý do và ghi chú để lưu vết kiểm toán).*
 
 ---

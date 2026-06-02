@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hủy Đơn Hàng - Store Console</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 100vh;
+            max-height: 812px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            padding: 24px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #8c766c;
+            display: flex;
+            align-items: center;
+        }
+
+        .title {
+            color: #2c1a11;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+            margin-right: 24px;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .warning-card {
+            background: #fff3e0;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            color: #e65100;
+            font-size: 11.5px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #5c3826;
+            margin-bottom: 6px;
+        }
+
+        .form-select,
+        .form-input {
+            width: 100%;
+            height: 40px;
+            background: #fafafa;
+            border: 1.5px solid #eaddd3;
+            border-radius: 12px;
+            padding: 0 14px;
+            box-sizing: border-box;
+            font-size: 14px;
+            color: #2c1a11;
+            transition: all 0.2s;
+        }
+
+        .form-select:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: #c89d7c;
+            background: #fff;
+        }
+
+        textarea.form-input {
+            height: 80px;
+            padding: 10px 14px;
+            font-family: inherit;
+            resize: none;
+        }
+
+        .readonly-value {
+            background: #faf8f5;
+            border: 1.5px solid #eaddd3;
+            border-radius: 12px;
+            color: #3d2314;
+            padding: 10px 14px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .error-message {
+            background: #fde8eb;
+            border: 1px solid rgba(207, 102, 121, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            color: #cf6679;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            border: 1px solid rgba(46, 125, 50, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            color: #2e7d32;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            height: 48px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #cf6679;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b05161;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #3d2314;
+            border: 1.5px solid #eaddd3;
+            box-sizing: border-box;
+        }
+
+        .btn-secondary:hover {
+            border-color: #c89d7c;
+            background: #fdfaf7;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                background-color: white;
+            }
+
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                padding: 50px 20px 24px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="phone-container">
+        <!-- Main Form -->
+        <div class="content-area">
+            <div class="header">
+                <a href="order_history.html" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </a>
+                <h1 class="title">Hủy Đơn Hàng</h1>
+            </div>
+
+            <div id="errorBox" class="error-message"></div>
+            <div id="successBox" class="success-message"></div>
+
+            <!-- BR-07 Notice -->
+            <div class="warning-card">
+                Cảnh báo: Đơn hàng này đang ở trạng thái pha chế. Nếu xác nhận hủy, nguyên liệu đã sử dụng sẽ tính là
+                hao hụt và KHÔNG hoàn lại kho.
+            </div>
+
+            <form id="cancelForm" onsubmit="handleCancel(event)">
+                <!-- Target Order Info read-only -->
+                <div class="form-group">
+                    <label class="form-label">Thông tin đơn hủy</label>
+                    <div class="readonly-value" id="targetOrderText">
+                        Đơn hàng: #012 <br>
+                        Tổng tiền hoàn trả: 30,000 đ
+                    </div>
+                </div>
+
+                <!-- Reason Selection -->
+                <div class="form-group">
+                    <label class="form-label" for="cancelReason">Lý do hủy đơn *</label>
+                    <select id="cancelReason" class="form-select" required>
+                        <option value="" disabled selected>Chọn lý do...</option>
+                        <option value="out_of_ingredient">Hết nguyên liệu pha chế (Out of Milk...)</option>
+                        <option value="customer_request">Khách hàng yêu cầu đổi/trả món</option>
+                        <option value="wrong_entry">Thu ngân nhập sai thông tin đơn</option>
+                        <option value="spilled_order">Hỏng/đổ sản phẩm khi đang chuẩn bị</option>
+                    </select>
+                </div>
+
+                <!-- Notes Explanation -->
+                <div class="form-group">
+                    <label class="form-label" for="cancelNotes">Ghi chú chi tiết *</label>
+                    <textarea id="cancelNotes" class="form-input" placeholder="Giải trình lý do hủy đơn bắt buộc..."
+                        required></textarea>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="order_history.html" class="btn btn-secondary">HỦY BỎ</a>
+            <button type="submit" form="cancelForm" class="btn btn-primary">XÁC NHẬN HỦY</button>
+        </div>
+    </div>
+
+    <script>
+        let orderId = "012";
+        let orderTotal = 30000;
+        let orderStatus = "PREPARING";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get('id') || "012";
+            orderTotal = parseFloat(urlParams.get('total')) || 30000;
+            orderStatus = urlParams.get('status') || "PREPARING";
+
+            document.getElementById('targetOrderText').innerHTML = `
+                <strong>Đơn hàng:</strong> #${orderId} (Trạng thái: ${orderStatus === 'PREPARING' ? 'Đang pha chế' : 'Chờ lấy hàng'}) <br>
+                <strong>Số tiền hoàn trả:</strong> ${orderTotal.toLocaleString('vi-VN')} VND
+            `;
+        });
+
+        function handleCancel(e) {
+            e.preventDefault();
+            const reasonSelect = document.getElementById('cancelReason');
+            const notes = document.getElementById('cancelNotes').value.trim();
+            const successBox = document.getElementById('successBox');
+            const errorBox = document.getElementById('errorBox');
+
+            if (!reasonSelect.value || !notes) {
+                alert("Vui lòng nhập lý do và giải trình chi tiết!");
+                return;
+            }
+
+            // Disable all form inputs
+            reasonSelect.disabled = true;
+            document.getElementById('cancelNotes').disabled = true;
+            document.querySelector('.btn-primary').disabled = true;
+
+            // Direct success without manager approval
+            successBox.innerHTML = `✅ Hủy đơn hàng thành công! <br><strong>Nhật ký:</strong> Khôi phục Voucher, hoàn trả điểm tích lũy & ghi nhận phí hao hụt nguyên liệu (Theo BR-07 & BR-08).`;
+            successBox.style.display = 'block';
+            errorBox.style.display = 'none';
+
+            setTimeout(() => {
+                window.location.href = "order_history.html";
+            }, 2000);
+        }
+    </script>
+</body>
+
+</html>
