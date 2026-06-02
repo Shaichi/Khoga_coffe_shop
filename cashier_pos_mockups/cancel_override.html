@@ -107,10 +107,20 @@
         }
 
         textarea.form-input {
-            height: 60px;
-            padding: 10px 14px;
+            height: 54px;
+            padding: 8px 14px;
             font-family: inherit;
             resize: none;
+        }
+
+        .readonly-value {
+            background: #faf8f5;
+            border: 1.5px solid #eaddd3;
+            border-radius: 12px;
+            color: #3d2314;
+            padding: 10px 14px;
+            font-size: 12px;
+            line-height: 1.4;
         }
 
         .error-message {
@@ -135,6 +145,118 @@
             font-weight: 500;
             margin-bottom: 15px;
             display: none;
+        }
+
+        /* Remote Approval Waiting Section */
+        .waiting-status-box {
+            background: #fdfaf7;
+            border: 1.5px solid #eaddd3;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .waiting-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #eaddd3;
+            border-top-color: #c89d7c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .waiting-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #8c766c;
+        }
+
+        .countdown-timer {
+            font-size: 13px;
+            color: #e65100;
+            font-weight: 700;
+        }
+
+        .simulator-btn {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid rgba(46, 125, 50, 0.3);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .simulator-btn:hover {
+            background: #c8e6c9;
+        }
+
+        /* OTP Section directly on screen */
+        .otp-section {
+            border-top: 1.5px solid #f2ede8;
+            padding-top: 12px;
+            margin-bottom: 10px;
+        }
+
+        .otp-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .otp-digit {
+            width: 32px;
+            height: 38px;
+            border: 1.5px solid #eaddd3;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c1a11;
+            background: #fafafa;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .numpad-btn {
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid #eaddd3;
+            background: #fdfaf7;
+            font-size: 15px;
+            font-weight: 600;
+            color: #3d2314;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.1s;
+        }
+
+        .numpad-btn:active {
+            background: #eaddd3;
         }
 
         .btn-row {
@@ -179,192 +301,6 @@
             background: #fdfaf7;
         }
 
-        .readonly-value {
-            background: #faf8f5;
-            border: 1.5px solid #eaddd3;
-            border-radius: 12px;
-            color: #3d2314;
-        }
-
-        /* Modal Overlay for Dynamic Approval */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(44, 26, 17, 0.6);
-            backdrop-filter: blur(4px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-container {
-            width: 340px;
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .modal-header {
-            text-align: center;
-            border-bottom: 1.5px solid #f2ede8;
-            padding-bottom: 10px;
-        }
-
-        .modal-title {
-            color: #cf6679;
-            font-size: 15px;
-            font-weight: 700;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .action-summary {
-            background: #fdfaf7;
-            border: 1px dashed #eaddd3;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #5c3826;
-        }
-
-        .waiting-status {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 0;
-        }
-
-        .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid #eaddd3;
-            border-top-color: #c89d7c;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .waiting-text {
-            font-size: 12px;
-            color: #8c766c;
-            line-height: 1.4;
-            margin: 0 10px;
-        }
-
-        .countdown-timer {
-            font-size: 13px;
-            color: #e65100;
-            font-weight: 700;
-        }
-
-        .otp-section {
-            border-top: 1.5px solid #f2ede8;
-            padding-top: 12px;
-        }
-
-        .otp-label {
-            display: block;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: #5c3826;
-            margin-bottom: 8px;
-        }
-
-        .otp-input-container {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .otp-digit {
-            width: 32px;
-            height: 38px;
-            border: 1.5px solid #eaddd3;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: #2c1a11;
-            background: #fafafa;
-        }
-
-        .numpad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .numpad-btn {
-            height: 36px;
-            border-radius: 8px;
-            border: 1px solid #eaddd3;
-            background: #fdfaf7;
-            font-size: 15px;
-            font-weight: 600;
-            color: #3d2314;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background 0.1s;
-        }
-
-        .numpad-btn:active {
-            background: #eaddd3;
-        }
-
-        .simulator-btn {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid rgba(46, 125, 50, 0.3);
-            font-size: 11px;
-            font-weight: 700;
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .simulator-btn:hover {
-            background: #c8e6c9;
-        }
-
-        .btn-cancel-modal {
-            background: #f5f5f5;
-            color: #666;
-            border: 1px solid #ddd;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .btn-cancel-modal:hover {
-            background: #e0e0e0;
-        }
-
         @media (max-width: 480px) {
             body {
                 background-color: white;
@@ -407,12 +343,11 @@
                 hao hụt và KHÔNG hoàn lại kho.
             </div>
 
-            <form id="overrideForm" onsubmit="triggerApprovalModal(event)">
+            <form id="overrideForm" onsubmit="triggerRemoteApproval(event)">
                 <!-- Target Order Info read-only -->
                 <div class="form-group">
                     <label class="form-label">Thông tin đơn hủy</label>
-                    <div class="readonly-value" id="targetOrderText"
-                        style="height:auto; padding: 10px 14px; font-size:12px; line-height:1.4;">
+                    <div class="readonly-value" id="targetOrderText">
                         Đơn hàng: #012 <br>
                         Tổng tiền hoàn trả: 30,000 đ
                     </div>
@@ -437,37 +372,22 @@
                         required></textarea>
                 </div>
             </form>
-        </div>
 
-        <!-- Footer Buttons -->
-        <div class="btn-row">
-            <a href="order_history.html" class="btn btn-secondary">HỦY BỎ</a>
-            <button type="submit" form="overrideForm" class="btn btn-primary">XÁC NHẬN HỦY</button>
-        </div>
-    </div>
-
-    <!-- Dynamic Override Modal Overlay -->
-    <div id="approvalModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h2 class="modal-title">CẦN XÁC THỰC CỦA QUẢN LÝ</h2>
-            </div>
-            
-            <!-- Action Details -->
-            <div class="action-summary" id="modalActionSummary">
-                <!-- Filled dynamically -->
-            </div>
-
-            <!-- Remote Approval Waiting Section -->
-            <div class="waiting-status">
-                <div class="spinner"></div>
-                <div class="waiting-text">Đang gửi yêu cầu phê duyệt từ xa đến điện thoại của Quản lý chi nhánh...</div>
+            <!-- Remote Waiting Status Box (Displayed after sending request) -->
+            <div class="waiting-status-box" id="waitingBox">
+                <div class="waiting-header">
+                    <div class="spinner"></div>
+                    <div class="waiting-title">Đang chờ quản lý duyệt từ xa...</div>
+                </div>
                 <div class="countdown-timer" id="countdownDisplay">Thời gian còn lại: 60 giây</div>
+                <button type="button" class="simulator-btn" onclick="simulateRemoteApproval()">
+                    [ Giả Lập ] Quản Lý Duyệt Từ Xa
+                </button>
             </div>
 
-            <!-- Offline TOTP Section -->
+            <!-- Offline TOTP Section directly outside -->
             <div class="otp-section">
-                <label class="otp-label">Nhập mã OTP 6 số (nếu duyệt ngoại tuyến)</label>
+                <label class="form-label" style="text-align: center;">Mã OTP xác thực của Quản lý (nếu duyệt tại quầy)</label>
                 <div class="otp-input-container">
                     <input type="text" class="otp-digit" id="otp_0" readonly maxlength="1">
                     <input type="text" class="otp-digit" id="otp_1" readonly maxlength="1">
@@ -493,16 +413,12 @@
                     <button type="button" class="numpad-btn" onclick="pressNumpad('OK')" style="font-size: 11px; font-weight: bold; background: #e8f5e9; color: #2e7d32;">OK</button>
                 </div>
             </div>
+        </div>
 
-            <!-- Developer Simulator Helper -->
-            <button type="button" class="simulator-btn" onclick="simulateRemoteApproval()">
-                [ Giả Lập ] Quản Lý Duyệt Từ Xa Thành Công
-            </button>
-
-            <!-- Cancel/Dismiss Request -->
-            <button type="button" class="btn-cancel-modal" onclick="closeApprovalModal()">
-                HỦY YÊU CẦU
-            </button>
+        <!-- Footer Buttons -->
+        <div class="btn-row">
+            <a href="order_history.html" class="btn btn-secondary">HỦY BỎ</a>
+            <button type="submit" form="overrideForm" class="btn btn-primary" id="btnSubmit">GỬI CHO QUẢN LÝ</button>
         </div>
     </div>
 
@@ -527,10 +443,9 @@
             `;
         });
 
-        function triggerApprovalModal(e) {
+        function triggerRemoteApproval(e) {
             e.preventDefault();
             const reasonSelect = document.getElementById('cancelReason');
-            const reasonText = reasonSelect.options[reasonSelect.selectedIndex].text;
             const notes = document.getElementById('cancelNotes').value.trim();
 
             if (!reasonSelect.value || !notes) {
@@ -538,19 +453,14 @@
                 return;
             }
 
-            // Populate Action summary details inside modal
-            document.getElementById('modalActionSummary').innerHTML = `
-                <strong>Tác vụ:</strong> Hủy đơn hàng #${orderId}<br>
-                <strong>Hoàn trả:</strong> ${orderTotal.toLocaleString('vi-VN')} VND<br>
-                <strong>Lý do:</strong> ${reasonText}
-            `;
+            // Disable inputs during active request
+            reasonSelect.disabled = true;
+            document.getElementById('cancelNotes').disabled = true;
+            document.getElementById('btnSubmit').disabled = true;
+            document.getElementById('btnSubmit').style.opacity = '0.5';
 
-            // Clear previous OTP inputs
-            enteredOtp = [];
-            updateOtpFields();
-
-            // Display modal
-            document.getElementById('approvalModal').style.display = 'flex';
+            // Display inline waiting box
+            document.getElementById('waitingBox').style.display = 'flex';
 
             // Start countdown
             countdown = 60;
@@ -565,13 +475,14 @@
                     clearInterval(timerInterval);
                     document.getElementById('countdownDisplay').textContent = `Yêu cầu đã hết hạn!`;
                     document.getElementById('countdownDisplay').style.color = '#cf6679';
+                    
+                    // Re-enable
+                    reasonSelect.disabled = false;
+                    document.getElementById('cancelNotes').disabled = false;
+                    document.getElementById('btnSubmit').disabled = false;
+                    document.getElementById('btnSubmit').style.opacity = '1';
                 }
             }, 1000);
-        }
-
-        function closeApprovalModal() {
-            if (timerInterval) clearInterval(timerInterval);
-            document.getElementById('approvalModal').style.display = 'none';
         }
 
         function pressNumpad(val) {
@@ -611,28 +522,32 @@
 
             // Correct simulation OTP is 123456
             if (otpCode === "123456") {
-                closeApprovalModal();
+                if (timerInterval) clearInterval(timerInterval);
+                document.getElementById('waitingBox').style.display = 'none';
+
                 successBox.innerHTML = `✅ Phê duyệt thành công qua OTP ngoại tuyến! <br><strong>Nhật ký:</strong> Khôi phục Voucher, hoàn trả điểm tích lũy & ghi nhận phí hao hụt nguyên liệu (Theo BR-07 & BR-08).`;
                 successBox.style.display = 'block';
                 errorBox.style.display = 'none';
                 
-                // Disable form actions
+                // Disable all form inputs
                 document.getElementById('cancelReason').disabled = true;
                 document.getElementById('cancelNotes').disabled = true;
-                document.querySelector('.btn-primary').disabled = true;
+                document.getElementById('btnSubmit').disabled = true;
 
                 setTimeout(() => {
                     window.location.href = "order_history.html";
                 }, 2500);
             } else {
-                alert("Mã OTP không chính xác hoặc đã hết hiệu lực. Thử lại với mã '123456' để chạy giả lập.");
+                alert("Mã OTP không chính xác. Thử lại với mã '123456' để chạy giả lập.");
                 enteredOtp = [];
                 updateOtpFields();
             }
         }
 
         function simulateRemoteApproval() {
-            closeApprovalModal();
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('waitingBox').style.display = 'none';
+
             const successBox = document.getElementById('successBox');
             const errorBox = document.getElementById('errorBox');
 
@@ -640,10 +555,10 @@
             successBox.style.display = 'block';
             errorBox.style.display = 'none';
 
-            // Disable form actions
+            // Disable all form inputs
             document.getElementById('cancelReason').disabled = true;
             document.getElementById('cancelNotes').disabled = true;
-            document.querySelector('.btn-primary').disabled = true;
+            document.getElementById('btnSubmit').disabled = true;
 
             setTimeout(() => {
                 window.location.href = "order_history.html";
