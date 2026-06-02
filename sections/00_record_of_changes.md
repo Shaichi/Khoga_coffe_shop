@@ -115,12 +115,9 @@ This section tracks the revision history and modifications made to the Software 
      - 3.10.2 Add Voucher / Promotion
      - 3.10.3 Update/Delete Voucher / Promotion
 
-   - **3.11 Delivery Partner Integration**
-     - 3.11.1 Pending Delivery Order Review
-     - 3.11.2 Sync Menu & Stock Availability
-     - 3.11.3 Update Order Preparation Status
-     - 3.11.4 Delivery Partner Authentication
-     - 3.11.5 Error Handling & Retry Policy
+   - **3.11 Delivery Partner Revenue Integration**
+     - 3.11.1 Consolidated Revenue Integration
+     - 3.11.2 Error Handling & Retry Policy
 
    - **3.12 Dashboard & Reporting**
      - 3.12.1 HQ Revenue Dashboard
@@ -153,4 +150,5 @@ This section tracks the revision history and modifications made to the Software 
      - 5.2.1 Audit Logging
      - 5.2.2 Datetime Formatting
    - 5.3 Application Messages List
+   - 5.4 Feature-Actor Mapping Matrix
 

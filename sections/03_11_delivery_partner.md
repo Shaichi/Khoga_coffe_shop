@@ -4,11 +4,11 @@ This section details specifications for background sales and revenue synchroniza
 
 ---
 
-## 3.11.1 F50 - Consolidated Revenue Integration / UC-11.1 Fetch Delivery Partner Sales
+## 3.11.1 F50 - Consolidated Revenue Integration / UC-67 Fetch Delivery Partner Sales
 
 ### 3.11.1.1 Use Case Description
 
-| Use Case ID | UC-11.1 | Use Case Name | Fetch Delivery Partner Sales |
+| Use Case ID | UC-67 | Use Case Name | Fetch Delivery Partner Sales |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.2 |
 | **Date** | 2026-06-02 | | |

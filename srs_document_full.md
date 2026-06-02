@@ -120,12 +120,9 @@ This section tracks the revision history and modifications made to the Software 
      - 3.10.2 Add Voucher / Promotion
      - 3.10.3 Update/Delete Voucher / Promotion
 
-   - **3.11 Delivery Partner Integration**
-     - 3.11.1 Pending Delivery Order Review
-     - 3.11.2 Sync Menu & Stock Availability
-     - 3.11.3 Update Order Preparation Status
-     - 3.11.4 Delivery Partner Authentication
-     - 3.11.5 Error Handling & Retry Policy
+   - **3.11 Delivery Partner Revenue Integration**
+     - 3.11.1 Consolidated Revenue Integration
+     - 3.11.2 Error Handling & Retry Policy
 
    - **3.12 Dashboard & Reporting**
      - 3.12.1 HQ Revenue Dashboard
@@ -158,6 +155,7 @@ This section tracks the revision history and modifications made to the Software 
      - 5.2.1 Audit Logging
      - 5.2.2 Datetime Formatting
    - 5.3 Application Messages List
+   - 5.4 Feature-Actor Mapping Matrix
 
 
 
@@ -610,6 +608,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
 | **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
 | **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
+| **UC-67** | Delivery Partner Integration | Fetch Delivery Partner Sales | System (automated) | **Description**: Automatically fetches daily consolidated revenue and sales figures from delivery partner APIs.<br>**Main Flow**:<br>1. Nightly scheduler triggers API request.<br>2. Consolidated sales metrics are downloaded and stored. |
 
 
 
@@ -3535,10 +3534,10 @@ All orders follow the state transitions below:
 
 [PREPARING] --(Barista: READY)--------> [READY]
              \--(Manager/Admin cancel)-> [CANCELLED]
-             \--(Barista: REPORT ISSUE)-> [ON_HOLD]
+             \--(Barista: REPORT ISSUE)-> [HOLD]
 
-[ON_HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
-           \--(Manager/Admin cancel)---> [CANCELLED]
+[HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
+            \--(Manager/Admin cancel)---> [CANCELLED]
 
 [READY] -----(Cashier: handover/pickup)-> [COMPLETED]
          \--(Manager/Admin cancel)------> [CANCELLED]
@@ -3549,7 +3548,7 @@ All orders follow the state transitions below:
 
 > **Note on COMPLETED state:** For DINE_IN and TAKE_AWAY orders, the transition from READY to COMPLETED is triggered by the Cashier confirming the order handover (customer pickup). For DELIVERY orders, it is triggered by delivery partner API sales report reconciliation.
 
-> **ON_HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). An ON_HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
+> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
 
 ---
 
@@ -3782,7 +3781,7 @@ All orders follow the state transitions below:
 |---|---|
 | **Actor** | Cashier, Store Manager |
 | **Description** | Voids an active order and processes payment refund. |
-| **Precondition** | **For Cashier:** Order is in `PENDING` state (before kitchen queue entry). **For Store Manager / Admin:** Order is in `PENDING`, `PREPARING`, `ON_HOLD`, or `READY` state (not `COMPLETED`). |
+| **Precondition** | **For Cashier:** Order is in `PENDING` state (before kitchen queue entry). **For Store Manager / Admin:** Order is in `PENDING`, `PREPARING`, `HOLD`, or `READY` state (not `COMPLETED`). |
 | **Trigger** | Cashier clicks Cancel Order. |
 | **Post-Condition** | Order is cancelled, stock rollbacked/marked waste, and refund completed. |
 
@@ -3795,12 +3794,12 @@ All orders follow the state transitions below:
 | 4 | Portal | Displays success notification and returns to order history screen. |
 
 #### Alternative Flows
-##### AT1: Order in PREPARING, ON_HOLD, or READY state
+##### AT1: Order in PREPARING, HOLD, or READY state
 - **Trigger**: Cashier attempts to cancel an order that is no longer in the `PENDING` state.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 1.1 | Portal | Detects that the order is in `PREPARING`, `ON_HOLD`, or `READY` status. |
+| 1.1 | Portal | Detects that the order is in `PREPARING`, `HOLD`, or `READY` status. |
 | 1.2 | Portal | Blocks direct cashier cancellation and displays warning that Manager authorization is required. |
 | 1.3 | Cashier | Taps "Request Manager Cancellation". |
 | 1.4 | Manager | Accesses the branch console, reviews the cancellation request (reason and notes), and taps "Approve Cancellation" (no PIN entry needed, authentication checked by manager account role). |
@@ -3810,8 +3809,8 @@ All orders follow the state transitions below:
 | ID | Rule Description |
 |---|---|
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
+| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `HOLD`, and `READY`). |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
 ---
@@ -4601,11 +4600,11 @@ This section details specifications for background sales and revenue synchroniza
 
 ---
 
-## 3.11.1 F50 - Consolidated Revenue Integration / UC-11.1 Fetch Delivery Partner Sales
+## 3.11.1 F50 - Consolidated Revenue Integration / UC-67 Fetch Delivery Partner Sales
 
 ### 3.11.1.1 Use Case Description
 
-| Use Case ID | UC-11.1 | Use Case Name | Fetch Delivery Partner Sales |
+| Use Case ID | UC-67 | Use Case Name | Fetch Delivery Partner Sales |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.2 |
 | **Date** | 2026-06-02 | | |
@@ -5377,10 +5376,10 @@ This section contains business rules, global requirements, common application me
 | BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
 | BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
+| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `HOLD`, and `READY`). |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
-| BR-09 | **Refund Authorization & Execution**: Refunds for orders in `PENDING` status can be performed directly by the Cashier without manager approval. Refunds for orders in `PREPARING`, `ON_HOLD`, or `READY` statuses require authorization by a Store Manager or Admin. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
+| BR-09 | **Refund Authorization & Execution**: Refunds for orders in `PENDING` status can be performed directly by the Cashier without manager approval. Refunds for orders in `PREPARING`, `HOLD`, or `READY` statuses require authorization by a Store Manager or Admin. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | **Account Suspension**: Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | **Force Password Change Block**: Mandatory password change flag blocks navigation to any other module. User cannot bypass the Force Password Change screen. |

@@ -359,5 +359,6 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
 | **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
 | **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
+| **UC-67** | Delivery Partner Integration | Fetch Delivery Partner Sales | System (automated) | **Description**: Automatically fetches daily consolidated revenue and sales figures from delivery partner APIs.<br>**Main Flow**:<br>1. Nightly scheduler triggers API request.<br>2. Consolidated sales metrics are downloaded and stored. |
 
 
