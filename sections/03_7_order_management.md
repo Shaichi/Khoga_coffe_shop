@@ -1,4 +1,4 @@
-﻿# 3.7 Order Management
+# 3.7 Order Management
 
 This section details specifications for tracking orders, barista queue controls, stickers printing, and cancellation flows.
 
@@ -233,10 +233,20 @@ All orders follow the state transitions below:
 |  Notes:                            |
 |  [ Discarded order, customer refund] |
 |                                    |
-|  Manager Pin Code:                 |
-|  [ ****                          ] |
++------------------------------------+
+|  CẦN XÁC THỰC CỦA QUẢN LÝ        |
+|  (MANAGER APPROVAL REQUIRED)       |
 |                                    |
-|       [ CONFIRM ]   [ CLOSE ]      |
+|  Tác vụ: Hủy đơn hàng #HD-9082    |
+|  Số tiền: 140,000 đ                |
+|                                    |
+|  (o) Đang gửi yêu cầu phê duyệt   |
+|      từ xa... Hết hạn sau: 45s     |
+|                                    |
+|  Hoặc nhập OTP từ Quản lý:        |
+|  [ _ _ _ _ _ _ ]                   |
+|                                    |
+|   [ HỦY YÊU CẦU ]  [ XÁC NHẬN ]  |
 +------------------------------------+
 ```
 
@@ -245,9 +255,10 @@ All orders follow the state transitions below:
 |---|---|---|---|---|---|
 | 1 | Reason | Dropdown | Yes | | Cancellation reason mapping. |
 | 2 | Notes | Text | Yes | 250 | Audit explanation. |
-| 3 | Manager Pin Code | Password | Yes | 4 | Required for cashier overrides or refunds. |
-| 4 | Confirm | Button | | | Confirms cancellation and refunds payment. |
-| 5 | Close | Button | | | Closes modal window. |
+| 3 | Remote Approval Status | Display | — | — | Shows real-time status of remote push approval request sent to Store Manager's mobile app. Includes countdown timer (default 60s). |
+| 4 | OTP Code | Number Input | Conditional | 6 | 6-digit TOTP code from Manager's mobile app (used as offline fallback when remote push is unavailable). |
+| 5 | Confirm | Button | | | Confirms cancellation after manager approval is received or valid OTP is entered. |
+| 6 | Cancel Request | Button | | | Cancels the override request and returns to order screen. |
 
 ### 3.7.5.2 Use Case Description
 
@@ -267,9 +278,17 @@ All orders follow the state transitions below:
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Cashier | Taps Cancel, inputs reason, and requests manager override credentials. |
-| 2 | Manager | Enters PIN code credentials. |
-| 3 | Portal | Updates order state to Cancelled, updates stock counts, and processes refund. |
+| 1 | Cashier | Taps Cancel, inputs reason, and triggers manager override request. |
+| 2 | Portal | Sends push notification to Store Manager's registered mobile device and displays approval-waiting modal with countdown timer on POS. |
+| 3 | Manager | Receives notification on mobile app, reviews override details (action type, order ID, amount), and taps **Approve** or **Reject**. |
+| 4 | Portal | Receives approval response via WebSocket/SSE, unlocks POS screen, and executes the action. |
+
+#### Alternative Flow: Offline TOTP Override
+| Step | Actor | Action |
+|---|---|---|
+| 2a | Portal | If push notification cannot be delivered (offline/timeout), POS displays OTP input field as fallback. |
+| 3a | Manager | Opens mobile app authenticator to retrieve 6-digit TOTP code (RFC 6238, refreshes every 30s). |
+| 4a | Cashier | Enters OTP code on POS screen. Portal validates against Manager's TOTP secret key. On success, action proceeds. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -281,23 +300,117 @@ All orders follow the state transitions below:
 
 ---
 
-## 3.7.6 Manager Override PIN
+## 3.7.6 Dynamic Override & Remote Authentication System
 
-Manager Override PIN is a 4-digit numeric credential used to authorize cashier actions that exceed their standard permissions (e.g., cancelling a non-PENDING order, processing a post-payment refund).
+The Dynamic Override system replaces the legacy static 4-digit Manager Override PIN with a more secure and auditable mechanism combining **Remote Push Approval** (when online) and **Time-based One-Time Password (TOTP)** (as offline fallback).
 
-### Configuration
-- Each Store Manager account has a dedicated Override PIN set by the Admin via the User Account Management panel (UC-12).
-- The Override PIN is stored as a salted hash — it is separate from the account login password.
-- The PIN can be changed by the Admin or by the Store Manager themselves via their profile settings.
+### 3.7.6.1 System Architecture
 
-### Usage at POS
-- When a Cashier initiates a cancel or refund action requiring Manager authorization, the POS screen displays a PIN entry prompt.
-- The Store Manager (or Admin if on-site) enters their 4-digit PIN.
-- The system validates the PIN hash against the manager's stored credential.
-- On success, the action proceeds. On failure after 3 attempts, the override session is locked for 5 minutes.
+The dynamic approval system consists of three components coordinating in real-time:
 
-#### Business Rules
+1. **POS Terminal (Thiết bị Thu ngân):** When a privileged action is triggered (void order, manual discount, cash drawer kick), POS sends a request to Backend and displays an approval-waiting screen (with QR code or OTP input field).
+2. **Manager Mobile App (Ứng dụng Quản lý):** The manager's device receives a push notification (Firebase/APNs) or generates a time-based OTP (TOTP) offline.
+3. **Backend Server (Hệ thống Trung tâm):** Handles notification dispatch, OTP validation, approval state synchronization, and audit logging.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cashier as Thu Ngân (POS)
+    participant POS as POS Terminal
+    participant Server as Backend Server
+    actor Manager as Quản Lý (Mobile App)
+    
+    Cashier->>POS: Initiates privileged action (Void/Refund/Discount)
+    POS->>Server: POST /override-requests (Action, Order ID, Cashier ID)
+    Server-->>POS: Returns Request ID & QR Code
+    Server->>Manager: Push Notification (Override request from POS X)
+    
+    alt Flow 1: Remote Push Approval (Online)
+        Manager->>Manager: Reviews request details on App
+        Manager->>Server: Taps [Approve] or [Reject]
+        Server-->>POS: Syncs approval status via WebSocket/SSE
+        POS->>Cashier: Unlocks screen and executes action
+    else Flow 2: Offline TOTP Override (Fallback)
+        Manager->>Manager: Opens App to retrieve 6-digit OTP (rotates every 30s)
+        Manager->>Cashier: Reads OTP code aloud
+        Cashier->>POS: Enters OTP into input field
+        POS->>Server: Validates OTP (with Manager's TOTP secret key)
+        Server-->>POS: Returns validation result
+        POS->>Cashier: Unlocks screen and executes action
+    end
+```
+
+### 3.7.6.2 Authentication Flows
+
+#### Flow 1: Remote Push Approval — Recommended when Internet is available
+1. Cashier presses the button to trigger a privileged action on the POS.
+2. POS locks the checkout screen, displays status `"Waiting for remote manager approval... (60s)"` with a QR code.
+3. Backend dispatches a Firebase/APNs push notification to the Store Manager's registered mobile device.
+4. Manager taps the notification, reviews action details (e.g., *Void Order #1024 — Trà đào cam sả — 140,000 VND*).
+5. Manager taps **Approve**. The app sends a digitally signed confirmation to the server.
+6. Server records the approval, pushes the status update via WebSocket/SSE to the POS.
+7. POS unlocks the screen, executes the voided order and prints the cancellation receipt.
+
+#### Flow 2: Offline TOTP Override — Fallback when network is unavailable
+1. POS displays the approval-waiting screen with a 6-digit OTP input field.
+2. Manager opens the management app on their phone (pre-configured with a Secret Key during onboarding).
+3. The app generates a 6-digit code that rotates every 30 seconds (RFC 6238 TOTP algorithm).
+4. Manager reads the OTP code to the Cashier for manual entry on the POS.
+5. The POS (or server if online) validates the OTP against the Manager's stored TOTP secret and current time window. If valid, the action proceeds immediately.
+
+### 3.7.6.3 Database Schema Update
+
+To accurately audit override actions and support financial reconciliation, the database adds a `pos_override_log` table linked to existing entities:
+
+```sql
+-- Override audit log table
+CREATE TABLE pos_override_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    branch_id UUID NOT NULL REFERENCES branches(id),
+    pos_session_id UUID NOT NULL,             -- Active POS shift session
+    cashier_id UUID NOT NULL REFERENCES users(id),  -- Requesting cashier
+    approver_id UUID REFERENCES users(id),    -- Approving manager (if remote)
+    action_type VARCHAR(50) NOT NULL,         -- 'VOID_ORDER', 'VOID_ITEM', 'MANUAL_DISCOUNT', 'DRAWER_KICK', 'REFUND'
+    action_details JSONB NOT NULL,            -- Details (order ID, voided items, discount amount)
+    status VARCHAR(20) NOT NULL,              -- 'PENDING', 'APPROVED', 'REJECTED', 'EXPIRED'
+    auth_method VARCHAR(20) NOT NULL,         -- 'REMOTE_APP', 'LOCAL_TOTP'
+    otp_used VARCHAR(6),                      -- OTP code used (if TOTP method)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Performance indexes for reporting queries
+CREATE INDEX idx_override_logs_branch ON pos_override_log(branch_id);
+CREATE INDEX idx_override_logs_created_at ON pos_override_log(created_at);
+```
+
+### 3.7.6.4 Use Cases
+
+#### UC-67: Request POS Privilege Override
+* **Actor:** Cashier
+* **Precondition:** A cart or paid order requires adjustment (void, discount exceeding threshold).
+* **Main Flow:**
+  1. Cashier triggers a privileged action on POS.
+  2. POS validates the Cashier's role and confirms Manager authorization is required.
+  3. POS locks the transaction, creates an override request, and sends it to Backend.
+  4. POS displays the approval-waiting modal with countdown timer and OTP fallback input.
+
+#### UC-68: Approve Privilege Override (Remote / Local)
+* **Actor:** Store Manager
+* **Precondition:** Receives override request notification or is called to the counter by Cashier.
+* **Main Flow (Remote Push):**
+  1. Manager views the notification on mobile app.
+  2. Manager reviews action details (action type, order ID, amount, reason).
+  3. Manager taps **Approve** on the app.
+  4. POS receives the approval signal, unlocks the screen, and completes the action.
+* **Main Flow (Offline TOTP):**
+  1. Manager opens the app to retrieve the current 6-digit TOTP code.
+  2. Manager or Cashier enters the OTP code into the POS input field.
+  3. POS validates the code and executes the action upon success.
+
+### 3.7.6.5 Business Rules
+
 | ID | Rule Description |
 |---|---|
-| BR-51 | **Manager Override PIN**: Each Store Manager account has a 4-digit Override PIN, stored as a salted hash, separate from the login password. The PIN is required for Cashier-initiated cancel/refund actions. Failed PIN entry is limited to 3 consecutive attempts before a 5-minute lockout. |
+| BR-51 | **Dynamic Override Authentication**: Privileged POS actions (void, refund, manual discount, cash drawer kick) require Store Manager authorization via either (a) Remote Push Approval through the Manager's registered mobile device, or (b) a 6-digit TOTP code generated by the Manager's app (RFC 6238, 30-second rotation). The override request expires after 60 seconds if no response is received. Failed OTP validation is limited to 3 consecutive attempts before a 5-minute lockout. All override actions are logged in `pos_override_log` for audit purposes. |
 
