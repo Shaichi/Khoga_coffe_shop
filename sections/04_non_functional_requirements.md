@@ -50,7 +50,7 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
   - **Degraded Mode Operations (Offline POS)**:
     > [!IMPORTANT]
     > If the local store internet connection drops, the POS cashier terminal must continue to function. It will store orders locally in secure local storage.
-    - Offline operations allow cash and card checkouts. Online wallet validation and live VietQR transfers are suspended.
+    - Offline operations allow cash and card checkouts. Online ShopeeFood validation and live VietQR transfers are suspended.
     - Loyalty points redemptions and online voucher verifications are suspended; only preloaded local vouchers can be verified.
     - Synchronizing queued offline orders to the cloud database must trigger automatically within **60 seconds** after internet connection recovery.
 - **Mean Time Between Failures (MTBF)**:

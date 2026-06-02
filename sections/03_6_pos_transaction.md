@@ -1,4 +1,4 @@
-﻿# 3.6 POS Transaction
+# 3.6 POS Transaction
 
 This section details specifications for cashier POS checkout sessions, order processing, and cash reconciliation.
 
@@ -347,7 +347,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |                                    |
 |  Payment Method:                   |
 |  ( ) Cash    ( ) Card              |
-|  (x) VietQR  ( ) E-Wallet          |
+|  (x) VietQR  ( ) ShopeeFood        |
 |                                    |
 |  +------------------------------+  |
 |  |                              |  |
@@ -363,7 +363,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Table 3-34: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `E_WALLET`. |
+| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
 | 2 | Cash Received | Text | Yes | 15 | Mandatory only for Cash method to compute change. |
 | 3 | Cancel | Button | | | Cancels active payment flow and returns to cart. |
 | 4 | Retry QR | Button | | | Regenerates dynamic payment code request. |

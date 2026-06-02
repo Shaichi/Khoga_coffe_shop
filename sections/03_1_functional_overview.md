@@ -397,7 +397,7 @@ Sales transactions.
 | 9 | discount | | DECIMAL(12,2) | Yes | Total discount amount subtracted. |
 | 10 | tax_amount | | DECIMAL(12,2) | Yes | The VAT amount calculated for this order based on global config. |
 | 11 | total | | DECIMAL(12,2) | Yes | Net payable amount. |
-| 12 | payment_method | | Enum | Yes | Payment method: `CASH`, `CARD`, `VIETQR`, `E_WALLET`, `DELIVERY_PLATFORM`. |
+| 12 | payment_method | | Enum | Yes | Payment method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
 | 13 | payment_status | | Enum | Yes | Payment status: `PENDING`, `COMPLETED`, `FAILED`, `REFUNDED`. |
 | 14 | order_status | | Enum | Yes | Fulfillment status: `PENDING`, `PREPARING`, `HOLD`, `READY`, `COMPLETED`, `CANCELLED`. |
 | 15 | created_at | | TIMESTAMP | Yes | Date and time the order was placed. |

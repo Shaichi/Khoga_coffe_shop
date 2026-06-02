@@ -1017,7 +1017,7 @@ Sales transactions.
 | 9 | discount | | DECIMAL(12,2) | Yes | Total discount amount subtracted. |
 | 10 | tax_amount | | DECIMAL(12,2) | Yes | The VAT amount calculated for this order based on global config. |
 | 11 | total | | DECIMAL(12,2) | Yes | Net payable amount. |
-| 12 | payment_method | | Enum | Yes | Payment method: `CASH`, `CARD`, `VIETQR`, `E_WALLET`, `DELIVERY_PLATFORM`. |
+| 12 | payment_method | | Enum | Yes | Payment method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
 | 13 | payment_status | | Enum | Yes | Payment status: `PENDING`, `COMPLETED`, `FAILED`, `REFUNDED`. |
 | 14 | order_status | | Enum | Yes | Fulfillment status: `PENDING`, `PREPARING`, `HOLD`, `READY`, `COMPLETED`, `CANCELLED`. |
 | 15 | created_at | | TIMESTAMP | Yes | Date and time the order was placed. |
@@ -3312,7 +3312,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |                                    |
 |  Payment Method:                   |
 |  ( ) Cash    ( ) Card              |
-|  (x) VietQR  ( ) E-Wallet          |
+|  (x) VietQR  ( ) ShopeeFood        |
 |                                    |
 |  +------------------------------+  |
 |  |                              |  |
@@ -3328,7 +3328,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Table 3-34: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `E_WALLET`. |
+| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
 | 2 | Cash Received | Text | Yes | 15 | Mandatory only for Cash method to compute change. |
 | 3 | Cancel | Button | | | Cancels active payment flow and returns to cart. |
 | 4 | Retry QR | Button | | | Regenerates dynamic payment code request. |
@@ -5348,7 +5348,7 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
   - **Degraded Mode Operations (Offline POS)**:
     > [!IMPORTANT]
     > If the local store internet connection drops, the POS cashier terminal must continue to function. It will store orders locally in secure local storage.
-    - Offline operations allow cash and card checkouts. Online wallet validation and live VietQR transfers are suspended.
+    - Offline operations allow cash and card checkouts. Online ShopeeFood validation and live VietQR transfers are suspended.
     - Loyalty points redemptions and online voucher verifications are suspended; only preloaded local vouchers can be verified.
     - Synchronizing queued offline orders to the cloud database must trigger automatically within **60 seconds** after internet connection recovery.
 - **Mean Time Between Failures (MTBF)**:
@@ -5440,7 +5440,7 @@ This section contains business rules, global requirements, common application me
 | BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
 | BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state (before stock deduction by UC-62). If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
-| BR-09 | **Refund Authorization & Execution**: Cash refunds are paid directly from the cash drawer. Card/Wallet payments invoke the payment gateway's refund API. All refunds must be authorized using **Store Manager** or **Admin** credentials at the POS, within **7 days** of the original purchase. |
+| BR-09 | **Refund Authorization & Execution**: Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must be authorized using **Store Manager** or **Admin** credentials at the POS, within **7 days** of the original purchase. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | **Account Suspension**: Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | **Force Password Change Block**: Mandatory password change flag blocks navigation to any other module. User cannot bypass the Force Password Change screen. |
