@@ -34,8 +34,11 @@
         .status-ontime { background: #e8f5e9; color: #2e7d32; }
         .status-late { background: #fff3e0; color: #e65100; }
         .status-absent { background: #fde8eb; color: #cf6679; }
+        .status-substituted { background: #efebe9; color: #5d4037; }
+        .status-swap { background: #e1f5fe; color: #0288d1; }
         
         .lateness-txt { font-size: 11px; font-weight: 600; color: #cf6679; }
+        .swap-txt { font-size: 11px; font-weight: 600; color: #0288d1; }
 
         .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; width: 100%; margin-top: 15px; }
         .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; box-sizing: border-box; }
@@ -73,19 +76,33 @@
 
         <!-- Attendance Logs List -->
         <div class="logs-list" id="logsListContainer">
-            <!-- Staff 1 -->
-            <div class="attendance-item" data-status="LATE">
+            <!-- Staff 1 (Original scheduled person but swapped) -->
+            <div class="attendance-item" data-status="ABSENT">
                 <div class="staff-details">
                     <div class="staff-name">Nguyễn Văn A</div>
-                    <div class="staff-role">Thu Ngân - Ca Sáng</div>
-                    <div class="time-detail">
-                        Vào: 06:15 AM <br>
-                        Ra: 02:02 PM
+                    <div class="staff-role">Thu Ngân - Ca Sáng (Theo lịch)</div>
+                    <div class="time-detail" style="color: #8c766c;">
+                        Vắng mặt - Được làm thay bởi Trần Văn B
                     </div>
                 </div>
                 <div class="status-col">
-                    <span class="status-badge status-late">Đi Muộn</span>
-                    <span class="lateness-txt">Muộn 15 phút</span>
+                    <span class="status-badge status-substituted">Được Làm Thay</span>
+                </div>
+            </div>
+
+            <!-- Staff 1.5 (The person who actually did the shift swap) -->
+            <div class="attendance-item" data-status="ON_TIME">
+                <div class="staff-details">
+                    <div class="staff-name">Trần Văn B</div>
+                    <div class="staff-role">Thu Ngân - Ca Sáng (Đi làm thay)</div>
+                    <div class="time-detail">
+                        Vào: 05:55 AM <br>
+                        Ra: 02:00 PM
+                    </div>
+                </div>
+                <div class="status-col">
+                    <span class="status-badge status-swap">Làm Thay Ca</span>
+                    <span class="swap-txt">Thay cho Nguyễn Văn A</span>
                 </div>
             </div>
 
