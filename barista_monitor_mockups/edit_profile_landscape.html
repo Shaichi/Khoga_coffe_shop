@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh Sửa Thông Tin - Barista Monitor</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        
+        .tablet-container { width: 736px; height: 414px; background: white; border: 1px solid #ddd; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; position: relative; }
+        
+        /* Header */
+        .queue-header { background: #3d2314; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .queue-title { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+        .queue-meta { font-size: 12px; color: #c89d7c; font-weight: 600; }
+        .exit-btn { text-decoration: none; color: #c89d7c; font-size: 12px; font-weight: 600; }
+
+        /* Profile Layout */
+        .profile-layout { display: flex; flex-grow: 1; background: #fdfaf7; overflow: hidden; }
+        
+        /* Left Column: Avatar & Quick Info */
+        .profile-side { width: 35%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1.5px solid #eaddd3; padding: 20px; box-sizing: border-box; }
+        .avatar { width: 90px; height: 90px; background: #eaddd3; color: #5c3826; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: 700; border: 3px solid #c89d7c; margin-bottom: 15px; }
+        .profile-name { font-size: 18px; font-weight: 700; color: #2c1a11; text-align: center; margin-bottom: 5px; }
+        .profile-role { font-size: 11px; background: #3d2314; color: white; padding: 3px 8px; border-radius: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Right Column: Edit Fields & Buttons */
+        .profile-details { width: 65%; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+        .details-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 11px; color: #8c766c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        input { height: 38px; padding: 8px 12px; border: 1px solid #e5dbcf; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #fdfdfd; transition: all 0.2s; }
+        input:focus { outline: none; border-color: #c89d7c; background-color: #fff; }
+        
+        .actions-row { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; height: 38px; background: #3d2314; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #5c3826; }
+        .btn-cancel { background: transparent; color: #5c3826; border: 1.5px solid #eaddd3; text-decoration: none; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
+        .btn-cancel:hover { background: #fdfaf7; border-color: #c89d7c; }
+
+        @media (max-width: 760px) {
+            body { background: #fdfaf7; }
+            .tablet-container { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+            .profile-layout { flex-direction: column; overflow-y: auto; }
+            .profile-side { width: 100%; border-right: none; border-bottom: 1.5px solid #eaddd3; padding: 30px 20px; }
+            .profile-details { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tablet-container">
+        <!-- Header -->
+        <div class="queue-header">
+            <h1 class="queue-title">Chỉnh Sửa Thông Tin Cá Nhân</h1>
+            <div class="queue-meta">Chi nhánh: Nguyễn Du | Quầy: BAR-01</div>
+            <a href="view_profile_landscape.html" class="exit-btn">Hủy bỏ</a>
+        </div>
+
+        <!-- Profile Layout -->
+        <div class="profile-layout">
+            <div class="profile-side">
+                <div class="avatar">PC</div>
+                <div class="profile-name">Trần Minh Pha Chế</div>
+                <span class="profile-role">BARISTA</span>
+            </div>
+            
+            <div class="profile-details">
+                <div class="details-grid">
+                    <div class="form-group">
+                        <label>Email liên hệ</label>
+                        <input type="email" id="email" placeholder="example@coffeeshop.com" value="barista01@espressomail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="phone" placeholder="Số điện thoại" value="0912345678">
+                    </div>
+                </div>
+                
+                <div class="actions-row">
+                    <a href="view_profile_landscape.html" class="btn-cancel" style="flex: 1; height: 38px; border-radius: 8px; font-size: 13px; font-weight: 600;">HỦY BỎ</a>
+                    <button onclick="handleSaveProfile()">LƯU THAY ĐỔI</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            if (localStorage.getItem('barista_email')) {
+                document.getElementById('email').value = localStorage.getItem('barista_email');
+            }
+            if (localStorage.getItem('barista_phone')) {
+                document.getElementById('phone').value = localStorage.getItem('barista_phone');
+            }
+        }
+        
+        function handleSaveProfile() {
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            
+            if (!email.includes('@')) {
+                alert("Vui lòng nhập đúng định dạng email.");
+                return;
+            }
+            if (phone.trim() === "") {
+                alert("Số điện thoại không được bỏ trống.");
+                return;
+            }
+
+            localStorage.setItem('barista_email', email);
+            localStorage.setItem('barista_phone', phone);
+            
+            alert("Cập nhật thông tin thành công!");
+            window.location.href = "view_profile_landscape.html";
+        }
+    </script>
+</body>
+</html>

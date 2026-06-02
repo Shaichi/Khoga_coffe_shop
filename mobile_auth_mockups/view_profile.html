@@ -63,14 +63,18 @@
         </div>
 
         <div>
-            <button class="btn-outline" onclick="location.href='edit_profile.html'">Chỉnh sửa thông tin</button>
-            <button class="btn-outline" onclick="location.href='change_password.html'">Đổi mật khẩu</button>
+            <button class="btn-outline" onclick="goEdit()">Chỉnh sửa thông tin</button>
+            <button class="btn-outline" onclick="goChangePass()">Đổi mật khẩu</button>
+            <button id="back-btn" class="btn-outline" style="display: none; border-color: #c89d7c; color: #5c3826;" onclick="handleBack()">Quay lại Dashboard</button>
             <button class="btn-danger" onclick="handleLogout()">Đăng xuất</button>
         </div>
     </div>
 
     <script>
-        // Load customized profile data from localStorage if exists
+        function getParams() {
+            return new URLSearchParams(window.location.search);
+        }
+        
         window.onload = function() {
             if (localStorage.getItem('staff_email')) {
                 document.getElementById('disp-email').innerText = localStorage.getItem('staff_email');
@@ -78,7 +82,39 @@
             if (localStorage.getItem('staff_phone')) {
                 document.getElementById('disp-phone').innerText = localStorage.getItem('staff_phone');
             }
+            
+            const params = getParams();
+            const role = params.get('role');
+            if (role) {
+                const backBtn = document.getElementById('back-btn');
+                backBtn.style.display = 'flex';
+                if (role === 'CASHIER') {
+                    backBtn.innerText = 'Quay lại POS';
+                } else if (role === 'STORE_MANAGER') {
+                    backBtn.innerText = 'Quay lại Dashboard';
+                }
+            }
         }
+        
+        function goEdit() {
+            window.location.href = 'edit_profile.html?' + getParams().toString();
+        }
+        
+        function goChangePass() {
+            window.location.href = 'change_password.html?' + getParams().toString();
+        }
+        
+        function handleBack() {
+            const role = getParams().get('role');
+            if (role === 'CASHIER') {
+                window.location.href = '../cashier_pos_mockups/checkout.html';
+            } else if (role === 'STORE_MANAGER') {
+                window.location.href = '../store_manager_mockups/dashboard.html';
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
         function handleLogout() {
             if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
                 window.location.href = "login.html";

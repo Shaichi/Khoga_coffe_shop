@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - Màn Hình Pha Chế (Barista)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        
+        /* Landscape container (simulate tablet / horizontal phone) */
+        .tablet-container { width: 736px; height: 414px; background: white; border: 1px solid #ddd; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; box-sizing: border-box; overflow: hidden; }
+        
+        /* Split view */
+        .brand-side { width: 45%; background: #3d2314; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; box-sizing: border-box; text-align: center; }
+        .form-side { width: 55%; padding: 40px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
+        
+        .brand-logo { font-size: 32px; font-weight: 800; letter-spacing: 1px; color: #fff; margin-bottom: 10px; }
+        .brand-sub { font-size: 13px; color: #c89d7c; text-transform: uppercase; font-weight: 600; letter-spacing: 2px; margin-bottom: 20px; }
+        .brand-desc { font-size: 12px; color: #eaddd3; line-height: 1.5; font-weight: 300; }
+        
+        h2 { color: #2c1a11; font-size: 22px; font-weight: 700; margin: 0 0 5px 0; }
+        .subtitle { color: #8c766c; font-size: 13px; margin: 0 0 25px 0; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #5c3826; text-transform: uppercase; letter-spacing: 0.5px; }
+        input { width: 100%; height: 42px; padding: 10px 12px; border: 1px solid #e5dbcf; border-radius: 10px; box-sizing: border-box; font-size: 15px; background-color: #fdfdfd; transition: all 0.2s; }
+        input:focus { outline: none; border-color: #c89d7c; background-color: #fff; }
+        
+        .actions { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; }
+        button { height: 44px; padding: 0 25px; background: #3d2314; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #5c3826; }
+        button:active { background: #2c1a11; }
+        
+        a { color: #c89d7c; text-decoration: none; font-size: 13px; font-weight: 600; transition: color 0.2s; }
+        a:hover { color: #5c3826; }
+        
+        .error-msg { color: #cf6679; font-size: 12px; font-weight: 500; margin-bottom: 15px; padding: 8px 12px; background: rgba(207,102,121,0.08); border-radius: 8px; display: none; }
+        
+        @media (max-width: 760px) {
+            body { background: #fdfaf7; }
+            .tablet-container { width: 100vw; height: 100vh; border-radius: 0; border: none; flex-direction: column; }
+            .brand-side { width: 100%; height: 35%; padding: 20px; }
+            .form-side { width: 100%; height: 65%; padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tablet-container">
+        <!-- Left Side: Branding -->
+        <div class="brand-side">
+            <div class="brand-logo">EspressoHQ</div>
+            <div class="brand-sub">Barista Portal</div>
+            <p class="brand-desc">Hệ thống giám sát và quản lý pha chế thời gian thực tại cửa hàng.</p>
+        </div>
+        
+        <!-- Right Side: Login Form -->
+        <div class="form-side">
+            <h2>Xin chào, Barista!</h2>
+            <p class="subtitle">Đăng nhập vào quầy của bạn để nhận đơn pha chế.</p>
+            
+            <div class="error-msg" id="error-alert">Tên đăng nhập hoặc mật khẩu không chính xác.</div>
+            
+            <div class="form-group">
+                <label>Tên đăng nhập</label>
+                <input type="text" id="username" placeholder="Nhập username" value="barista01">
+            </div>
+            
+            <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="password" placeholder="Nhập mật khẩu" value="12345678">
+            </div>
+            
+            <div class="actions">
+                <a href="forgot_password_landscape.html">Quên mật khẩu?</a>
+                <button onclick="handleLogin()">ĐĂNG NHẬP</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const username = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const alertBox = document.getElementById('error-alert');
+            
+            alertBox.style.display = 'none';
+
+            if (username === 'barista01' && pass === '12345678') {
+                alert("Đăng nhập vai trò Barista thành công!");
+                window.location.href = "barista_queue.html";
+            } else {
+                alertBox.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

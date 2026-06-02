@@ -45,8 +45,9 @@
     <div class="wrapper">
         <div class="sidebar">
             <h2>EspressoHQ Admin</h2>
-            <div class="sidebar-menu">
+                                    <div class="sidebar-menu">
                 <a href="dashboard_web.html">Trang chủ</a>
+                <a href="branches_web.html">Chi nhánh</a>
                 <a href="users_web.html">Nhân sự</a>
                 <a href="menu_web.html" class="active">Thực đơn</a>
                 <a href="vouchers_web.html">Vouchers</a>
@@ -107,32 +108,35 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            <tr id="row-espresso">
                                 <td>Espresso</td>
                                 <td>Cà Phê</td>
                                 <td>35,000 VND</td>
-                                <td><span style="color:#2e7d32;font-weight:600;font-size:13px">● Đang bán</span></td>
+                                <td class="status-cell"><span style="color:#2e7d32;font-weight:600;font-size:13px">● Đang bán</span></td>
                                 <td>
+                                    <a href="#" class="action-link toggle-btn" onclick="toggleStatus('espresso'); return false;" style="color:#d84315;">Tạm ngưng</a>
                                     <a href="menu_edit_web.html" class="action-link">Sửa</a>
                                     <a href="delete_confirm_modal.html" class="action-link" style="color:#c62828;">Xóa</a>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr id="row-tradao">
                                 <td>Trà đào cam sả</td>
                                 <td>Trà</td>
                                 <td>45,000 VND</td>
-                                <td><span style="color:#2e7d32;font-weight:600;font-size:13px">● Đang bán</span></td>
+                                <td class="status-cell"><span style="color:#2e7d32;font-weight:600;font-size:13px">● Đang bán</span></td>
                                 <td>
+                                    <a href="#" class="action-link toggle-btn" onclick="toggleStatus('tradao'); return false;" style="color:#d84315;">Tạm ngưng</a>
                                     <a href="menu_edit_web.html" class="action-link">Sửa</a>
                                     <a href="delete_confirm_modal.html" class="action-link" style="color:#c62828;">Xóa</a>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr id="row-latte">
                                 <td>Latte (Oat Milk)</td>
                                 <td>Cà Phê</td>
                                 <td>55,000 VND</td>
-                                <td><span style="color:#8c766c;font-weight:600;font-size:13px">○ Tạm ngưng</span></td>
+                                <td class="status-cell"><span style="color:#8c766c;font-weight:600;font-size:13px">○ Tạm ngưng</span></td>
                                 <td>
+                                    <a href="#" class="action-link toggle-btn" onclick="toggleStatus('latte'); return false;" style="color:#2e7d32;">Tiếp tục</a>
                                     <a href="menu_edit_web.html" class="action-link">Sửa</a>
                                     <a href="delete_confirm_modal.html" class="action-link" style="color:#c62828;">Xóa</a>
                                 </td>
@@ -143,5 +147,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleStatus(itemId) {
+            const row = document.getElementById('row-' + itemId);
+            const statusCell = row.querySelector('.status-cell');
+            const toggleBtn = row.querySelector('.toggle-btn');
+            
+            if (toggleBtn.textContent === 'Tạm ngưng') {
+                statusCell.innerHTML = '<span style="color:#8c766c;font-weight:600;font-size:13px">○ Tạm ngưng</span>';
+                toggleBtn.textContent = 'Tiếp tục';
+                toggleBtn.style.color = '#2e7d32';
+            } else {
+                statusCell.innerHTML = '<span style="color:#2e7d32;font-weight:600;font-size:13px">● Đang bán</span>';
+                toggleBtn.textContent = 'Tạm ngưng';
+                toggleBtn.style.color = '#d84315';
+            }
+        }
+    </script>
 </body>
 </html>

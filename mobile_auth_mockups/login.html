@@ -54,11 +54,26 @@
 
     <script>
         function handleLogin() {
+            const username = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
-            if (pass !== "12345678" && pass !== "admin123") {
-                document.getElementById('error-alert').style.display = 'block';
+            const alertBox = document.getElementById('error-alert');
+            
+            alertBox.style.display = 'none';
+
+            if (username === 'admin01' && pass === 'admin123') {
+                alert("Đăng nhập vai trò Admin HQ thành công!");
+                window.location.href = "../admin_hq_mockups/dashboard_web.html";
+            } else if (username === 'manager01' && pass === '12345678') {
+                alert("Đăng nhập vai trò Store Manager thành công!");
+                window.location.href = "../store_manager_mockups/dashboard.html";
+            } else if (username === 'cashier01' && pass === '12345678') {
+                alert("Đăng nhập vai trò Thu Ngân (POS) thành công!");
+                window.location.href = "../cashier_pos_mockups/open_shift.html";
+            } else if (username === 'barista01' && pass === '12345678') {
+                alert("Đăng nhập vai trò Pha Chế (Barista) thành công!");
+                window.location.href = "../barista_monitor_mockups/barista_queue.html";
             } else {
-                alert("Đăng nhập thành công!");
+                alertBox.style.display = 'block';
             }
         }
     </script>
