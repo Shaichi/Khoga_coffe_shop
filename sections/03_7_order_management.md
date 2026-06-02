@@ -80,7 +80,7 @@ All orders follow the state transitions below:
 
 ---
 
-## 3.7.2 F36 - View Order Detail / UC-54b View Order Detail
+## 3.7.2 F36 - View Order Detail / UC-73 View Order Detail
 
 ### 3.7.2.1 Screen Mock-up (Mobile Portrait)
 ```
@@ -111,7 +111,7 @@ All orders follow the state transitions below:
 
 ### 3.7.2.2 Use Case Description
 
-| Use Case ID | UC-54b | Use Case Name | View Order Detail |
+| Use Case ID | UC-73 | Use Case Name | View Order Detail |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |

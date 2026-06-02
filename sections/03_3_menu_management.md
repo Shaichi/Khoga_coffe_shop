@@ -89,7 +89,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 ### 3.3.2.2 Use Case Description
 
-| Use Case ID | UC-15a | Use Case Name | View Menu Item Detail |
+| Use Case ID | UC-68 | Use Case Name | View Menu Item Detail |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |
@@ -263,7 +263,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 ---
 
-## 3.3.5 F17 - Delete Menu Item / UC-19a Delete Menu Item
+## 3.3.5 F17 - Delete Menu Item / UC-72 Delete Menu Item
 
 ### 3.3.5.1 Screen Mock-up (Desktop Landscape Modal)
 ```
@@ -286,7 +286,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 ### 3.3.5.2 Use Case Description
 
-| Use Case ID | UC-19a | Use Case Name | Delete Menu Item |
+| Use Case ID | UC-72 | Use Case Name | Delete Menu Item |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |
@@ -341,7 +341,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 ### 3.3.6.2 Use Case Description
 
-| Use Case ID | UC-18a | Use Case Name | Manage Toppings & Options |
+| Use Case ID | UC-71 | Use Case Name | Manage Toppings & Options |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |

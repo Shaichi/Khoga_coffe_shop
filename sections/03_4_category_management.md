@@ -1,4 +1,4 @@
-﻿# 3.4 Category Management
+# 3.4 Category Management
 
 This section details specifications for managing product categories.
 
@@ -31,7 +31,7 @@ This section details specifications for managing product categories.
 
 ### 3.4.1.2 Use Case Description
 
-| Use Case ID | UC-15b | Use Case Name | View Categories List |
+| Use Case ID | UC-69 | Use Case Name | View Categories List |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |
@@ -187,7 +187,7 @@ This section details specifications for managing product categories.
 
 ### 3.4.4.2 Use Case Description
 
-| Use Case ID | UC-17a | Use Case Name | Delete Category |
+| Use Case ID | UC-70 | Use Case Name | Delete Category |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |
