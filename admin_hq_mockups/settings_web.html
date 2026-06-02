@@ -72,6 +72,20 @@
                     <button class="btn" onclick="saveSettings()">LƯU CẤU HÌNH</button>
                 </div>
 
+                <!-- Branch Management Section -->
+                <div class="form-container" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; box-sizing: border-box;">
+                    <div>
+                        <h2>Quản Lý Hệ Thống Chi Nhánh</h2>
+                        <p style="font-size: 14px; color: #5c3826; line-height: 1.5; margin: 0 0 15px 0;">
+                            Quản lý vòng đời hoạt động của các chi nhánh cửa hàng. Thêm mới chi nhánh, cập nhật thông tin địa chỉ, số điện thoại hoặc tạm đóng cửa hàng khi cần thiết.
+                        </p>
+                        <p style="font-size: 13px; color: #8c766c; margin: 0 0 10px 0;">
+                            * Giới hạn tối đa: 5 chi nhánh hoạt động (BR-54).
+                        </p>
+                    </div>
+                    <a href="branches_web.html" class="btn" style="text-align: center; text-decoration: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; margin-top: auto;">ĐI TỚI QUẢN LÝ CHI NHÁNH</a>
+                </div>
+
                 <!-- Security Section -->
                 <div class="form-container">
                     <h2>Đổi Mật Khẩu Quản Trị</h2>
@@ -90,9 +104,9 @@
                     <button class="btn" onclick="savePassword()">CẬP NHẬT MẬT KHẨU</button>
                 </div>
 
-                <!-- Manager Override PIN Section -->
+                <!-- Admin Override PIN Section -->
                 <div class="form-container">
-                    <h2>Đổi Mã PIN Xác Thực (Store Manager)</h2>
+                    <h2>Đổi Mã PIN Xác Thực Quản Trị (Admin PIN)</h2>
                     <div class="form-group">
                         <label>Mã PIN hiện tại</label>
                         <input type="password" id="oldpin" placeholder="Mã PIN hiện tại (4 chữ số)" maxlength="4">
@@ -158,7 +172,7 @@
                 return;
             }
 
-            alert("Đổi mã PIN xác thực (Override PIN) thành công!");
+            alert("Đổi mã PIN xác thực (Admin PIN) thành công!");
             document.getElementById('oldpin').value = "";
             document.getElementById('newpin').value = "";
             document.getElementById('confirmpin').value = "";

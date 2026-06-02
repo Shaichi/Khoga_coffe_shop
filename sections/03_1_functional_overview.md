@@ -49,6 +49,9 @@ graph LR
     AdminHome --> HQReports[23. HQ Business Reports Screen]
     
     AdminHome --> CentralConfig[24. Central System Settings Screen]
+    CentralConfig --> BranchMgmt[45. Branch Management List Screen]
+    BranchMgmt --> AddBranch[46. Add Branch Form]
+    BranchMgmt --> EditBranch[47. Edit / Deactivate Branch Screen]
 ```
 
 ### 3. Store Manager Console Screen Flow
@@ -136,6 +139,9 @@ The system comprises the following screens across its user portals:
 | | | Store Revenue & Order Reports Screen | Local branch dashboard showing sales, shift closures, and cash reports. |
 | 7 | System Configuration | Central System Settings Screen | Central configuration screen for tax rates and brand settings. |
 | | | Branch Local Settings Screen | Local settings screen for branch hardware and POS registers. |
+| | | Branch Management List Screen | Lists all store branches with status indicators for Admin management. |
+| | | Add Branch Form | Form for Admin to register a new store branch with name, address, and phone. |
+| | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
 | 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
 | | | Stock List & History View Screen | Displays branch inventory quantities and historical ledger logs. |
 | | | Stock Import Form Screen | Form to record supplier inventory imports. |
@@ -158,7 +164,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 44 screens:
+The table below specifies access control policies across all 47 screens:
 
 | Screen Name | Admin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|
@@ -208,6 +214,9 @@ The table below specifies access control policies across all 44 screens:
 | 42. Shift Reconciliation Close Shift | No | No | **Yes** | No |
 | 43. Barista Queue Monitor | No | Yes | Yes | **Yes** |
 | 44. Report Issue & Hold Order | No | No | No | **Yes** |
+| 45. Branch Management List | **Yes** | No | No | No |
+| 46. Add Branch Form | **Yes** | No | No | No |
+| 47. Edit / Deactivate Branch | **Yes** | No | No | No |
 
 ---
 

@@ -180,5 +180,231 @@ This section details specifications for system settings, store branding profiles
 | BR-47 | Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
 | BR-48 | Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 
+---
+
+## 3.13.3 Branch Management
+
+This section specifies the branch lifecycle management functionality available exclusively to the HQ Admin. It covers viewing, adding, and updating/deactivating store branches.
+
+> [!IMPORTANT]
+> Branch Management is an Admin-only function for managing the store lifecycle (create, view, deactivate). It is distinct from **UC-42 Branch Local Settings**, which allows Store Managers to configure operational parameters (timezone, hardware, logo) for their assigned branch.
+
+---
+
+### 3.13.3.1 F55 - View Branch List / UC-63 View Branch List
+
+#### Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Branch Management                                             |
++---------------------------------------------------------------------------------+
+|  Search: [ Nguyen Du            ]         Status: [ All Statuses ] [v]          |
+|                                                                                 |
+|  +-----+------------------------+--------------------------+----------+-------+ |
+|  | ID  | Branch Name            | Address                  | Phone    | Status| |
+|  +-----+------------------------+--------------------------+----------+-------+ |
+|  | 001 | Coffee Zone - Dist 1   | 123 Nguyen Hue, D1       | 02839300 | Active| |
+|  | 002 | Coffee Zone - Dist 7   | 45 Nguyen Thi Thap, D7   | 02839301 | Active| |
+|  | 003 | Coffee Zone - Thu Duc  | 78 Vo Van Ngan, Thu Duc   | 02839302 | Closed| |
+|  +-----+------------------------+--------------------------+----------+-------+ |
+|  Active: 2 / 5 Max                                        [ + Add Branch ]     |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-56: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Search | Text | No | 100 | Filter branches by name or address. |
+| 2 | Status | Dropdown | No | | Filter by status: `Active`, `Inactive`, `All`. |
+| 3 | Branch Grid | Grid | | | Displays branch listings including ID, name, address, phone, and status. |
+| 4 | Active Counter | Label | | | Shows `Active: X / 5 Max` to indicate capacity utilization. |
+| 5 | Add Branch | Button | | | Navigates to Add Branch form. Disabled when 5 active branches already exist. |
+
+#### Use Case Description
+
+| Use Case ID | UC-63 | Use Case Name | View Branch List |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Admin |
+| **Description** | Displays all registered store branches and their operational statuses. |
+| **Precondition** | Admin is logged in. |
+| **Trigger** | Admin opens the Central System Settings Screen and clicks the "Quản lý Chi nhánh" button. |
+| **Post-Condition** | Complete list of branches with statuses is displayed. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Admin | Navigates to Branch Management. |
+| 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. maximum capacity (5). |
+| 3 | Admin | Optionally filters by status or searches by keyword. |
+
+---
+
+### 3.13.3.2 F56 - Add Branch / UC-64 Add Branch
+
+#### Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Branch Management > Add Branch                               |
++---------------------------------------------------------------------------------+
+|  Branch Name:    [ Coffee Zone - Binh Thanh                                   ] |
+|  Address:        [ 200 Dien Bien Phu, Binh Thanh                              ] |
+|  Phone:          [ 0283930005                                                 ] |
+|                                                                                 |
+|                                            [ Save Branch ]       [ Cancel ]     |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-57: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Branch Name | Text | Yes | 100 | Name of the new store branch. |
+| 2 | Address | Text | Yes | 255 | Physical address of the branch. |
+| 3 | Phone | Text | Yes | 20 | Branch contact phone number (10-12 digits). |
+| 4 | Save Branch | Button | | | Submits details to register new branch. |
+| 5 | Cancel | Button | | | Discards form and returns to Branch List. |
+
+#### Use Case Description
+
+| Use Case ID | UC-64 | Use Case Name | Add Branch |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Admin |
+| **Description** | Registers a new store branch in the system. |
+| **Precondition** | Admin is logged in. Total active branches is less than the maximum capacity (5). |
+| **Trigger** | Admin clicks "+ Add Branch" on Branch List screen. |
+| **Post-Condition** | New branch is created with `is_active = true` and appears in the branch list. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Admin | Enters Branch Name, Address, and Phone, then clicks "Save Branch". |
+| 2 | Portal | Validates inputs: name is not empty, address is not empty, phone is 10-12 digits, and branch name is unique. |
+| 3 | Portal | Creates new STORE record with `is_active = true`, records `created_at` timestamp, and returns to Branch List view. Displays confirmation: `"Branch successfully created."` (MSG15). |
+
+#### Alternative Flows
+##### AT1: Maximum Branch Capacity Reached
+- **Trigger**: At step 2, the number of active branches already equals 5.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays error message: `"Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one."` (MSG16) |
+
+##### AT2: Validation Errors
+- **Trigger**: At step 2, input validation fails.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | If Branch Name is empty, displays message: `"Branch name cannot be empty."` |
+| 2.2 | Portal | If Address is empty, displays message: `"Branch address cannot be empty."` |
+| 2.3 | Portal | If Phone is not 10-12 digits, displays message: `"Please enter a valid phone number (10-12 digits)."` |
+| 2.4 | Portal | If Branch Name is duplicated, displays message: `"A branch with this name already exists."` |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+
+---
+
+### 3.13.3.3 F57 - Update / Deactivate Branch / UC-65 Update / Deactivate Branch
+
+#### Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Branch Management > Edit Branch                              |
++---------------------------------------------------------------------------------+
+|  Branch ID: STR-001  (Read-only)       Created: 2026-01-15 (Read-only)          |
+|                                                                                 |
+|  Branch Name:    [ Coffee Zone - District 1                                   ] |
+|  Address:        [ 123 Nguyen Hue, District 1                                 ] |
+|  Phone:          [ 0283930001                                                 ] |
+|  Status:         [ Active          ] [v]                                        |
+|                                                                                 |
+|                                            [ Save Changes ]      [ Cancel ]     |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-58: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Branch ID | Label | | | Unique branch identifier (read-only). |
+| 2 | Created | Label | | | Branch registration date (read-only). |
+| 3 | Branch Name | Text | Yes | 100 | Store branch name. |
+| 4 | Address | Text | Yes | 255 | Physical address. |
+| 5 | Phone | Text | Yes | 20 | Branch contact phone number (10-12 digits). |
+| 6 | Status | Dropdown | Yes | | Branch status: `Active` / `Inactive`. |
+| 7 | Save Changes | Button | | | Saves modifications to branch record. |
+| 8 | Cancel | Button | | | Discards edits and returns to Branch List. |
+
+#### Use Case Description
+
+| Use Case ID | UC-65 | Use Case Name | Update / Deactivate Branch |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Admin |
+| **Description** | Modifies branch information or deactivates (closes) a branch, triggering cascading effects on associated staff and schedules. |
+| **Precondition** | Admin is logged in. Branch record exists. |
+| **Trigger** | Admin clicks on a branch row in the Branch List to open the edit form. |
+| **Post-Condition** | Branch details are updated. If deactivated: staff accounts are disabled, future schedules are cancelled. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Admin | Modifies branch name, address, phone, or sets Status to `Inactive`. Clicks "Save Changes". |
+| 2 | Portal | Validates inputs (same rules as Add Branch form). |
+| 3 | Portal | If only contact details were changed (no status change), saves updates and returns to Branch List. |
+
+#### Alternative Flows
+##### AT1: Deactivation Cascade — Branch Closure
+- **Trigger**: At step 1, Admin sets Status from `Active` to `Inactive`.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Checks preconditions: verifies no `SHIFT_SESSION` with `status = OPEN` exists for this branch, and no `ORDER` in non-terminal state (`PENDING`, `PREPARING`, `HOLD`, `READY`) exists for this branch. |
+| 1.2 | Portal | If preconditions fail, displays error: `"Cannot deactivate branch. Please close all active shifts and complete or cancel all pending orders first."` |
+| 1.3 | Portal | If preconditions pass, displays confirmation dialog: `"Deactivating this branch will disable all staff accounts assigned to it and cancel all future scheduled shifts. This action can be reversed by reactivating the branch. Proceed?"` |
+| 1.4 | Admin | Clicks "Confirm Deactivate". |
+| 1.5 | Portal | Sets `STORE.is_active = false`. |
+| 1.6 | Portal | Sets `USER.is_active = false` for all users where `store_id` matches the deactivated branch. Terminates their active session tokens (BR-18). |
+| 1.7 | Portal | Deletes all `STAFF_SCHEDULE` entries with `shift_date > current_date` for this branch. Sends notification alerts to affected employees (BR-37). |
+| 1.8 | Portal | Returns to Branch List with confirmation message: `"Branch has been deactivated."` |
+
+##### AT2: Reactivation
+- **Trigger**: At step 1, Admin sets Status from `Inactive` to `Active`.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Checks that total active branches after reactivation does not exceed 5 (BR-54). |
+| 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (5) reached. Please deactivate another branch first."` (MSG16) |
+| 1.3 | Portal | If within capacity, sets `STORE.is_active = true`. |
+| 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the Admin."` |
+
+##### AT3: Validation Errors
+- **Trigger**: At step 2, input validation fails (same validation as AT2 in UC-64).
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays appropriate validation error message (empty name, empty address, invalid phone, or duplicate name). |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously. Deactivated branches do not count toward this limit. |
+| BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
+| BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
+
 
 

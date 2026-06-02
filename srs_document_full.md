@@ -16,6 +16,7 @@ This section tracks the revision history and modifications made to the Software 
 | **1.4** | 2026-05-24 | Resolved comprehensive review v1.3 issues: defined UC-49 Redeem Loyalty Points, fixed UTF-8 encoding in product scope, matched Login failure alert with MSG02, expanded messages dictionary (MSG09-MSG13), specified tier downgrades (BR-34) and 12-month inactivity point expiry (BR-35), detailed delivery order rejection flow (BR-42), and added new alternative flows for negative audit input and close shift disputes. | Software Engineering Team | Store Management / Product Owner |
 | **1.5** | 2026-05-24 | Resolved comprehensive review v1.4 issues: added full Section 3.6.5 F31.1 for UC-49 (containing mock-up, field definition, and alternate flows), updated the Table of Contents, fully synchronized BR-42 in Section 5.1, and standardized MSG12 to pure English dictionary key text. | Software Engineering Team | Store Management / Product Owner |
 | **1.6** | 2026-05-24 | Addressed final review feedback: mapped Redeem Loyalty Points Modal (37a) in functional overview and authorization matrix, assigned MSG14 for invalid loyalty redemption multiples, and updated POS transactions flow AT3. | Software Engineering Team | Store Management / Product Owner |
+| **1.7** | 2026-06-02 | Added Branch Management functionality (Section 3.13.3): UC-63 View Branch List, UC-64 Add Branch, UC-65 Update/Deactivate Branch. Added 3 new screens (45-47) to Admin Portal flow, updated screen authorization matrix, Feature-Actor Mapping Matrix, and added business rules BR-54, BR-55, BR-56. Added application messages MSG15, MSG16. | Software Engineering Team | Store Management / Product Owner |
 
 # Table of Contents
 
@@ -133,6 +134,7 @@ This section tracks the revision history and modifications made to the Software 
    - **3.13 System Configuration**
      - 3.13.1 Central System Settings
      - 3.13.2 Branch Local Settings
+     - 3.13.3 Branch Management (Add / Edit / Deactivate Branch)
 
 4. [Non-Functional Requirements](#4-non-functional-requirements)
    - 4.1 External Interfaces
@@ -365,6 +367,10 @@ graph LR
         UC_ExportReports([Export HQ Reports])
         
         UC_ConfigCentral([Configure Central System Settings])
+
+        UC_ListBranches([View Branch List])
+        UC_AddBranch([Add Branch])
+        UC_UpdateBranch([Update / Deactivate Branch])
     end
 
     %% Admin Links
@@ -374,6 +380,7 @@ graph LR
     Actor_Admin --> UC_ListMenu
     Actor_Admin --> UC_ViewReports
     Actor_Admin --> UC_ConfigCentral
+    Actor_Admin --> UC_ListBranches
 
     %% User extends
     UC_AddUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
@@ -399,6 +406,10 @@ graph LR
 
     %% Reports extends
     UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
+
+    %% Branch extends
+    UC_AddBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
+    UC_UpdateBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
 ```
 
 
@@ -597,6 +608,9 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
 | **UC-60** | Order Prep & Queue | Report Issue / Escalate Order | Barista | **Description**: Flags order preparation errors.<br>**Main Flow**:<br>1. Barista reports machine/ingredient issue.<br>2. The order is marked with an issue flag, notifying POS cashiers. |
 | **UC-61** | Inventory Management | View Import/Export History | Store Manager | **Description**: Reviews past stock movements.<br>**Main Flow**:<br>1. Manager opens history logs.<br>2. Details of stock imports and exports are displayed. |
+| **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
+| **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
+| **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
 
 
 
@@ -654,6 +668,9 @@ graph LR
     AdminHome --> HQReports[23. HQ Business Reports Screen]
     
     AdminHome --> CentralConfig[24. Central System Settings Screen]
+    CentralConfig --> BranchMgmt[45. Branch Management List Screen]
+    BranchMgmt --> AddBranch[46. Add Branch Form]
+    BranchMgmt --> EditBranch[47. Edit / Deactivate Branch Screen]
 ```
 
 ### 3. Store Manager Console Screen Flow
@@ -741,6 +758,9 @@ The system comprises the following screens across its user portals:
 | | | Store Revenue & Order Reports Screen | Local branch dashboard showing sales, shift closures, and cash reports. |
 | 7 | System Configuration | Central System Settings Screen | Central configuration screen for tax rates and brand settings. |
 | | | Branch Local Settings Screen | Local settings screen for branch hardware and POS registers. |
+| | | Branch Management List Screen | Lists all store branches with status indicators for Admin management. |
+| | | Add Branch Form | Form for Admin to register a new store branch with name, address, and phone. |
+| | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
 | 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
 | | | Stock List & History View Screen | Displays branch inventory quantities and historical ledger logs. |
 | | | Stock Import Form Screen | Form to record supplier inventory imports. |
@@ -763,7 +783,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 44 screens:
+The table below specifies access control policies across all 47 screens:
 
 | Screen Name | Admin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|
@@ -813,6 +833,9 @@ The table below specifies access control policies across all 44 screens:
 | 42. Shift Reconciliation Close Shift | No | No | **Yes** | No |
 | 43. Barista Queue Monitor | No | Yes | Yes | **Yes** |
 | 44. Report Issue & Hold Order | No | No | No | **Yes** |
+| 45. Branch Management List | **Yes** | No | No | No |
+| 46. Add Branch Form | **Yes** | No | No | No |
+| 47. Edit / Deactivate Branch | **Yes** | No | No | No |
 
 ---
 
@@ -2207,10 +2230,10 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Admin, Store Manager |
 | **Description** | Modifies properties of an existing item. |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Edit Item" on detail panel. |
+| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager may toggle item Availability only. |
 | **Post-Condition** | Product listings are modified. |
 
 #### Main Flows
@@ -2232,7 +2255,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | ID | Rule Description |
 |---|---|
 | BR-27 | Deactivating (`Availability = false`) triggers automatic removal from online delivery partner channels. |
-| BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified name (e.g. "Cà phê đá" -> "cfd") and updates if name is modified. |
+| BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified (diacritic-removed) name (e.g. "Cà phê đá" → "cfd") and updates if name is modified. **Collision handling:** If the generated abbreviation already exists in the catalog, a numeric suffix is appended incrementally (e.g. "cfd2", "cfd3") until a unique value is found. |
 
 ---
 
@@ -2757,11 +2780,13 @@ This section details specifications for viewing inventory, managing imports/expo
 
 #### Alternative Flows
 ##### AT1: Insufficient Stock
-- **Trigger**: At step 2, quantity exceeds stock level.
+- **Trigger**: At step 2, quantity exceeds **current total stock** level.
 
 | Sub-step | Actor | Action |
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Cannot export quantity. Current stock level is too low."` |
+
+> **Note:** Validation checks against the item's **current total stock quantity** (not the safety threshold). The safety threshold triggers a low-stock warning (MSG07) but does not block exports.
 
 ---
 
@@ -2878,8 +2903,50 @@ This section details specifications for viewing inventory, managing imports/expo
 |---|---|
 | BR-32 | Explanatory notes are mandatory if physically counted actual quantity does not match expected value. |
 
+---
 
+## 3.5.6 F27.1 - Auto-Deduct Stock on Sale / UC-62 Auto-Deduct Inventory on Order Completion
 
+### 3.5.6.1 Use Case Description
+
+| Use Case ID | UC-62 | Use Case Name | Auto-Deduct Inventory on Order Completion |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-01 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | System (automated) |
+| **Description** | Automatically deducts ingredient quantities from stock based on the menu item recipe formulation when an order transitions to the `PREPARING` state. |
+| **Precondition** | Order status transitions from `PENDING` to `PREPARING`. Menu items in the order have linked recipe ingredient mappings. |
+| **Trigger** | Barista clicks "START PREP" on the kitchen queue display, transitioning the order to `PREPARING`. |
+| **Post-Condition** | Stock quantities for all associated ingredients are reduced according to each item's recipe. A stock transaction log entry of type `AUTO` is created. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Barista | Taps "START PREP" on an order in the queue. |
+| 2 | System | Retrieves the recipe formulation (ingredient quantities) for each menu item in the order. |
+| 3 | System | Deducts the corresponding quantities from each ingredient's stock count. |
+| 4 | System | Logs each deduction as a stock transaction record (type: `AUTO`, linked to Order ID). |
+| 5 | System | If any ingredient falls below the safety threshold after deduction, triggers MSG07 low-stock notification to the Store Manager. |
+
+#### Alternative Flows
+##### AT1: Ingredient Quantity Insufficient
+- **Trigger**: At step 3, the required ingredient quantity exceeds the current available stock.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 3.1 | System | Logs a stock discrepancy warning. Deduction proceeds to zero (stock cannot go negative). |
+| 3.2 | System | Sends MSG07 critical low-stock alert to the Store Manager immediately. |
+
+> **Note:** The system does **not** block order preparation due to insufficient stock. Operational continuity takes priority; the discrepancy is flagged for manual audit by the Store Manager.
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-32 | *(Applies)* Any discrepancy between expected and actual counts must be noted. |
+| BR-07 | If an order is cancelled in `PREPARING` or `READY` state, stock is **not** restored (consumed ingredients are logged as operational waste). If cancelled in `PENDING` state (before stock deduction occurs), no deduction was made, so no rollback is needed. |
 
 
 ---
@@ -3293,12 +3360,16 @@ This section outlines the business logic for calculating and applying discounts 
 ### 1. Stacking Rules & Restrictions
 - **Voucher and Membership Tier Discount Exclusivity**: Percentage-based or flat-rate **Voucher discounts** and **Membership Tier discounts** DO NOT stack. 
   - The system compares the discount value of the linked membership tier against the active voucher discount and applies the one that yields the higher discount value.
+  - **Both discount types must first be converted to VND before comparison:** `Tier Discount (VND) = Gross Subtotal × Tier Percent / 100`; `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
   - If a customer applies a voucher but the membership tier discount is higher, the system applies the membership tier discount instead.
+  - **Tie-breaking rule**: If `Tier Discount (VND) == Voucher Discount (VND)`, the Voucher discount takes priority.
 - **Loyalty Point Redemption Stackability**: Loyalty point redemptions (e.g. redeeming 100 points for a flat 10,000 VND discount) CAN stack with either a membership tier discount OR an active voucher discount.
 - **Order of Calculations**:
   1. **Gross Subtotal**: Sum of the base prices of all selected menu items plus any applied custom toppings or option modifiers.
   2. **Campaign / Tier Discount (Exclusivity applied)**:
-     - `Selected Discount = Max(Membership Tier Discount, Voucher Discount)`
+     - `Tier Discount (VND) = Gross Subtotal × Tier Percent / 100`
+     - `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND`
+     - `Selected Discount = Max(Tier Discount VND, Voucher Discount VND)` *(Voucher wins on tie)*
      - `Discounted Subtotal = Gross Subtotal - Selected Discount`
   3. **Loyalty Point Redemption**:
      - `Point Discount Value = (Redeemed Points / 100) * 10,000 VND`
@@ -3309,6 +3380,7 @@ This section outlines the business logic for calculating and applying discounts 
        - `tax_amount = Final Taxable Subtotal * (VAT_Rate / (100 + VAT_Rate))`
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
+  5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
 
 ---
 
@@ -3441,6 +3513,30 @@ This section outlines the business logic for calculating and applying discounts 
 # 3.7 Order Management
 
 This section details specifications for tracking orders, barista queue controls, stickers printing, and cancellation flows.
+
+### Order Status State Machine
+
+All orders follow the state transitions below:
+
+```
+[PENDING] ---(Barista: START PREP)---> [PREPARING]
+             \--(Cashier cancel)------> [CANCELLED]
+
+[PREPARING] --(Barista: READY)--------> [READY]
+             \--(Manager/Admin cancel)-> [CANCELLED]
+             \--(Barista: REPORT ISSUE)-> [ON_HOLD]
+
+[ON_HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
+           \--(Manager/Admin cancel)---> [CANCELLED]
+
+[READY] -----(Cashier: payment done)--> [COMPLETED]
+         \--(Manager/Admin cancel)------> [CANCELLED]
+
+[COMPLETED] → Terminal state (no further transitions)
+[CANCELLED]  → Terminal state (no further transitions)
+```
+
+> **ON_HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). An ON_HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
 
 ---
 
@@ -3669,14 +3765,14 @@ This section details specifications for tracking orders, barista queue controls,
 
 | Use Case ID | UC-55 | Use Case Name | Request Transaction Refund |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-01 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Cashier, Store Manager |
 | **Description** | Voids an active order and processes payment refund. |
-| **Precondition** | Order is not completed. |
+| **Precondition** | **For Cashier:** Order is in `PENDING` state (before kitchen queue entry). **For Store Manager / Admin:** Order is in `PENDING`, `PREPARING`, `ON_HOLD`, or `READY` state (not `COMPLETED`). |
 | **Trigger** | Cashier clicks Cancel Order. |
 | **Post-Condition** | Order is cancelled, stock rollbacked/marked waste, and refund completed. |
 
@@ -3691,10 +3787,31 @@ This section details specifications for tracking orders, barista queue controls,
 | ID | Rule Description |
 |---|---|
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state. If cancelled during `PREPARING` or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
+| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
+| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
+---
+
+## 3.7.6 Manager Override PIN
+
+Manager Override PIN is a 4-digit numeric credential used to authorize cashier actions that exceed their standard permissions (e.g., cancelling a non-PENDING order, processing a post-payment refund).
+
+### Configuration
+- Each Store Manager account has a dedicated Override PIN set by the Admin via the User Account Management panel (UC-12).
+- The Override PIN is stored as a salted hash — it is separate from the account login password.
+- The PIN can be changed by the Admin or by the Store Manager themselves via their profile settings.
+
+### Usage at POS
+- When a Cashier initiates a cancel or refund action requiring Manager authorization, the POS screen displays a PIN entry prompt.
+- The Store Manager (or Admin if on-site) enters their 4-digit PIN.
+- The system validates the PIN hash against the manager's stored credential.
+- On success, the action proceeds. On failure after 3 attempts, the override session is locked for 5 minutes.
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-51 | **Manager Override PIN**: Each Store Manager account has a 4-digit Override PIN, stored as a salted hash, separate from the login password. The PIN is required for Cashier-initiated cancel/refund actions. Failed PIN entry is limited to 3 consecutive attempts before a 5-minute lockout. |
 
 
 ---
@@ -3848,8 +3965,8 @@ This section details specifications for loyalty membership profiles search, enro
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Contact Email | Text | Yes | 100 | Customer email address. |
-| 2 | Points | Text | Yes | 6 | Editable only by Admin role for point adjustments. |
-| 3 | Reason | Text | No | 250 | Mandatory comment explanation for manual points adjustment. |
+| 2 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
+| 3 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
 | 4 | Save | Button | | | Saves customer details changes. |
 | 5 | Cancel | Button | | | Returns to list page. |
 
@@ -3874,6 +3991,21 @@ This section details specifications for loyalty membership profiles search, enro
 | 1 | User | Modifies contact details (or Admin inputs point changes) and clicks "Save". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, logs adjust audit notes (if point changes occur), and returns. |
+
+#### Alternative Flows
+##### AT1: Non-Admin Actor — Points Fields Hidden
+- **Trigger**: Cashier or Store Manager opens the Edit Customer screen.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1 | Portal | The "Points" and "Reason" fields are hidden from the form. Only "Contact Email" is editable. |
+
+##### AT2: Points Changed Without Reason
+- **Trigger**: Admin modifies the Points value but leaves Reason blank.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays error message: `"A reason is required when manually adjusting customer points."` |
 
 #### Business Rules
 | ID | Rule Description |
@@ -3976,7 +4108,7 @@ This section details specifications for staff shifts assignment, schedules views
 | 1 | Employee | Dropdown | Yes | | Active employee user accounts list. |
 | 2 | Date | Date | Yes | | Target scheduling date calendar. |
 | 3 | Shift Type | Dropdown | Yes | | Shift duration (`Morning`, `Afternoon`, `Full-Day`). |
-| 4 | Allocated POS Register | Dropdown | Yes | | POS terminal register allocation. |
+| 4 | Allocated POS Register | Dropdown | Conditional | | POS terminal register allocation. **Mandatory when Employee role = `CASHIER`; Optional (leave blank) when role = `BARISTA` or `STORE_MANAGER`.** |
 | 5 | Assign | Button | | | Submits details to schedule shift. |
 | 6 | Cancel | Button | | | Returns to Shift Schedule view. |
 
@@ -4177,12 +4309,9 @@ This section details specifications for staff shifts assignment, schedules views
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-38 | Check-in records are automatically created based on employee logins at local terminal stations. |
+| BR-38 | **Attendance Check-in Registration**: A check-in record is automatically created based on the employee's first successful login at a local terminal station within their scheduled shift time window. Subsequent logins within the same shift window do not create duplicate check-in records. If no scheduled shift exists for the login time, no check-in record is created. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-
-
-
-
+| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
 
 
 ---
@@ -4329,10 +4458,17 @@ This section details specifications for managing discount codes and promotional 
 #### Table 3-49: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Max Total Uses | Text | No | 5 | Overall maximum total uses cap (null for unlimited). |
-| 2 | Save Changes | Button | | | Saves updated voucher values. |
-| 3 | Deactivate | Button | | | Immediately deactivates voucher. |
-| 4 | Cancel | Button | | | Returns to list page without saving. |
+| 1 | Voucher Code | Text | | | Read-only. Alphanumeric code — cannot be modified after creation (BR-40). |
+| 2 | Discount Type | Dropdown | Yes | | Discount type (`Percentage`, `Fixed Amount`). |
+| 3 | Discount Val | Text | Yes | 10 | Updated percentage discount or flat VND value. |
+| 4 | Min Order Val | Text | Yes | 15 | Updated minimum order subtotal threshold in VND. |
+| 5 | Start Date | Date | Yes | | Updated validity start date. |
+| 6 | End Date | Date | Yes | | Updated validity expiration date. Must be after Start Date. |
+| 7 | Usage Limit per Customer | Text | No | 5 | Updated max usages per customer. |
+| 8 | Max Total Uses | Text | No | 5 | Updated overall maximum total uses cap. |
+| 9 | Save Changes | Button | | | Saves updated voucher values. |
+| 10 | Deactivate | Button | | | Immediately deactivates voucher (sets status to INACTIVE). |
+| 11 | Cancel | Button | | | Returns to list page without saving. |
 
 ### 3.10.3.2 Use Case Description
 
@@ -4361,6 +4497,7 @@ This section details specifications for managing discount codes and promotional 
 |---|---|
 | BR-40 | Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | Deactivating a voucher immediately stops all checkout redemptions. |
+| BR-52 | **Voucher Status Definitions**: A voucher's display status is computed as follows: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive, and voucher is not deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
 
 
 ---
@@ -4404,23 +4541,43 @@ This section details specifications for background order synchronization and man
 
 | Use Case ID | UC-11.1 | Use Case Name | Receive Online Order |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-01 | | |
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier |
-| **Description** | Handles manual review of incoming orders with out-of-stock items. |
-| **Precondition** | Delivery order contains out-of-stock items and manual review is configured. |
-| **Trigger** | Webhook request receives order payload. |
-| **Post-Condition** | Order is partially accepted or rejected. |
+| **Actor** | System (automated), Cashier (manual review only) |
+| **Description** | Processes incoming delivery partner orders. Automatically accepts orders when all items are in stock; triggers manual review when out-of-stock items are detected. |
+| **Precondition** | A valid delivery order webhook payload has been received and authenticated. |
+| **Trigger** | Webhook request receives order payload from delivery partner API. |
+| **Post-Condition** | Order is either auto-accepted into the kitchen queue, or manually resolved (partial accept / reject) by the Cashier. |
 
-#### Main Flows
+#### Main Flows (Auto-Accept — All Items In Stock)
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Portal | Flags order on POS cashier screen with countdown timer. |
-| 2 | Cashier | Contacts customer/rider, adjusts cart items in POS, and clicks "Accept Partial". |
-| 3 | Portal | Submits edited confirmation payload back to partner API. |
+| 1 | System | Receives and validates webhook payload from delivery partner. |
+| 2 | System | Checks stock availability for all items in the order. |
+| 3 | System | All items are in stock: automatically accepts the order and sends acceptance payload to the delivery partner API. |
+| 4 | System | Creates a new order record (type: `DELIVERY`) and pushes it directly to the Barista kitchen queue in `PENDING` state. |
+
+#### Alternative Flows
+##### AT1: Out-of-Stock Item Detected (Manual Review Required)
+- **Trigger**: At step 2, one or more items are out of stock.
+
+| Step | Actor | Action |
+|---|---|---|
+| 1 | System | Flags the order on the POS Cashier screen with a countdown timer (BR-42: 2 minutes). |
+| 2 | Cashier | Reviews out-of-stock items, contacts customer/rider if needed, and either: |
+| 2a | Cashier | Clicks "Accept Partial" — removes unavailable items from the cart and sends a partial acceptance payload back to the partner API. The adjusted order is pushed to the kitchen queue. |
+| 2b | Cashier | Clicks "Reject" — sends an immediate rejection payload to the delivery partner. The order is not created locally. |
+
+##### AT2: Timer Expired (Auto-Reject)
+- **Trigger**: Countdown timer reaches 0 with no Cashier action.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1 | System | Sends automatic rejection payload to delivery partner API (BR-42). |
+| 2 | System | Logs the auto-rejection event for audit. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -4582,7 +4739,8 @@ This section details specifications for business reports views, sales analytics 
 +------------------------------------+
 |      Store Revenue Reports         |
 |                                    |
-|  Date: [ 2026-05-24 ]              |
+|  From: [ 2026-05-01 ]              |
+|  To:   [ 2026-05-24 ]              |
 |                                    |
 |         [ Export Report ]          |
 |                                    |
@@ -4604,8 +4762,9 @@ This section details specifications for business reports views, sales analytics 
 #### Table 3-53: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Date | Date Picker | Yes | | Sets the target date boundary for local store reports. |
-| 2 | Export Report | Button | | | Navigates to Export Report modal screen. |
+| 1 | From Date | Date Picker | Yes | | Start of the target date range for local store reports. |
+| 2 | To Date | Date Picker | Yes | | End of the target date range. Must be on or after From Date. Defaults to today. |
+| 3 | Export Report | Button | | | Navigates to Export Report modal screen. |
 
 ### 3.12.3.2 Use Case Description
 
@@ -4713,7 +4872,7 @@ This section details specifications for system settings, store branding profiles
 | ID | Rule Description |
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
-| BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. |
+| BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the VAT rate that was active when they were created.** |
 
 ---
 
@@ -4820,6 +4979,232 @@ This section details specifications for system settings, store branding profiles
 |---|---|
 | BR-47 | Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
 | BR-48 | Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
+
+---
+
+## 3.13.3 Branch Management
+
+This section specifies the branch lifecycle management functionality available exclusively to the HQ Admin. It covers viewing, adding, and updating/deactivating store branches.
+
+> [!IMPORTANT]
+> Branch Management is an Admin-only function for managing the store lifecycle (create, view, deactivate). It is distinct from **UC-42 Branch Local Settings**, which allows Store Managers to configure operational parameters (timezone, hardware, logo) for their assigned branch.
+
+---
+
+### 3.13.3.1 F55 - View Branch List / UC-63 View Branch List
+
+#### Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Branch Management                                             |
++---------------------------------------------------------------------------------+
+|  Search: [ Nguyen Du            ]         Status: [ All Statuses ] [v]          |
+|                                                                                 |
+|  +-----+------------------------+--------------------------+----------+-------+ |
+|  | ID  | Branch Name            | Address                  | Phone    | Status| |
+|  +-----+------------------------+--------------------------+----------+-------+ |
+|  | 001 | Coffee Zone - Dist 1   | 123 Nguyen Hue, D1       | 02839300 | Active| |
+|  | 002 | Coffee Zone - Dist 7   | 45 Nguyen Thi Thap, D7   | 02839301 | Active| |
+|  | 003 | Coffee Zone - Thu Duc  | 78 Vo Van Ngan, Thu Duc   | 02839302 | Closed| |
+|  +-----+------------------------+--------------------------+----------+-------+ |
+|  Active: 2 / 5 Max                                        [ + Add Branch ]     |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-56: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Search | Text | No | 100 | Filter branches by name or address. |
+| 2 | Status | Dropdown | No | | Filter by status: `Active`, `Inactive`, `All`. |
+| 3 | Branch Grid | Grid | | | Displays branch listings including ID, name, address, phone, and status. |
+| 4 | Active Counter | Label | | | Shows `Active: X / 5 Max` to indicate capacity utilization. |
+| 5 | Add Branch | Button | | | Navigates to Add Branch form. Disabled when 5 active branches already exist. |
+
+#### Use Case Description
+
+| Use Case ID | UC-63 | Use Case Name | View Branch List |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Admin |
+| **Description** | Displays all registered store branches and their operational statuses. |
+| **Precondition** | Admin is logged in. |
+| **Trigger** | Admin opens the Central System Settings Screen and clicks the "Quản lý Chi nhánh" button. |
+| **Post-Condition** | Complete list of branches with statuses is displayed. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Admin | Navigates to Branch Management. |
+| 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. maximum capacity (5). |
+| 3 | Admin | Optionally filters by status or searches by keyword. |
+
+---
+
+### 3.13.3.2 F56 - Add Branch / UC-64 Add Branch
+
+#### Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Branch Management > Add Branch                               |
++---------------------------------------------------------------------------------+
+|  Branch Name:    [ Coffee Zone - Binh Thanh                                   ] |
+|  Address:        [ 200 Dien Bien Phu, Binh Thanh                              ] |
+|  Phone:          [ 0283930005                                                 ] |
+|                                                                                 |
+|                                            [ Save Branch ]       [ Cancel ]     |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-57: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Branch Name | Text | Yes | 100 | Name of the new store branch. |
+| 2 | Address | Text | Yes | 255 | Physical address of the branch. |
+| 3 | Phone | Text | Yes | 20 | Branch contact phone number (10-12 digits). |
+| 4 | Save Branch | Button | | | Submits details to register new branch. |
+| 5 | Cancel | Button | | | Discards form and returns to Branch List. |
+
+#### Use Case Description
+
+| Use Case ID | UC-64 | Use Case Name | Add Branch |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Admin |
+| **Description** | Registers a new store branch in the system. |
+| **Precondition** | Admin is logged in. Total active branches is less than the maximum capacity (5). |
+| **Trigger** | Admin clicks "+ Add Branch" on Branch List screen. |
+| **Post-Condition** | New branch is created with `is_active = true` and appears in the branch list. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Admin | Enters Branch Name, Address, and Phone, then clicks "Save Branch". |
+| 2 | Portal | Validates inputs: name is not empty, address is not empty, phone is 10-12 digits, and branch name is unique. |
+| 3 | Portal | Creates new STORE record with `is_active = true`, records `created_at` timestamp, and returns to Branch List view. Displays confirmation: `"Branch successfully created."` (MSG15). |
+
+#### Alternative Flows
+##### AT1: Maximum Branch Capacity Reached
+- **Trigger**: At step 2, the number of active branches already equals 5.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays error message: `"Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one."` (MSG16) |
+
+##### AT2: Validation Errors
+- **Trigger**: At step 2, input validation fails.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | If Branch Name is empty, displays message: `"Branch name cannot be empty."` |
+| 2.2 | Portal | If Address is empty, displays message: `"Branch address cannot be empty."` |
+| 2.3 | Portal | If Phone is not 10-12 digits, displays message: `"Please enter a valid phone number (10-12 digits)."` |
+| 2.4 | Portal | If Branch Name is duplicated, displays message: `"A branch with this name already exists."` |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+
+---
+
+### 3.13.3.3 F57 - Update / Deactivate Branch / UC-65 Update / Deactivate Branch
+
+#### Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Branch Management > Edit Branch                              |
++---------------------------------------------------------------------------------+
+|  Branch ID: STR-001  (Read-only)       Created: 2026-01-15 (Read-only)          |
+|                                                                                 |
+|  Branch Name:    [ Coffee Zone - District 1                                   ] |
+|  Address:        [ 123 Nguyen Hue, District 1                                 ] |
+|  Phone:          [ 0283930001                                                 ] |
+|  Status:         [ Active          ] [v]                                        |
+|                                                                                 |
+|                                            [ Save Changes ]      [ Cancel ]     |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-58: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Branch ID | Label | | | Unique branch identifier (read-only). |
+| 2 | Created | Label | | | Branch registration date (read-only). |
+| 3 | Branch Name | Text | Yes | 100 | Store branch name. |
+| 4 | Address | Text | Yes | 255 | Physical address. |
+| 5 | Phone | Text | Yes | 20 | Branch contact phone number (10-12 digits). |
+| 6 | Status | Dropdown | Yes | | Branch status: `Active` / `Inactive`. |
+| 7 | Save Changes | Button | | | Saves modifications to branch record. |
+| 8 | Cancel | Button | | | Discards edits and returns to Branch List. |
+
+#### Use Case Description
+
+| Use Case ID | UC-65 | Use Case Name | Update / Deactivate Branch |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-02 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Admin |
+| **Description** | Modifies branch information or deactivates (closes) a branch, triggering cascading effects on associated staff and schedules. |
+| **Precondition** | Admin is logged in. Branch record exists. |
+| **Trigger** | Admin clicks on a branch row in the Branch List to open the edit form. |
+| **Post-Condition** | Branch details are updated. If deactivated: staff accounts are disabled, future schedules are cancelled. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Admin | Modifies branch name, address, phone, or sets Status to `Inactive`. Clicks "Save Changes". |
+| 2 | Portal | Validates inputs (same rules as Add Branch form). |
+| 3 | Portal | If only contact details were changed (no status change), saves updates and returns to Branch List. |
+
+#### Alternative Flows
+##### AT1: Deactivation Cascade — Branch Closure
+- **Trigger**: At step 1, Admin sets Status from `Active` to `Inactive`.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Checks preconditions: verifies no `SHIFT_SESSION` with `status = OPEN` exists for this branch, and no `ORDER` in non-terminal state (`PENDING`, `PREPARING`, `HOLD`, `READY`) exists for this branch. |
+| 1.2 | Portal | If preconditions fail, displays error: `"Cannot deactivate branch. Please close all active shifts and complete or cancel all pending orders first."` |
+| 1.3 | Portal | If preconditions pass, displays confirmation dialog: `"Deactivating this branch will disable all staff accounts assigned to it and cancel all future scheduled shifts. This action can be reversed by reactivating the branch. Proceed?"` |
+| 1.4 | Admin | Clicks "Confirm Deactivate". |
+| 1.5 | Portal | Sets `STORE.is_active = false`. |
+| 1.6 | Portal | Sets `USER.is_active = false` for all users where `store_id` matches the deactivated branch. Terminates their active session tokens (BR-18). |
+| 1.7 | Portal | Deletes all `STAFF_SCHEDULE` entries with `shift_date > current_date` for this branch. Sends notification alerts to affected employees (BR-37). |
+| 1.8 | Portal | Returns to Branch List with confirmation message: `"Branch has been deactivated."` |
+
+##### AT2: Reactivation
+- **Trigger**: At step 1, Admin sets Status from `Inactive` to `Active`.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Checks that total active branches after reactivation does not exceed 5 (BR-54). |
+| 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (5) reached. Please deactivate another branch first."` (MSG16) |
+| 1.3 | Portal | If within capacity, sets `STORE.is_active = true`. |
+| 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the Admin."` |
+
+##### AT3: Validation Errors
+- **Trigger**: At step 2, input validation fails (same validation as AT2 in UC-64).
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays appropriate validation error message (empty name, empty address, invalid phone, or duplicate name). |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously. Deactivated branches do not count toward this limit. |
+| BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
+| BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 
 
 
@@ -4963,13 +5348,13 @@ This section contains business rules, global requirements, common application me
 
 | ID | Rule Definition |
 |---|---|
-| BR-01 | **Membership Point Accrual**: Customers accumulate 1 point for every 10,000 VND spent (rounded down to the nearest whole integer). |
+| BR-01 | **Membership Point Accrual**: Customers accumulate 1 point for every 10,000 VND of **Net Total Payable** (after all discounts and point redemptions are applied) spent, rounded down to the nearest whole integer. Formula: `points_earned = floor(netTotalPayable / 10000)`. Points are not accrued for the portion of the order covered by point redemption discounts. |
 | BR-02 | **Membership Point Redemption**: 100 points can be redeemed for 10,000 VND discount at checkout, applicable only for customers who have reached at least the **Silver** tier. |
 | BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation/delivery. |
 | BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state. If cancelled during `PREPARING` or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
+| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
+| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state (before stock deduction by UC-62). If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 | BR-09 | **Refund Authorization & Execution**: Cash refunds are paid directly from the cash drawer. Card/Wallet payments invoke the payment gateway's refund API. All refunds must be authorized using **Store Manager** or **Admin** credentials at the POS, within **7 days** of the original purchase. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
@@ -5012,6 +5397,13 @@ This section contains business rules, global requirements, common application me
 | BR-47 | **Manager Config scope**: Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
 | BR-48 | **IP/COM Printer Port Validation**: Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 | BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Admin role. |
+| BR-50 | **Discount Cap**: The Net Total Payable after all discounts (tier discount, voucher discount, and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
+| BR-51 | **Manager Override PIN**: Each Store Manager account has a 4-digit numeric Override PIN, stored as a salted hash, separate from the login password. The PIN is configured by the Admin via the User Account Management panel and can be changed by the Manager via profile settings. Failed PIN entry at the POS is limited to 3 consecutive attempts before a 5-minute lockout is applied. |
+| BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
+| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+| BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
+| BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 
 
 ## 5.2 Common Requirements
@@ -5048,6 +5440,8 @@ The table below lists the standardized messages.
 | 12 | MSG12 | Toast message / Pop-up | Assigning employee to a shift that conflicts with their existing scheduled shifts | *Employee shift conflict. The employee is already scheduled for another shift during this time block.* |
 | 13 | MSG13 | Notification badge / Banner | API integration or webhook sync with third-party delivery partner fails | *Delivery partner channel sync error. Bypassing online sync.* |
 | 14 | MSG14 | In red / Toast message | Cashier enters points count not in multiples of 100 for loyalty points redemption | *Redemption points must be entered in multiples of 100.* |
+| 15 | MSG15 | Toast message | Admin successfully creates a new branch | *Branch successfully created.* |
+| 16 | MSG16 | Dialog pop-up | Admin attempts to add a branch when maximum capacity (5) is reached | *Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one.* |
 
 
 ---
@@ -5080,6 +5474,7 @@ The matrix below maps operational modules and system features to employee roles,
 | **Branch Revenue & Sales Reports** | R (Consolidated) | C / R / U | — | — |
 | **Central System Configurations** | C / R / U / D | — | — | — |
 | **Branch Local Settings** | C / R / U | C / R / U | — | — |
+| **Branch Management (Lifecycle)** | C / R / U | — | — | — |
 
 
 

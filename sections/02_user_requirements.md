@@ -114,6 +114,10 @@ graph LR
         UC_ExportReports([Export HQ Reports])
         
         UC_ConfigCentral([Configure Central System Settings])
+
+        UC_ListBranches([View Branch List])
+        UC_AddBranch([Add Branch])
+        UC_UpdateBranch([Update / Deactivate Branch])
     end
 
     %% Admin Links
@@ -123,6 +127,7 @@ graph LR
     Actor_Admin --> UC_ListMenu
     Actor_Admin --> UC_ViewReports
     Actor_Admin --> UC_ConfigCentral
+    Actor_Admin --> UC_ListBranches
 
     %% User extends
     UC_AddUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
@@ -148,6 +153,10 @@ graph LR
 
     %% Reports extends
     UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
+
+    %% Branch extends
+    UC_AddBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
+    UC_UpdateBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
 ```
 
 
@@ -346,5 +355,8 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
 | **UC-60** | Order Prep & Queue | Report Issue / Escalate Order | Barista | **Description**: Flags order preparation errors.<br>**Main Flow**:<br>1. Barista reports machine/ingredient issue.<br>2. The order is marked with an issue flag, notifying POS cashiers. |
 | **UC-61** | Inventory Management | View Import/Export History | Store Manager | **Description**: Reviews past stock movements.<br>**Main Flow**:<br>1. Manager opens history logs.<br>2. Details of stock imports and exports are displayed. |
+| **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
+| **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
+| **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
 
 

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Branch - HQ Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #fcfaf7; color: #2c1a11; margin: 0; padding: 0; }
+        .wrapper { display: flex; min-height: 100vh; flex-direction: row; }
+        .sidebar { width: 240px; background: #3d2314; color: white; padding: 25px 15px; box-sizing: border-box; }
+        .sidebar h2 { font-size: 20px; margin-bottom: 30px; text-align: center; color: #c89d7c; }
+        .sidebar a { display: block; color: #d1c4b9; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-bottom: 5px; }
+        .sidebar a.active, .sidebar a:hover { background: #5c3826; color: white; }
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 1px solid #eaddd3; padding-bottom: 15px; }
+        .header h1 { font-size: 24px; margin: 0; }
+        
+        .form-container { background: white; padding: 30px; border-radius: 12px; border: 1px solid #eaddd3; max-width: 600px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #3d2314; }
+        .form-group input, .form-group select { width: 100%; height: 46px; padding: 0 14px; border: 1px solid #e5dbcf; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: inherit; background: white; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #5c3826; box-shadow: 0 0 0 3px rgba(92, 56, 38, 0.1); }
+        .form-group input[readonly] { background: #f5ece1; color: #666; border-color: #e5dbcf; cursor: not-allowed; }
+        
+        .btn-group { display: flex; gap: 12px; margin-top: 30px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-primary { background: #3d2314; color: white; }
+        .btn-primary:hover { background: #5c3826; }
+        .btn-secondary { background: #f5ece1; color: #3d2314; border: 1px solid #eaddd3; }
+        .btn-secondary:hover { background: #eaddd3; }
+        
+        .error-msg { color: #c62828; font-size: 13px; margin-top: 6px; font-weight: 600; display: none; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #2e7d32; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 1000; }
+        .warning-box { background: #fff8e1; border-left: 4px solid #ffb300; padding: 15px; margin-bottom: 20px; border-radius: 4px; display: none; }
+        .warning-title { font-weight: bold; color: #b78103; margin-bottom: 5px; font-size: 14px; }
+        .warning-text { color: #5c3826; font-size: 13px; line-height: 1.4; }
+
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; padding: 15px; }
+            .sidebar h2 { margin-bottom: 15px; }
+            .sidebar-menu { display: flex; flex-wrap: wrap; gap: 5px; }
+            .sidebar a { padding: 8px 12px; font-size: 14px; }
+            .main-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h2>EspressoHQ Admin</h2>
+            <div class="sidebar-menu">
+                <a href="dashboard_web.html">Trang chủ</a>
+                <a href="users_web.html">Nhân sự</a>
+                <a href="menu_web.html">Thực đơn</a>
+                <a href="vouchers_web.html">Vouchers</a>
+                <a href="customers.html">Khách hàng</a>
+                <a href="reports_web.html">Báo cáo</a>
+                <a href="settings_web.html" class="active">Cấu hình</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Chỉnh Sửa Chi Nhánh</h1>
+            </div>
+
+            <div class="form-container">
+                <div class="warning-box" id="deactivateWarning">
+                    <div class="warning-title">⚠️ LƯU Ý KHI ĐÓNG CHI NHÁNH (BR-56):</div>
+                    <div class="warning-text">
+                        Hành động đóng chi nhánh sẽ <strong>tự động vô hiệu hóa (is_active = false)</strong> toàn bộ tài khoản nhân sự thuộc chi nhánh này, đồng thời <strong>hủy toàn bộ lịch làm việc tương lai</strong>. Dữ liệu lịch sử giao dịch và chấm công vẫn sẽ được giữ lại làm báo cáo.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mã Chi Nhánh (Mặc định)</label>
+                    <input type="text" id="branchId" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="branchName">Tên Chi Nhánh <span style="color:red">*</span></label>
+                    <input type="text" id="branchName" placeholder="Ví dụ: Coffee Zone - Binh Thanh">
+                    <div class="error-msg" id="nameError">Tên chi nhánh không được để trống.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="branchAddress">Địa Chỉ <span style="color:red">*</span></label>
+                    <input type="text" id="branchAddress" placeholder="Ví dụ: 200 Điện Biên Phủ, P. 17, Q. Bình Thạnh">
+                    <div class="error-msg" id="addressError">Địa chỉ chi nhánh không được để trống.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="branchPhone">Số Điện Thoại Liên Hệ <span style="color:red">*</span></label>
+                    <input type="text" id="branchPhone" placeholder="Ví dụ: 0283930005 (10-12 số)">
+                    <div class="error-msg" id="phoneError">Số điện thoại liên hệ không hợp lệ.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="branchStatus">Trạng Thái Hoạt Động</label>
+                    <select id="branchStatus" onchange="toggleStatusWarning()">
+                        <option value="active">Đang hoạt động (Active)</option>
+                        <option value="inactive">Đã tạm đóng (Inactive)</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" onclick="updateBranch()">Lưu Thay Đổi</button>
+                    <a href="branches_web.html" class="btn btn-secondary">Hủy bỏ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="successToast">Thay đổi đã được lưu thành công.</div>
+
+    <script>
+        // Lấy query string ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const branchId = urlParams.get('id');
+
+        let branches = JSON.parse(localStorage.getItem('coffee_branches')) || [];
+        let branch = branches.find(b => b.id === branchId);
+
+        if (!branch) {
+            alert('Không tìm thấy thông tin chi nhánh!');
+            window.location.href = 'branches_web.html';
+        } else {
+            // Fill data
+            document.getElementById('branchId').value = branch.id;
+            document.getElementById('branchName').value = branch.name;
+            document.getElementById('branchAddress').value = branch.address;
+            document.getElementById('branchPhone').value = branch.phone;
+            document.getElementById('branchStatus').value = branch.is_active ? 'active' : 'inactive';
+            
+            document.getElementById('pageTitle').innerText = `Chỉnh Sửa: ${branch.name}`;
+            toggleStatusWarning();
+        }
+
+        function toggleStatusWarning() {
+            const status = document.getElementById('branchStatus').value;
+            const warningBox = document.getElementById('deactivateWarning');
+            if (status === 'inactive' && branch.is_active) {
+                // Hiển thị cảnh báo nếu đang hoạt động mà chuyển sang đóng
+                warningBox.style.display = 'block';
+            } else {
+                warningBox.style.display = 'none';
+            }
+        }
+
+        function updateBranch() {
+            // Reset errors
+            document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+
+            const name = document.getElementById('branchName').value.trim();
+            const address = document.getElementById('branchAddress').value.trim();
+            const phone = document.getElementById('branchPhone').value.trim();
+            const status = document.getElementById('branchStatus').value;
+            const targetIsActive = (status === 'active');
+
+            let hasError = false;
+
+            // Kiểm tra điều kiện reactivation (nếu từ đóng sang mở) (BR-54)
+            if (targetIsActive && !branch.is_active) {
+                const activeBranchesCount = branches.filter(b => b.is_active).length;
+                if (activeBranchesCount >= 5) {
+                    alert('Maximum branch capacity (5) reached. Please deactivate another branch first. (MSG16)');
+                    return;
+                }
+            }
+
+            if (!name) {
+                document.getElementById('nameError').style.display = 'block';
+                hasError = true;
+            } else {
+                // Kiểm tra trùng tên với chi nhánh khác
+                const isDuplicate = branches.some(b => b.id !== branch.id && b.name.toLowerCase() === name.toLowerCase());
+                if (isDuplicate) {
+                    const nameErr = document.getElementById('nameError');
+                    nameErr.innerText = 'Tên chi nhánh này đã tồn tại trong hệ thống.';
+                    nameErr.style.display = 'block';
+                    hasError = true;
+                }
+            }
+
+            if (!address) {
+                document.getElementById('addressError').style.display = 'block';
+                hasError = true;
+            }
+
+            const phoneRegex = /^[0-9]{10,12}$/;
+            if (!phone || !phoneRegex.test(phone)) {
+                document.getElementById('phoneError').style.display = 'block';
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Nếu người dùng chọn deactive chi nhánh đang hoạt động, cần confirmation dialog (BR-56)
+            if (!targetIsActive && branch.is_active) {
+                const confirmDeactivate = confirm(
+                    "Deactivating this branch will disable all staff accounts assigned to it and cancel all future scheduled shifts. This action can be reversed by reactivating the branch. Proceed? (BR-56 / UC-65)"
+                );
+                if (!confirmDeactivate) {
+                    return; // Người dùng hủy bỏ
+                }
+            }
+
+            // Tiến hành cập nhật
+            branch.name = name;
+            branch.address = address;
+            branch.phone = phone;
+            
+            // Xử lý các hiệu ứng lan truyền nếu đổi trạng thái đóng
+            if (!targetIsActive && branch.is_active) {
+                branch.is_active = false;
+                // Demo hiệu ứng cascade
+                alert("Hệ thống đã tự động vô hiệu hóa các tài khoản nhân viên và hủy các lịch làm việc tương lai thuộc chi nhánh này! (Cascade effects successful)");
+            } else if (targetIsActive && !branch.is_active) {
+                branch.is_active = true;
+                alert("Chi nhánh đã được kích hoạt hoạt động trở lại! Lưu ý: Nhân viên thuộc chi nhánh này vẫn đang vô hiệu hóa và cần Admin kích hoạt lại thủ công từng người.");
+            }
+
+            localStorage.setItem('coffee_branches', JSON.stringify(branches));
+
+            // Hiển thị Toast thông báo thành công
+            const toast = document.getElementById('successToast');
+            toast.style.display = 'block';
+
+            setTimeout(() => {
+                window.location.href = 'branches_web.html';
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
