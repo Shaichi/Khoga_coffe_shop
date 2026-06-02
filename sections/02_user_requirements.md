@@ -18,7 +18,7 @@ The system defines the following roles (actors), structured under a generalizati
 5. **Barista**:
    - Inherits from `User`. Coordinates drink preparation using the queue monitor and prints label stickers.
 6. **Delivery Partner**:
-   - An external API actor that automates online order ingestion and availability syncs.
+   - An external API actor representing third-party delivery platforms (GrabFood, ShopeeFood) from which the system retrieves sales and revenue data.
 
 ```mermaid
 graph TD
@@ -313,6 +313,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-17** | Menu & Categories | Update Category | Admin | **Description**: Modifies category settings.<br>**Main Flow**:<br>1. Admin updates category details or visibility.<br>2. The category parameters are updated. |
 | **UC-18** | Menu & Categories | Add Menu Item & Recipe | Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
 | **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin | **Description**: Edits product details or recipes.<br>**Main Flow**:<br>1. Admin alters item pricing, availability, or raw material recipe counts.<br>2. Adjustments are saved, instantly modifying local POS catalogs. |
+| **UC-19a** | Menu & Categories | Delete Menu Item | Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
 | **UC-20** | Voucher Management | View Vouchers List | Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
 | **UC-21** | Voucher Management | Add Voucher | Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
 | **UC-22** | Voucher Management | Update Voucher | Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |

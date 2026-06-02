@@ -8,7 +8,7 @@ The primary purpose of the Coffee Shop Management System is to automate, coordin
 - **Inventory Control**: Real-time tracking of ingredients, automated low-stock alerts, and structured audit procedures to minimize wastage and stockouts.
 - **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for admins, managers, cashiers, and baristas.
 - **Data-Driven Insights**: Deliver comprehensive financial, inventory, and staff performance reports to enable management to make informed business decisions.
-- **Omnichannel Integration**: Seamlessly synchronize in-store sales and online orders from third-party delivery platforms.
+- **Consolidated Revenue Reporting**: Automatically retrieve sales and revenue figures from third-party delivery partners via API for unified store performance analysis.
 
 ## 1.2 Product Scope
 The system will manage the following core domains:
@@ -22,7 +22,7 @@ The system will manage the following core domains:
 
 ### Out of Scope
 The system will *not* support:
-- **Direct Logistics Dispatch**: Actual courier dispatching or routing. Instead, it relies on API integrations with third-party Delivery Partners.
+- **Real-time Order Processing & Delivery Integration**: Direct handling of online order lifecycles, courier dispatching, or kitchen sync with third-party delivery apps. Instead, the system only fetches aggregate sales reports from third-party delivery partner APIs.
 - **Payroll Calculation & Payouts**: The system will track staff schedules and attendance reports, but financial payroll calculations and payroll payouts are handled by external accounting systems.
 
 ---
@@ -78,8 +78,5 @@ graph LR
     SYS --> |"Queue Display Data"| BARISTA
 
     %% 5. Delivery Partner Data Flows
-    DELIVERY --> |"Online Order Data"| SYS
-    SYS --> |"Menu & Stock Synchronization"| DELIVERY
-    SYS --> |"Order Preparation Status"| DELIVERY
+    DELIVERY --> |"Sales/Revenue API Report"| SYS
 ```
-

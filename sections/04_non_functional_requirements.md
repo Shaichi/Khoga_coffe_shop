@@ -17,7 +17,7 @@ This section provides information to ensure that the system will communicate pro
 
 ### 4.1.3 Software & API Interfaces
 - **Payment Gateways**: API integration with bank systems (dynamic VietQR bank transfers) and payment services to receive instant payment confirmations.
-- **Third-Party Delivery APIs**: Webhook endpoints integration to receive orders and sync catalog menu availability details.
+- **Third-Party Delivery APIs**: API integration to fetch consolidated daily revenue and sales reports.
 
 ---
 

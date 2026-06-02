@@ -1,4 +1,4 @@
-﻿# 3.3 Menu Management
+# 3.3 Menu Management
 
 This section details specifications for viewing, adding, updating, and deactivating menu items and optional toppings.
 
@@ -125,7 +125,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |  | Rich traditional Vietnamese drip coffee...                                |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [ ] Available (Show on POS & Delivery Apps)                                    |
+|  [ ] Available (Show on POS)                                                    |
 |  Image Upload:  [ Choose File ] (No file chosen)                                |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -201,7 +201,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |  | Strong traditional black coffee...                                        |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [x] Available (Show on POS & Delivery Apps)                                    |
+|  [x] Available (Show on POS)                                                    |
 |  Image Upload:  [ Choose File ] (espresso.png)                                  |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -258,12 +258,12 @@ This section details specifications for viewing, adding, updating, and deactivat
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-27 | Deactivating (`Availability = false`) triggers automatic removal from online delivery partner channels. |
+| BR-27 | [RESERVED / DELETED] |
 | BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified (diacritic-removed) name (e.g. "Cà phê đá" → "cfd") and updates if name is modified. **Collision handling:** If the generated abbreviation already exists in the catalog, a numeric suffix is appended incrementally (e.g. "cfd2", "cfd3") until a unique value is found. |
 
 ---
 
-## 3.3.5 F17 - Delete Menu Item / UC-19 Update Menu Item & Recipe
+## 3.3.5 F17 - Delete Menu Item / UC-19a Delete Menu Item
 
 ### 3.3.5.1 Screen Mock-up (Desktop Landscape Modal)
 ```

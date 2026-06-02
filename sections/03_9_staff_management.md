@@ -1,4 +1,4 @@
-﻿# 3.9 Staff Management
+# 3.9 Staff Management
 
 This section details specifications for staff shifts assignment, schedules views, and schedules cancellations.
 
@@ -236,7 +236,7 @@ This section details specifications for staff shifts assignment, schedules views
 |---|---|
 | BR-38 | **Attendance Check-in Registration**: A check-in record is automatically created based on the employee's first successful login at a local terminal station within their scheduled shift time window. Subsequent logins within the same shift window do not create duplicate check-in records. If no scheduled shift exists for the login time, no check-in record is created. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
+| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
 
 ---
 

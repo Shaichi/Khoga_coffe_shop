@@ -173,7 +173,7 @@ The primary purpose of the Coffee Shop Management System is to automate, coordin
 - **Inventory Control**: Real-time tracking of ingredients, automated low-stock alerts, and structured audit procedures to minimize wastage and stockouts.
 - **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for admins, managers, cashiers, and baristas.
 - **Data-Driven Insights**: Deliver comprehensive financial, inventory, and staff performance reports to enable management to make informed business decisions.
-- **Omnichannel Integration**: Seamlessly synchronize in-store sales and online orders from third-party delivery platforms.
+- **Consolidated Revenue Reporting**: Automatically retrieve sales and revenue figures from third-party delivery partners via API for unified store performance analysis.
 
 ## 1.2 Product Scope
 The system will manage the following core domains:
@@ -187,7 +187,7 @@ The system will manage the following core domains:
 
 ### Out of Scope
 The system will *not* support:
-- **Direct Logistics Dispatch**: Actual courier dispatching or routing. Instead, it relies on API integrations with third-party Delivery Partners.
+- **Real-time Order Processing & Delivery Integration**: Direct handling of online order lifecycles, courier dispatching, or kitchen sync with third-party delivery apps. Instead, the system only fetches aggregate sales reports from third-party delivery partner APIs.
 - **Payroll Calculation & Payouts**: The system will track staff schedules and attendance reports, but financial payroll calculations and payroll payouts are handled by external accounting systems.
 
 ---
@@ -243,11 +243,8 @@ graph LR
     SYS --> |"Queue Display Data"| BARISTA
 
     %% 5. Delivery Partner Data Flows
-    DELIVERY --> |"Online Order Data"| SYS
-    SYS --> |"Menu & Stock Synchronization"| DELIVERY
-    SYS --> |"Order Preparation Status"| DELIVERY
+    DELIVERY --> |"Sales/Revenue API Report"| SYS
 ```
-
 
 
 ---
@@ -272,7 +269,7 @@ The system defines the following roles (actors), structured under a generalizati
 5. **Barista**:
    - Inherits from `User`. Coordinates drink preparation using the queue monitor and prints label stickers.
 6. **Delivery Partner**:
-   - An external API actor that automates online order ingestion and availability syncs.
+   - An external API actor representing third-party delivery platforms (GrabFood, ShopeeFood) from which the system retrieves sales and revenue data.
 
 ```mermaid
 graph TD
@@ -567,6 +564,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-17** | Menu & Categories | Update Category | Admin | **Description**: Modifies category settings.<br>**Main Flow**:<br>1. Admin updates category details or visibility.<br>2. The category parameters are updated. |
 | **UC-18** | Menu & Categories | Add Menu Item & Recipe | Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
 | **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin | **Description**: Edits product details or recipes.<br>**Main Flow**:<br>1. Admin alters item pricing, availability, or raw material recipe counts.<br>2. Adjustments are saved, instantly modifying local POS catalogs. |
+| **UC-19a** | Menu & Categories | Delete Menu Item | Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
 | **UC-20** | Voucher Management | View Vouchers List | Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
 | **UC-21** | Voucher Management | Add Voucher | Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
 | **UC-22** | Voucher Management | Update Voucher | Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
@@ -855,8 +853,7 @@ These automated backend processes do not require direct human interaction:
 | 4 | Inventory Management | Low Stock Notification Engine | Evaluates active stock levels against thresholds in real-time, displaying alert badges and sending nightly aggregated emails at 22:00. |
 | 5 | POS Transaction | Auto-Close Abandoned Shifts | Nightly scheduler runs at 11:59 PM to automatically close active cashier shifts left open, logging discrepancies. |
 | 6 | POS Transaction | Order Timeout Handler | Automatically cancels orders that are in a pending payment state for more than 15 minutes. |
-| 7 | Delivery Partner Integration | Auto-Sync Scheduler | Periodic background task running every 15 minutes to synchronize menu items, availability status, and inventory metrics with delivery partners. |
-| 8 | Delivery Partner Integration | Real-time Out-of-Stock Webhooks | Immediately pushes out-of-stock statuses of menu items to third-party delivery partners when stock is depleted. |
+| 7 | Delivery Partner Integration | Revenue Report Fetcher | Automatically fetch daily consolidated revenue and sales figures from delivery partner APIs at 23:00 to populate dashboards and reports. |
 
 ---
 
@@ -1278,12 +1275,12 @@ This section details the functional requirements for authentication, user profil
 
 #### Alternative Flows
 ##### AT1: Active Shift Check
-- **Trigger**: At step 2, Cashier has an active POS shift open.
+- **Trigger**: At step 2, Cashier has an active POS shift session open.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays warning message: `"You have an active shift session open. Please close your shift before logging out."` |
-| 2.2 | Cashier | Chooses to proceed with logout anyway, or cancels to close shift first. |
+| 2.1 | Portal | Displays error message: `"You have an active shift session open. You must close your shift (UC-53) before logging out."` (MSG17) |
+| 2.2 | Cashier | Acknowledges the error, and the logout flow is aborted. The cashier is redirected to the active shift page. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -2130,7 +2127,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |  | Rich traditional Vietnamese drip coffee...                                |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [ ] Available (Show on POS & Delivery Apps)                                    |
+|  [ ] Available (Show on POS)                                                    |
 |  Image Upload:  [ Choose File ] (No file chosen)                                |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -2206,7 +2203,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |  | Strong traditional black coffee...                                        |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [x] Available (Show on POS & Delivery Apps)                                    |
+|  [x] Available (Show on POS)                                                    |
 |  Image Upload:  [ Choose File ] (espresso.png)                                  |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -2263,12 +2260,12 @@ This section details specifications for viewing, adding, updating, and deactivat
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-27 | Deactivating (`Availability = false`) triggers automatic removal from online delivery partner channels. |
+| BR-27 | [RESERVED / DELETED] |
 | BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified (diacritic-removed) name (e.g. "Cà phê đá" → "cfd") and updates if name is modified. **Collision handling:** If the generated abbreviation already exists in the catalog, a numeric suffix is appended incrementally (e.g. "cfd2", "cfd3") until a unique value is found. |
 
 ---
 
-## 3.3.5 F17 - Delete Menu Item / UC-19 Update Menu Item & Recipe
+## 3.3.5 F17 - Delete Menu Item / UC-19a Delete Menu Item
 
 ### 3.3.5.1 Screen Mock-up (Desktop Landscape Modal)
 ```
@@ -3353,7 +3350,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 1 | Cashier | Selects payment method and initiates transaction. |
 | 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) or registers Cash drawer float logic. |
-| 3 | Portal | Verifies successful receipt confirmation, records transaction, and prints invoice. |
+| 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.7 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
 
 #### Alternative Flows
 ##### AT1: Gateway Timeout
@@ -3393,6 +3390,7 @@ This section outlines the business logic for calculating and applying discounts 
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
   5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
+  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable / 10000)`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
 
 ---
 
@@ -3513,7 +3511,7 @@ This section outlines the business logic for calculating and applying discounts 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-03 | A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation/delivery. |
+| BR-03 | A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
 | BR-04 | Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. |
 
 
@@ -3542,12 +3540,14 @@ All orders follow the state transitions below:
 [ON_HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
            \--(Manager/Admin cancel)---> [CANCELLED]
 
-[READY] -----(Cashier: payment done)--> [COMPLETED]
+[READY] -----(Cashier: handover/pickup)-> [COMPLETED]
          \--(Manager/Admin cancel)------> [CANCELLED]
 
 [COMPLETED] → Terminal state (no further transitions)
 [CANCELLED]  → Terminal state (no further transitions)
 ```
+
+> **Note on COMPLETED state:** For DINE_IN and TAKE_AWAY orders, the transition from READY to COMPLETED is triggered by the Cashier confirming the order handover (customer pickup). For DELIVERY orders, it is triggered by delivery partner API sales report reconciliation.
 
 > **ON_HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). An ON_HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
 
@@ -3794,12 +3794,24 @@ All orders follow the state transitions below:
 | 3 | Portal | Updates order status to `CANCELLED`, reverses vouchers/points (BR-08), records inventory wastage logs (BR-07), and saves cancellation audit logs. |
 | 4 | Portal | Displays success notification and returns to order history screen. |
 
+#### Alternative Flows
+##### AT1: Order in PREPARING, ON_HOLD, or READY state
+- **Trigger**: Cashier attempts to cancel an order that is no longer in the `PENDING` state.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Detects that the order is in `PREPARING`, `ON_HOLD`, or `READY` status. |
+| 1.2 | Portal | Blocks direct cashier cancellation and displays warning that Manager authorization is required. |
+| 1.3 | Cashier | Taps "Request Manager Cancellation". |
+| 1.4 | Manager | Accesses the branch console, reviews the cancellation request (reason and notes), and taps "Approve Cancellation" (no PIN entry needed, authentication checked by manager account role). |
+| 1.5 | Portal | Transitions the order to `CANCELLED`, executes refund (BR-09), and logs the action in `order_cancellations`. |
+
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
 | BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
 ---
@@ -4324,7 +4336,7 @@ This section details specifications for staff shifts assignment, schedules views
 |---|---|
 | BR-38 | **Attendance Check-in Registration**: A check-in record is automatically created based on the employee's first successful login at a local terminal station within their scheduled shift time window. Subsequent logins within the same shift window do not create duplicate check-in records. If no scheduled shift exists for the login time, no check-in record is created. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
+| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
 
 ---
 
@@ -4583,120 +4595,48 @@ This section details specifications for managing discount codes and promotional 
 
 ---
 
-# 3.11 Delivery Partner Integration
+# 3.11 Delivery Partner Revenue Integration
 
-This section details specifications for background order synchronization and manual review screens for delivery partners.
+This section details specifications for background sales and revenue synchronization from third-party delivery partners.
 
 ---
 
-## 3.11.1 F50 - Pending Delivery Order Review / UC-11.1 Online Order
+## 3.11.1 F50 - Consolidated Revenue Integration / UC-11.1 Fetch Delivery Partner Sales
 
-### 3.11.1.1 Screen Mock-up (Mobile Portrait Modal)
-```
-+------------------------------------+
-|      Pending Delivery Order        |
-|                                    |
-|  Partner: GrabFood                 |
-|  Timer Remaining: [ 01:45 ]        |
-|                                    |
-|  Ordered Items:                    |
-|  - 1x Milk Tea  (Gold Topping)     |
-|  * Status: IN STOCK                |
-|                                    |
-|  - 1x Peach Tea (Peach slices)     |
-|  * Status: OUT OF STOCK [!]        |
-|                                    |
-|     [ CALL CUSTOMER/RIDER ]        |
-|     [ ACCEPT PARTIAL ]  [ REJECT ] |
-+------------------------------------+
-```
+### 3.11.1.1 Use Case Description
 
-#### Table 3-54: Screen Definition
-| # | Field Name | Type | Mandatory | Max Length | Description |
-|---|---|---|---|---|---|
-| 1 | Call Customer/Rider | Button | | | Triggers phone call connection using the rider/customer hotline. |
-| 2 | Accept Partial | Button | | | Submits edited order payload excluding unavailable items. |
-| 3 | Reject | Button | | | Rejects order immediately. |
-
-### 3.11.1.2 Use Case Description
-
-| Use Case ID | UC-11.1 | Use Case Name | Receive Online Order |
+| Use Case ID | UC-11.1 | Use Case Name | Fetch Delivery Partner Sales |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.1 |
-| **Date** | 2026-06-01 | | |
+| **Author** | Antigravity | **Version** | 1.2 |
+| **Date** | 2026-06-02 | | |
 
 | Field | Description |
 |---|---|
-| **Actor** | System (automated), Cashier (manual review only) |
-| **Description** | Processes incoming delivery partner orders. Automatically accepts orders when all items are in stock; triggers manual review when out-of-stock items are detected. |
-| **Precondition** | A valid delivery order webhook payload has been received and authenticated. |
-| **Trigger** | Webhook request receives order payload from delivery partner API. |
-| **Post-Condition** | Order is either auto-accepted into the kitchen queue, or manually resolved (partial accept / reject) by the Cashier. |
+| **Actor** | System (automated) |
+| **Description** | Automatically fetches daily consolidated revenue and sales figures from delivery partner APIs. |
+| **Precondition** | Secure API integration keys/tokens are configured in the system settings. |
+| **Trigger** | Nightly scheduler runs automatically at 23:00. |
+| **Post-Condition** | Consolidated sales data is stored and displayed on the HQ consolidated dashboards. |
 
-#### Main Flows (Auto-Accept — All Items In Stock)
+#### Main Flows (Fetch and Store Consolidated Sales)
 | Step | Actor | Action |
 |---|---|---|
-| 1 | System | Receives and validates webhook payload from delivery partner. |
-| 2 | System | Checks stock availability for all items in the order. |
-| 3 | System | All items are in stock: automatically accepts the order and sends acceptance payload to the delivery partner API. |
-| 4 | System | Creates a new order record (type: `DELIVERY`) and pushes it directly to the Barista kitchen queue in `PENDING` state. |
-
-#### Alternative Flows
-##### AT1: Out-of-Stock Item Detected (Manual Review Required)
-- **Trigger**: At step 2, one or more items are out of stock.
-
-| Step | Actor | Action |
-|---|---|---|
-| 1 | System | Flags the order on the POS Cashier screen with a countdown timer (BR-42: 2 minutes). |
-| 2 | Cashier | Reviews out-of-stock items, contacts customer/rider if needed, and either: |
-| 2a | Cashier | Clicks "Accept Partial" — removes unavailable items from the cart and sends a partial acceptance payload back to the partner API. The adjusted order is pushed to the kitchen queue. |
-| 2b | Cashier | Clicks "Reject" — sends an immediate rejection payload to the delivery partner. The order is not created locally. |
-
-##### AT2: Timer Expired (Auto-Reject)
-- **Trigger**: Countdown timer reaches 0 with no Cashier action.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 1 | System | Sends automatic rejection payload to delivery partner API (BR-42). |
-| 2 | System | Logs the auto-rejection event for audit. |
+| 1 | System | Initiates secure API requests to registered delivery partners (e.g. GrabFood, ShopeeFood). |
+| 2 | System | Authenticates requests using configured access tokens (BR-60). |
+| 3 | System | Receives sales payloads containing daily consolidated transaction counts, item quantities, and gross totals. |
+| 4 | System | Processes and saves records into the reporting database, mapping sales figures to corresponding physical store branches. |
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-42 | Review countdown timer is set to exactly 2 minutes; if it expires, the order is automatically rejected. **Rejection Notification**: Upon manual rejection or auto-timeout rejection, the system sends an immediate API rejection payload callback to the third-party delivery partner (e.g., GrabFood, ShopeeFood). The delivery partner platform is responsible for notifying both the delivery rider and the end customer via their respective mobile applications. |
-| BR-43 | Delivery orders bypass individual cashier shift sessions drawer cash totals. |
+| BR-60 | **Delivery Partner Authentication**: All outbound requests to delivery partner endpoints must include valid, encrypted authorization headers generated from active integration keys configured by HQ Admin. |
+| BR-61 | **Data Reconciliation**: Consolidated delivery sales records are flagged as external transactions. They bypass local drawer cash calculations and shift session totals, but are included in store performance reports. |
 
 ---
 
-## 3.11.2 Sync Menu & Stock Availability
-- **Description**: Synchronizes active store prices and ingredient/item availability to delivery partner applications.
-- **Process**:
-  - When an item is marked "Out of stock" locally, the status is synchronized with the delivery applications.
-  - This temporarily disables the item on the delivery partner's catalog.
-
----
-
-## 3.11.3 Update Order Preparation Status
-- **Description**: Notifies delivery riders and platforms of kitchen status changes.
-- **Process**:
-  - Updating the order state to "Preparing" or "Ready" automatically synchronizes the status with the delivery partner.
-  - Coordinates rider arrival with kitchen order completion.
-
----
-
-## 3.11.4 Delivery Partner Integration Authentication
-- **Method**: Secure access tokens are used to authenticate each registered delivery partner.
-- **Validation**: Incoming integration requests must include a valid authorization token. Unauthorized requests are rejected.
-
----
-
-## 3.11.5 Error Handling & Retry Policy
-- **Timeout**: If no response is received from the delivery partner within 10 seconds, the request is considered timed out.
-- **Retry Policy**: Failed outbound synchronization requests are retried up to 3 times. After 3 failures, the issue is logged and the Store Manager is notified.
-- **Failed Synchronizations**: Failed events that exhaust all retries are logged for manual review by the Administrator.
-- **Offline Handling**: If the local store is offline, synchronization events are queued locally and sent chronologically once connectivity is restored.
-
-
+## 3.11.2 Error Handling & Retry Policy
+- **Connection Timeout**: If a delivery partner API does not respond within 15 seconds, the request times out.
+- **Retry Schedule**: Failed synchronization requests are retried every hour up to 3 times. If all retries fail, a system alert is sent to the Admin dashboard and logged.
 
 
 ---
@@ -5315,7 +5255,7 @@ This section provides information to ensure that the system will communicate pro
 
 ### 4.1.3 Software & API Interfaces
 - **Payment Gateways**: API integration with bank systems (dynamic VietQR bank transfers) and payment services to receive instant payment confirmations.
-- **Third-Party Delivery APIs**: Webhook endpoints integration to receive orders and sync catalog menu availability details.
+- **Third-Party Delivery APIs**: API integration to fetch consolidated daily revenue and sales reports.
 
 ---
 
@@ -5434,13 +5374,13 @@ This section contains business rules, global requirements, common application me
 |---|---|
 | BR-01 | **Membership Point Accrual**: Customers accumulate 1 point for every 10,000 VND of **Net Total Payable** (after all discounts and point redemptions are applied) spent, rounded down to the nearest whole integer. Formula: `points_earned = floor(netTotalPayable / 10000)`. Points are not accrued for the portion of the order covered by point redemption discounts. |
 | BR-02 | **Membership Point Redemption**: 100 points can be redeemed for 10,000 VND discount at checkout, applicable only for customers who have reached at least the **Silver** tier. |
-| BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation/delivery. |
+| BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
 | BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
 | BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state (before stock deduction by UC-62). If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
-| BR-09 | **Refund Authorization & Execution**: Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must be authorized using **Store Manager** or **Admin** credentials at the POS, within **7 days** of the original purchase. |
+| BR-09 | **Refund Authorization & Execution**: Refunds for orders in `PENDING` status can be performed directly by the Cashier without manager approval. Refunds for orders in `PREPARING`, `ON_HOLD`, or `READY` statuses require authorization by a Store Manager or Admin. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | **Account Suspension**: Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | **Force Password Change Block**: Mandatory password change flag blocks navigation to any other module. User cannot bypass the Force Password Change screen. |
@@ -5458,7 +5398,7 @@ This section contains business rules, global requirements, common application me
 | BR-24 | **Menu Items Autocomplete & Filters**: Items list shows search autocomplete results and real-time category filtering. |
 | BR-25 | **Menu Item Availability Status**: Availability states must indicate `Available` or `Out of Stock` based on active quantities or flags. |
 | BR-26 | **Menu Item Abbreviation Generation**: Abbreviation is automatically created based on first letters of words in the unsignified name (e.g. "Cà phê đá" -> "cfd") and updates if name is modified. |
-| BR-27 | **Delivery Partner Catalog Sync**: Deactivating (`Availability = false`) triggers automatic removal from online delivery partner channels. |
+| BR-27 | [RESERVED / DELETED] |
 | BR-28 | **Menu Items Soft Delete**: Menu items are never permanently deleted from database to preserve historical sales reports. |
 | BR-29 | **Topping Pricing & Linkage**: Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
 | BR-30 | **Category Sales propagation**: Category updates propagate immediately to POS sales screen catalogs. |
@@ -5473,8 +5413,8 @@ This section contains business rules, global requirements, common application me
 | BR-39 | **Lateness Calculation Rule**: Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
 | BR-40 | **Read-Only Voucher Code**: Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | **Deactivation Redemption Block**: Deactivating a voucher immediately stops all checkout redemptions. |
-| BR-42 | **Delivery Partner Review Timer**: Review countdown timer is set to exactly 2 minutes; if it expires, the order is automatically rejected. **Rejection Notification**: Upon manual rejection or auto-timeout rejection, the system sends an immediate API rejection payload callback to the third-party delivery partner (e.g., GrabFood, ShopeeFood). The delivery partner platform is responsible for notifying both the delivery rider and the end customer via their respective mobile applications. |
-| BR-43 | **Delivery Drawer Separation**: Delivery orders bypass individual cashier shift sessions drawer cash totals. |
+| BR-42 | [RESERVED / DELETED] |
+| BR-43 | [RESERVED / DELETED] |
 | BR-44 | **Reports & Metrics Scope**: Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
 | BR-45 | **VAT Configuration Limits**: Default VAT rate must be between 0% and 20%. |
 | BR-46 | **Config Sync propagation**: Saving changes updates the receipt calculation engine and template layouts immediately. |
@@ -5484,13 +5424,15 @@ This section contains business rules, global requirements, common application me
 | BR-50 | **Discount Cap**: The Net Total Payable after all discounts (tier discount, voucher discount, and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
 | BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` database log for audit and reporting purposes. No manager PIN or override code verification is required. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift) or logs out of the system. The last recorded logout or shift-close time within the shift window is used as the check-out timestamp. |
+| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
 | BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
 | BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
 | BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+| BR-60 | **Delivery Partner Authentication**: All outbound requests to delivery partner endpoints must include valid, encrypted authorization headers generated from active integration keys configured by HQ Admin. |
+| BR-61 | **Data Reconciliation**: Consolidated delivery sales records are flagged as external transactions. They bypass local drawer cash calculations and shift session totals, but are included in store performance reports. |
 
 
 
@@ -5526,10 +5468,11 @@ The table below lists the standardized messages.
 | 10 | MSG10 | In red / Toast message | Entering incorrect or expired OTP recovery code | *Incorrect or expired OTP. Please check your email and try again.* |
 | 11 | MSG11 | Toast message / Pop-up | Customer doesn't have enough loyalty points to redeem or is below Silver tier | *Insufficient points balance or membership tier ineligible for redemption.* |
 | 12 | MSG12 | Toast message / Pop-up | Assigning employee to a shift that conflicts with their existing scheduled shifts | *Employee shift conflict. The employee is already scheduled for another shift during this time block.* |
-| 13 | MSG13 | Notification badge / Banner | API integration or webhook sync with third-party delivery partner fails | *Delivery partner channel sync error. Bypassing online sync.* |
+| 13 | MSG13 | [RESERVED / DELETED] | *[Reserved for future use]* | *[Reserved for future use]* |
 | 14 | MSG14 | In red / Toast message | Cashier enters points count not in multiples of 100 for loyalty points redemption | *Redemption points must be entered in multiples of 100.* |
 | 15 | MSG15 | Toast message | Admin successfully creates a new branch | *Branch successfully created.* |
 | 16 | MSG16 | Dialog pop-up | Admin attempts to add a branch when maximum capacity (5) is reached | *Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one.* |
+| 17 | MSG17 | Dialog pop-up | Cashier attempts to log out with an active open shift | *You have an active shift session open. You must close your shift (UC-53) before logging out.* |
 
 
 ---

@@ -17,12 +17,14 @@ All orders follow the state transitions below:
 [ON_HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
            \--(Manager/Admin cancel)---> [CANCELLED]
 
-[READY] -----(Cashier: payment done)--> [COMPLETED]
+[READY] -----(Cashier: handover/pickup)-> [COMPLETED]
          \--(Manager/Admin cancel)------> [CANCELLED]
 
 [COMPLETED] → Terminal state (no further transitions)
 [CANCELLED]  → Terminal state (no further transitions)
 ```
+
+> **Note on COMPLETED state:** For DINE_IN and TAKE_AWAY orders, the transition from READY to COMPLETED is triggered by the Cashier confirming the order handover (customer pickup). For DELIVERY orders, it is triggered by delivery partner API sales report reconciliation.
 
 > **ON_HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). An ON_HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
 
@@ -269,12 +271,24 @@ All orders follow the state transitions below:
 | 3 | Portal | Updates order status to `CANCELLED`, reverses vouchers/points (BR-08), records inventory wastage logs (BR-07), and saves cancellation audit logs. |
 | 4 | Portal | Displays success notification and returns to order history screen. |
 
+#### Alternative Flows
+##### AT1: Order in PREPARING, ON_HOLD, or READY state
+- **Trigger**: Cashier attempts to cancel an order that is no longer in the `PENDING` state.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Detects that the order is in `PREPARING`, `ON_HOLD`, or `READY` status. |
+| 1.2 | Portal | Blocks direct cashier cancellation and displays warning that Manager authorization is required. |
+| 1.3 | Cashier | Taps "Request Manager Cancellation". |
+| 1.4 | Manager | Accesses the branch console, reviews the cancellation request (reason and notes), and taps "Approve Cancellation" (no PIN entry needed, authentication checked by manager account role). |
+| 1.5 | Portal | Transitions the order to `CANCELLED`, executes refund (BR-09), and logs the action in `order_cancellations`. |
+
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
 | BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `ON_HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: Inventory is auto-replenished only if the order is cancelled in the `PENDING` state. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, stock is considered wasted and is not restored (logged as operational waste). |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `ON_HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
 ---

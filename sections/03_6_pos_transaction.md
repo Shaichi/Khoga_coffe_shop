@@ -388,7 +388,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 1 | Cashier | Selects payment method and initiates transaction. |
 | 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) or registers Cash drawer float logic. |
-| 3 | Portal | Verifies successful receipt confirmation, records transaction, and prints invoice. |
+| 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.7 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
 
 #### Alternative Flows
 ##### AT1: Gateway Timeout
@@ -428,6 +428,7 @@ This section outlines the business logic for calculating and applying discounts 
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
   5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
+  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable / 10000)`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
 
 ---
 
@@ -548,7 +549,7 @@ This section outlines the business logic for calculating and applying discounts 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-03 | A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation/delivery. |
+| BR-03 | A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
 | BR-04 | Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. |
 
 

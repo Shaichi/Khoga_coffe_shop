@@ -1,4 +1,4 @@
-﻿# 3.2 System Access & Security
+# 3.2 System Access & Security
 
 This section details the functional requirements for authentication, user profiles, and employee account administration.
 
@@ -135,12 +135,12 @@ This section details the functional requirements for authentication, user profil
 
 #### Alternative Flows
 ##### AT1: Active Shift Check
-- **Trigger**: At step 2, Cashier has an active POS shift open.
+- **Trigger**: At step 2, Cashier has an active POS shift session open.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays warning message: `"You have an active shift session open. Please close your shift before logging out."` |
-| 2.2 | Cashier | Chooses to proceed with logout anyway, or cancels to close shift first. |
+| 2.1 | Portal | Displays error message: `"You have an active shift session open. You must close your shift (UC-53) before logging out."` (MSG17) |
+| 2.2 | Cashier | Acknowledges the error, and the logout flow is aborted. The cashier is redirected to the active shift page. |
 
 #### Business Rules
 | ID | Rule Description |
