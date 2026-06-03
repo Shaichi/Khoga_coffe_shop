@@ -1,4 +1,4 @@
-﻿# 3.13 System Configuration
+# 3.13 System Configuration
 
 This section details specifications for system settings, store branding profiles, taxation rules, invoice layouts, and local hardware connections.
 
@@ -19,6 +19,11 @@ This section details specifications for system settings, store branding profiles
 |  Default VAT:   [ 10.0         ] %                                              |
 |  Header Title:  [ Welcome to Coffee Zone                                      ] |
 |  Footer Message:[ Thank you! See you again.                                   ] |
+|  Max Active Branches: [ 5      ]                                                |
+|                                                                                 |
+|  Loyalty Points Program Settings:                                               |
+|  Accrual Rate:  [ 1.0          ] %   Redeem Value:  [ 100          ] VND/point  |
+|  Max Redeem:    [ 50           ] %   Max Discount:  [ 100,000      ] VND/order  |
 |                                                                                 |
 |                                                     [ Save Settings ] [ Cancel ] |
 +---------------------------------------------------------------------------------+
@@ -33,20 +38,25 @@ This section details specifications for system settings, store branding profiles
 | 4 | Default VAT | Decimal | Yes | 5 | Percentage value for VAT rate calculation (0% to 20%). |
 | 5 | Header Title | Text | Yes | 150 | Text printed at the top of POS receipts. |
 | 6 | Footer Message | Text | Yes | 250 | Text printed at the bottom of POS receipts. |
-| 7 | Save Settings | Button | | | Commits and saves global brand changes. |
-| 8 | Cancel | Button | | | Discards edits and returns to dashboard home. |
+| 7 | Max Active Branches | Number | Yes | 3 | Maximum number of active store branches allowed simultaneously. |
+| 8 | Accrual Rate | Decimal | Yes | 5 | Percentage of net total payable earned as points (0% to 100%). |
+| 9 | Redeem Value | Number | Yes | 6 | Cash value per point in VND (must be > 0). |
+| 10 | Max Redeem | Decimal | Yes | 5 | Max percentage of order subtotal paid via points (0% to 100%). |
+| 11 | Max Discount | Number | Yes | 8 | Max absolute discount amount in VND via points per order (must be >= 0). |
+| 12 | Save Settings | Button | | | Commits and saves global brand changes. |
+| 13 | Cancel | Button | | | Discards edits and returns to dashboard home. |
 
 ### 3.13.1.2 Use Case Description
 
 | Use Case ID | UC-30 | Use Case Name | Configure Central System Settings |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Admin |
-| **Description** | Configures global parameters including brand name, tax rate, and receipt templates. |
+| **Description** | Configures global parameters including brand name, tax rate, receipt templates, and loyalty points configuration settings. |
 | **Precondition** | Admin is logged in. |
 | **Trigger** | Admin navigates to Central System Settings. |
 | **Post-Condition** | Central configuration parameters are updated. |
@@ -54,7 +64,7 @@ This section details specifications for system settings, store branding profiles
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Updates the Brand Name, Default VAT, Header Title, or Footer Message. |
+| 1 | Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
 | 2 | Admin | Clicks "Save Settings". |
 | 3 | Portal | Validates the input values. |
 | 4 | Portal | Saves the updated configurations. |
@@ -67,12 +77,17 @@ This section details specifications for system settings, store branding profiles
 |---|---|---|
 | 3.1 | Portal | If Brand Name is empty, displays message: `"Brand name cannot be empty."` |
 | 3.2 | Portal | If Default VAT is not between 0 and 20, displays message: `"VAT rate must be a numeric value between 0 and 20."` |
+| 3.3 | Portal | If Accrual Rate is not between 0 and 100, displays message: `"Accrual rate must be a numeric value between 0 and 100."` |
+| 3.4 | Portal | If Redeem Value is not greater than 0, displays message: `"Redeem value must be a numeric value greater than 0."` |
+| 3.5 | Portal | If Max Redeem is not between 0 and 100, displays message: `"Max redeem percentage must be a numeric value between 0 and 100."` |
+| 3.6 | Portal | If Max Discount is not greater than or equal to 0, displays message: `"Max discount must be a numeric value greater than or equal to 0."` |
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
-| BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the VAT rate that was active when they were created.** |
+| BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes and loyalty config changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the parameters that were active when they were created.** |
+| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
 
 ---
 
@@ -311,7 +326,7 @@ This section specifies the branch lifecycle management functionality available e
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches do not count toward this limit. |
 
 ---
 

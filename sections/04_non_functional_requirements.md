@@ -17,7 +17,7 @@ This section provides information to ensure that the system will communicate pro
 
 ### 4.1.3 Software & API Interfaces
 - **Payment Gateways**: API integration with bank systems (dynamic VietQR bank transfers) and payment services to receive instant payment confirmations.
-- **Third-Party Delivery APIs**: API integration to fetch consolidated daily revenue and sales reports.
+
 
 ---
 
@@ -50,7 +50,7 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
   - **Degraded Mode Operations (Offline POS)**:
     > [!IMPORTANT]
     > If the local store internet connection drops, the POS cashier terminal must continue to function. It will store orders locally in secure local storage.
-    - Offline operations allow cash and card checkouts. Online ShopeeFood validation and live VietQR transfers are suspended.
+    - Offline operations allow cash and card checkouts. Live VietQR transfers are suspended.
     - Loyalty points redemptions and online voucher verifications are suspended; only preloaded local vouchers can be verified.
     - Synchronizing queued offline orders to the cloud database must trigger automatically within **60 seconds** after internet connection recovery.
 - **Mean Time Between Failures (MTBF)**:
@@ -81,7 +81,7 @@ The system's performance characteristics, transaction response times, and capaci
 - **Throughput**:
   - The backend APIs must handle a minimum throughput of **100 transactions per second (TPS)** globally without degradation.
 - **Capacity**:
-  - The system must accommodate up to **5 branches** and **100 concurrent active cashier POS sessions**.
+  - The system must accommodate up to the configured `MAX_ACTIVE_BRANCHES` branches and **100 concurrent active cashier POS sessions**.
   - The central database must handle up to **10,000 daily order transactions**.
 - **Resource Utilization**:
   - **POS client memory**: The active application must consume **less than 512MB RAM** on terminal devices.
@@ -96,7 +96,7 @@ The system's performance characteristics, transaction response times, and capaci
 - **Access Control**: Strict role-based access control (RBAC) enforced on all resource endpoints. Unauthorised attempts to access administrative features will return access denied errors.
 
 ### 4.2.5 Scalability
-- The system architecture must support horizontal scaling to accommodate up to **5 branches** without requiring architectural redesign.
+- The system architecture must support horizontal scaling to accommodate a dynamic number of branches (configured via `MAX_ACTIVE_BRANCHES`) without requiring architectural redesign.
 - A single branch deployment must handle a minimum of **500 transactions per day** and **50 concurrent active users** without performance degradation.
 
 ### 4.2.6 Data Retention & Archival

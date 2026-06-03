@@ -7,18 +7,15 @@ This section details specifications for tracking orders, barista queue controls,
 All orders follow the state transitions below:
 
 ```
-[PENDING] ---(Barista: START PREP)---> [PREPARING]
+[PENDING] --(Barista: START PREP)---> [PREPARING]
              \--(Cashier cancel)------> [CANCELLED]
 
 [PREPARING] --(Barista: READY)--------> [READY]
-             \--(Manager/Admin cancel)-> [CANCELLED]
              \--(Barista: REPORT ISSUE)-> [HOLD]
 
 [HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
-            \--(Manager/Admin cancel)---> [CANCELLED]
 
 [READY] -----(Cashier: handover/pickup)-> [COMPLETED]
-         \--(Manager/Admin cancel)------> [CANCELLED]
 
 [COMPLETED] → Terminal state (no further transitions)
 [CANCELLED]  → Terminal state (no further transitions)
@@ -26,7 +23,7 @@ All orders follow the state transitions below:
 
 > **Note on COMPLETED state:** For DINE_IN and TAKE_AWAY orders, the transition from READY to COMPLETED is triggered by the Cashier confirming the order handover (customer pickup). For DELIVERY orders, it is triggered by delivery partner API sales report reconciliation.
 
-> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
+> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved.
 
 ---
 
@@ -153,7 +150,7 @@ All orders follow the state transitions below:
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | START PREP | Button | | | Transitions order status from Pending to Preparing. |
-| 2 | READY | Button | | | Transitions order status from Preparing to Ready and prints stickers. |
+| 2 | READY | Button | | | One-touch action. Transitions order status from Preparing to Ready and prints stickers without requiring any PIN or employee authentication. |
 | 3 | REPORT ISSUE | Button | | | Puts order on Hold due to prep issue. |
 
 ### 3.7.3.2 Use Case Description
@@ -252,43 +249,31 @@ All orders follow the state transitions below:
 
 | Use Case ID | UC-55 | Use Case Name | Request Transaction Refund |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.2 |
+| **Author** | Antigravity | **Version** | 1.3 |
 | **Date** | 2026-06-02 | | |
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager |
-| **Description** | Voids an active order and processes payment refund. |
-| **Precondition** | **For Cashier:** Order is in `PENDING` state (before kitchen queue entry). **For Store Manager / Admin:** Order is in `PENDING`, `PREPARING`, `HOLD`, or `READY` state (not `COMPLETED`). |
+| **Actor** | Cashier |
+| **Description** | Voids a pending order and processes payment refund. |
+| **Precondition** | Order is in `PENDING` state. |
 | **Trigger** | Cashier clicks Cancel Order. |
-| **Post-Condition** | Order is cancelled, stock rollbacked/marked waste, and refund completed. |
+| **Post-Condition** | Order is cancelled, stock rollbacked, and refund completed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Cashier | Taps Cancel, inputs reason and detailed notes. |
+| 1 | Cashier | Selects a PENDING order, taps Cancel, inputs reason and detailed notes. |
 | 2 | Cashier | Taps **Xác nhận hủy**. |
 | 3 | Portal | Updates order status to `CANCELLED`, reverses vouchers/points (BR-08), records inventory wastage logs (BR-07), and saves cancellation audit logs. |
 | 4 | Portal | Displays success notification and returns to order history screen. |
 
-#### Alternative Flows
-##### AT1: Order in PREPARING, HOLD, or READY state
-- **Trigger**: Cashier attempts to cancel an order that is no longer in the `PENDING` state.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 1.1 | Portal | Detects that the order is in `PREPARING`, `HOLD`, or `READY` status. |
-| 1.2 | Portal | Blocks direct cashier cancellation and displays warning that Manager authorization is required. |
-| 1.3 | Cashier | Taps "Request Manager Cancellation". |
-| 1.4 | Manager | Accesses the branch console, reviews the cancellation request (reason and notes), and taps "Approve Cancellation" (no PIN entry needed, authentication checked by manager account role). |
-| 1.5 | Portal | Transitions the order to `CANCELLED`, executes refund (BR-09), and logs the action in `order_cancellations`. |
-
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
+| BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
+| BR-06 | [RESERVED / DELETED] |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
 ---
@@ -312,4 +297,20 @@ CREATE TABLE order_cancellations (
 CREATE INDEX idx_cancellations_order ON order_cancellations(order_id);
 CREATE INDEX idx_cancellations_created_at ON order_cancellations(created_at);
 ```
+
+
+---
+
+## 3.7.7 Cashier Shift Sessions & Multi-Store Attendance Tracking
+
+This section specifies operational guidelines for cash register shifts, session management, and employee cross-branch deployments.
+
+### 3.7.7.1 Separation of User Session & Shift Session
+- **Rule**: Cashiers are allowed to log out of their personal user account session (terminating their `User Session` token) without being forced to close the POS cash drawer ca làm việc (`Shift Session`).
+- **Operation**: The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. This bypasses the mandatory cash counting and closing float reconciliation when a cashier takes a short break or switches duties mid-shift.
+
+### 3.7.7.2 Cross-Branch Staff Mobility Support
+- **Rule**: Employees (Cashiers, Baristas) are permitted to log in, check-in for attendance, or open POS shifts at any active branch store in the chain when they are assigned as cross-branch support.
+- **Data Association**: The system dynamically identifies the active POS register terminal's `store_id` where the login or attendance popup action occurs. All resulting sales revenue, cash floats, and attendance logs are automatically recorded under that physical branch store's ID rather than the employee's default home branch.
+
 

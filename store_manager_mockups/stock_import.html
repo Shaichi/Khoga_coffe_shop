@@ -3,27 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhập Kho - Store Console</title>
+    <title>Nhập Kho Hàng Loạt - Store Console</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fcfaf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .phone-container { width: 375px; height: 100vh; max-height: 812px; background: white; border: 1px solid #eee; border-radius: 24px; padding: 24px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
         
-        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
         .back-btn { text-decoration: none; color: #8c766c; display: flex; align-items: center; }
         .title { color: #2c1a11; font-size: 20px; font-weight: 700; margin: 0; flex-grow: 1; text-align: center; margin-right: 24px; }
 
-        .form-group { margin-bottom: 18px; }
+        .form-group { margin-bottom: 14px; }
         .form-label { display: block; font-size: 13px; font-weight: 700; color: #5c3826; margin-bottom: 6px; }
-        .form-select, .form-input { width: 100%; height: 44px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 12px; padding: 0 16px; box-sizing: border-box; font-size: 14px; color: #2c1a11; transition: all 0.2s; }
+        .form-select, .form-input { width: 100%; height: 40px; background: #fdfdfd; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 0 12px; box-sizing: border-box; font-size: 13px; color: #2c1a11; transition: all 0.2s; }
         .form-select:focus, .form-input:focus { outline: none; border-color: #c89d7c; background: #fff; }
         
-        textarea.form-input { height: 80px; padding: 12px 16px; font-family: inherit; resize: none; }
+        textarea.form-input { height: 60px; padding: 8px 12px; font-family: inherit; resize: none; }
 
-        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 12px; padding: 12px; color: #cf6679; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
-        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 12px; padding: 12px; color: #2e7d32; font-size: 13px; font-weight: 500; margin-bottom: 18px; display: none; }
+        /* Grid Items */
+        .items-section-header { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 10px 0; border-bottom: 1px solid #f2ece7; padding-bottom: 6px; }
+        .items-title { font-size: 14px; font-weight: 700; color: #3d2314; }
+        .add-row-btn { background: #fff; border: 1.5px dashed #c89d7c; color: #8c6d58; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .add-row-btn:hover { background: #fffbf9; border-color: #3d2314; color: #3d2314; }
 
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
+        .items-list { display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto; padding-right: 4px; margin-bottom: 14px; }
+        .item-row { background: #faf8f6; border: 1px solid #f0e6dd; border-radius: 10px; padding: 10px; position: relative; }
+        
+        .row-header { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .row-header .form-select { flex-grow: 1; }
+        .delete-row-btn { background: none; border: none; color: #cf6679; cursor: pointer; font-size: 16px; font-weight: bold; padding: 4px 8px; display: flex; align-items: center; justify-content: center; }
+        
+        .row-body { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; align-items: end; }
+        .row-body .form-input { height: 34px; padding: 0 8px; font-size: 12px; }
+        .row-label { font-size: 10px; font-weight: 600; color: #8c766c; margin-bottom: 4px; display: block; }
+        .row-total-val { font-size: 12px; font-weight: 700; color: #2c1a11; height: 34px; display: flex; align-items: center; justify-content: flex-end; box-sizing: border-box; padding-right: 4px; }
+
+        .invoice-summary { background: #fdfaf7; border: 1.5px solid #eaddd3; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #5c3826; }
+        .summary-value { font-size: 16px; font-weight: 800; color: #3d2314; }
+
+        .error-message { background: #fde8eb; border: 1px solid rgba(207,102,121,0.2); border-radius: 10px; padding: 10px; color: #cf6679; font-size: 12px; font-weight: 500; margin-bottom: 14px; display: none; }
+        .success-message { background: #e8f5e9; border: 1px solid rgba(46,125,50,0.2); border-radius: 10px; padding: 10px; color: #2e7d32; font-size: 12px; font-weight: 500; margin-bottom: 14px; display: none; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn { height: 44px; border-radius: 10px; font-size: 13px; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; transition: all 0.2s; border: none; }
         .btn-primary { background: #3d2314; color: white; }
         .btn-primary:hover { background: #5c3826; }
         .btn-secondary { background: white; color: #3d2314; border: 1.5px solid #eaddd3; }
@@ -50,41 +72,32 @@
             <div id="successBox" class="success-message"></div>
 
             <form id="importForm" onsubmit="handleSubmit(event)">
-                <!-- Item Selection -->
-                <div class="form-group">
-                    <label class="form-label" for="itemName">Tên nguyên liệu *</label>
-                    <select id="itemName" class="form-select" required>
-                        <option value="" disabled selected>Chọn nguyên liệu...</option>
-                        <option value="STK-01">Cà phê hạt Espresso</option>
-                        <option value="STK-02">Sữa tươi tiệt trùng</option>
-                        <option value="STK-03">Siro hương đào</option>
-                        <option value="STK-04">Ly giấy nóng 12oz</option>
-                        <option value="STK-05">Đường cát trắng túi</option>
-                    </select>
-                </div>
-
-                <!-- Quantity -->
-                <div class="form-group">
-                    <label class="form-label" id="qtyLabel" for="quantity">Số lượng nhập *</label>
-                    <input type="number" step="any" id="quantity" class="form-input" placeholder="Ví dụ: 15.0" required>
-                </div>
-
                 <!-- Supplier -->
                 <div class="form-group">
-                    <label class="form-label" for="supplier">Nhà cung cấp</label>
-                    <input type="text" id="supplier" class="form-input" placeholder="Ví dụ: Highlands Supplier">
-                </div>
-
-                <!-- Unit Price -->
-                <div class="form-group">
-                    <label class="form-label" for="unitPrice">Đơn giá nhập (VND) *</label>
-                    <input type="number" id="unitPrice" class="form-input" placeholder="Ví dụ: 180000" required>
+                    <label class="form-label" for="supplier">Nhà cung cấp *</label>
+                    <input type="text" id="supplier" class="form-input" placeholder="Ví dụ: Highlands Supplier" required>
                 </div>
 
                 <!-- Notes -->
                 <div class="form-group">
-                    <label class="form-label" for="notes">Ghi chú</label>
+                    <label class="form-label" for="notes">Ghi chú phiếu nhập</label>
                     <textarea id="notes" class="form-input" placeholder="Nhập ghi chú chi tiết nếu có..."></textarea>
+                </div>
+
+                <!-- Items Section -->
+                <div class="items-section-header">
+                    <span class="items-title">Danh sách nhập kho</span>
+                    <button type="button" class="add-row-btn" onclick="addNewRow()">+ Thêm dòng</button>
+                </div>
+
+                <div class="items-list" id="itemsList">
+                    <!-- Rows will be injected here by JS -->
+                </div>
+
+                <!-- Invoice Total Summary -->
+                <div class="invoice-summary">
+                    <span class="summary-label">TỔNG TIỀN HÀNG:</span>
+                    <span class="summary-value" id="invoiceTotal">0 VND</span>
                 </div>
             </form>
         </div>
@@ -97,40 +110,142 @@
     </div>
 
     <script>
-        // Update label or unit hint when item changes
-        document.getElementById('itemName').addEventListener('change', function() {
-            const label = document.getElementById('qtyLabel');
-            const selected = this.value;
-            if (selected === 'STK-01' || selected === 'STK-05') {
-                label.textContent = "Số lượng nhập (kg) *";
-            } else if (selected === 'STK-02' || selected === 'STK-03') {
-                label.textContent = "Số lượng nhập (lít) *";
-            } else if (selected === 'STK-04') {
-                label.textContent = "Số lượng nhập (cái) *";
-            } else {
-                label.textContent = "Số lượng nhập *";
-            }
+        let rowCounter = 0;
+        const itemOptions = [
+            { id: "STK-01", name: "Cà phê hạt Espresso", unit: "kg" },
+            { id: "STK-02", name: "Sữa tươi tiệt trùng", unit: "lít" },
+            { id: "STK-03", name: "Siro hương đào", unit: "lít" },
+            { id: "STK-04", name: "Ly giấy nóng 12oz", unit: "cái" },
+            { id: "STK-05", name: "Đường cát trắng túi", unit: "kg" }
+        ];
+
+        // Initialize with one empty row
+        document.addEventListener("DOMContentLoaded", () => {
+            addNewRow();
         });
+
+        function addNewRow() {
+            rowCounter++;
+            const id = rowCounter;
+            
+            const rowHTML = `
+                <div class="item-row" id="row-${id}">
+                    <div class="row-header">
+                        <select class="form-select item-select" required onchange="handleItemChange(${id})">
+                            <option value="" disabled selected>Chọn nguyên liệu...</option>
+                            ${itemOptions.map(opt => `<option value="${opt.id}">${opt.name}</option>`).join("")}
+                        </select>
+                        <button type="button" class="delete-row-btn" onclick="deleteRow(${id})">✕</button>
+                    </div>
+                    <div class="row-body">
+                        <div>
+                            <span class="row-label" id="label-qty-${id}">Số lượng *</span>
+                            <input type="number" step="any" class="form-input qty-input" id="qty-${id}" placeholder="0.0" required oninput="calculateRowTotal(${id})">
+                        </div>
+                        <div>
+                            <span class="row-label">Đơn giá (VND) *</span>
+                            <input type="number" class="form-input price-input" id="price-${id}" placeholder="0" required oninput="calculateRowTotal(${id})">
+                        </div>
+                        <div>
+                            <span class="row-label" style="text-align: right;">Thành tiền</span>
+                            <div class="row-total-val" id="total-${id}">0 VND</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById("itemsList").insertAdjacentHTML('beforeend', rowHTML);
+            calculateTotals();
+        }
+
+        function deleteRow(id) {
+            const rows = document.querySelectorAll('.item-row');
+            if (rows.length <= 1) {
+                const errorBox = document.getElementById('errorBox');
+                errorBox.textContent = "Phiếu nhập kho phải có ít nhất 1 mặt hàng.";
+                errorBox.style.display = 'block';
+                setTimeout(() => { errorBox.style.display = 'none'; }, 3000);
+                return;
+            }
+            const el = document.getElementById(`row-${id}`);
+            if (el) el.remove();
+            calculateTotals();
+        }
+
+        function handleItemChange(id) {
+            const selectEl = document.querySelector(`#row-${id} .item-select`);
+            const selectedVal = selectEl.value;
+            const item = itemOptions.find(opt => opt.id === selectedVal);
+            const labelEl = document.getElementById(`label-qty-${id}`);
+            
+            if (item && labelEl) {
+                labelEl.textContent = `Số lượng (${item.unit}) *`;
+            }
+        }
+
+        function calculateRowTotal(id) {
+            const qty = parseFloat(document.getElementById(`qty-${id}`).value) || 0;
+            const price = parseFloat(document.getElementById(`price-${id}`).value) || 0;
+            const total = qty * price;
+            
+            document.getElementById(`total-${id}`).textContent = total.toLocaleString("vi-VN") + " VND";
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let totalInvoice = 0;
+            const rows = document.querySelectorAll('.item-row');
+            
+            rows.forEach(row => {
+                const rowId = row.id.split('-')[1];
+                const qty = parseFloat(document.getElementById(`qty-${rowId}`).value) || 0;
+                const price = parseFloat(document.getElementById(`price-${rowId}`).value) || 0;
+                totalInvoice += (qty * price);
+            });
+            
+            document.getElementById("invoiceTotal").textContent = totalInvoice.toLocaleString("vi-VN") + " VND";
+        }
 
         function handleSubmit(e) {
             e.preventDefault();
-            const quantity = parseFloat(document.getElementById('quantity').value);
-            const unitPrice = parseFloat(document.getElementById('unitPrice').value);
             const errorBox = document.getElementById('errorBox');
             const successBox = document.getElementById('successBox');
 
             errorBox.style.display = 'none';
             successBox.style.display = 'none';
 
-            // AT1: Validation checks
-            if (isNaN(quantity) || quantity <= 0 || isNaN(unitPrice) || unitPrice <= 0) {
-                errorBox.textContent = "Vui lòng nhập số lượng và đơn giá là số dương lớn hơn 0.";
+            // Validate fields
+            const rows = document.querySelectorAll('.item-row');
+            let hasError = false;
+
+            if (rows.length === 0) {
+                errorBox.textContent = "Vui lòng thêm ít nhất một mặt hàng để nhập kho.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            rows.forEach(row => {
+                const rowId = row.id.split('-')[1];
+                const itemVal = document.querySelector(`#row-${rowId} .item-select`).value;
+                const qty = parseFloat(document.getElementById(`qty-${rowId}`).value);
+                const price = parseFloat(document.getElementById(`price-${rowId}`).value);
+
+                if (!itemVal) {
+                    errorBox.textContent = "Vui lòng chọn nguyên liệu cho tất cả các dòng.";
+                    hasError = true;
+                } else if (isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0) {
+                    errorBox.textContent = "Số lượng và đơn giá của các mặt hàng phải lớn hơn 0.";
+                    hasError = true;
+                }
+            });
+
+            if (hasError) {
                 errorBox.style.display = 'block';
                 return;
             }
 
             // Success simulation
-            successBox.textContent = "Nhập kho thành công! Đang chuyển hướng...";
+            successBox.textContent = "Nhập kho hàng loạt thành công! Đang chuyển hướng...";
             successBox.style.display = 'block';
             
             // Disable form interaction

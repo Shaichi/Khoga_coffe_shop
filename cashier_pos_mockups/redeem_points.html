@@ -60,11 +60,7 @@
                     <div id="custName" class="readonly-value">Nguyễn Văn A</div>
                 </div>
 
-                <!-- Active Tier -->
-                <div class="form-group">
-                    <label class="form-label">Hạng thẻ hội viên</label>
-                    <div id="custTier" class="readonly-value">Gold (Được quyền quy đổi)</div>
-                </div>
+
 
                 <!-- Points Available -->
                 <div class="form-group">
@@ -93,19 +89,13 @@
 
     <script>
         let availablePointsVal = 340;
-        let customerTierVal = "GOLD";
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const nameParam = urlParams.get('name');
-            const tierParam = urlParams.get('tier');
             const pointsParam = parseInt(urlParams.get('points'));
 
             if (nameParam) document.getElementById('custName').textContent = nameParam;
-            if (tierParam) {
-                customerTierVal = tierParam.toUpperCase();
-                document.getElementById('custTier').textContent = `${tierParam} (${customerTierVal === 'BRONZE' ? 'Chưa đủ điều kiện quy đổi' : 'Được quyền quy đổi'})`;
-            }
             if (!isNaN(pointsParam)) {
                 availablePointsVal = pointsParam;
                 document.getElementById('custPoints').textContent = `${availablePointsVal} điểm`;
@@ -122,7 +112,7 @@
                 return;
             }
 
-            const discount = (points / 100) * 10000;
+            const discount = points * 100;
             txt.textContent = `Chiết khấu quy đổi: -${discount.toLocaleString('vi-VN')} VND`;
             badge.style.display = 'inline-block';
         }
@@ -135,13 +125,6 @@
 
             errorBox.style.display = 'none';
             successBox.style.display = 'none';
-
-            // AT2: Ineligible Membership Tier check (BR-02)
-            if (customerTierVal === 'BRONZE') {
-                errorBox.textContent = "Lỗi: Khách hàng hạng Đồng (Bronze) chưa đủ điều kiện quy đổi điểm tích lũy. Yêu cầu tối thiểu từ Hạng Bạc trở lên (Theo AT2).";
-                errorBox.style.display = 'block';
-                return;
-            }
 
             // AT1: Insufficient Points check
             if (points > availablePointsVal) {
@@ -158,7 +141,7 @@
             }
 
             // Success simulation
-            const discount = (points / 100) * 10000;
+            const discount = points * 100;
             successBox.textContent = `Quy đổi ${points} điểm thành công (-${discount.toLocaleString('vi-VN')} VND)! Đang chuyển hướng...`;
             successBox.style.display = 'block';
 

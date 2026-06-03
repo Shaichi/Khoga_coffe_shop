@@ -135,7 +135,6 @@ Tài liệu này ánh xạ chi tiết các file giao diện mẫu (HTML mockups)
 
 #### **3.7.6 Void & Cancellation Audit Logging (Nhật ký hủy đơn hàng)**
 * **Mobile App (Cashier POS)**: [cancel_override.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/cashier_pos_mockups/cancel_override.html)
-* **Mobile App (Store Manager)**: [cancel_override.html](file:///c:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/store_manager_mockups/cancel_override.html)
   *(Hủy đơn hàng trực tiếp kèm lý do và ghi chú để lưu vết kiểm toán).*
 
 ---

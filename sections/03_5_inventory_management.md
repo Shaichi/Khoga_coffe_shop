@@ -1,4 +1,4 @@
-﻿# 3.5 Inventory & Stock Management
+# 3.5 Inventory & Stock Management
 
 This section details specifications for viewing inventory, managing imports/exports, and reconciling discrepancies.
 
@@ -57,52 +57,53 @@ This section details specifications for viewing inventory, managing imports/expo
 
 ## 3.5.2 F24 - Import Stock / UC-32 Import Stock
 
-### 3.5.2.1 Screen Mock-up (Mobile Portrait)
+### 3.5.2.1 Screen Mock-up (Desktop Landscape / Multi-line Grid)
 ```
-+------------------------------------+
-|            Import Stock            |
-|                                    |
-|  Item Name                         |
-|  [ Coffee Beans                ][v]|
-|                                    |
-|  Quantity (kg)                     |
-|  [ 15.0                          ] |
-|                                    |
-|  Supplier                          |
-|  [ Highlands Supplier            ] |
-|                                    |
-|  Unit Price (VND)                  |
-|  [ 180,000                       ] |
-|                                    |
-|  Notes                             |
-|  [ Restock coffee beans          ] |
-|                                    |
-|        [ SUBMIT ]   [ CANCEL ]     |
-+------------------------------------+
++-------------------------------------------------------------+
+|                        Import Stock                         |
+|                                                             |
+|  Supplier: [ Highlands Supplier                       ]     |
+|  Invoice No: [ INV-2026-001                           ]     |
+|                                                             |
+|  +---------------------+------------+------------+-------+  |
+|  | Item Name           | Qty        | Unit Price | Total |  |
+|  +---------------------+------------+------------+-------+  |
+|  | [ Coffee Beans  ][v]| [ 15.0  ]  | [ 180,000] | 2.7M  |  |
+|  | [ Fresh Milk    ][v]| [ 10.0  ]  | [  25,000] | 250k  |  |
+|  +---------------------+------------+------------+-------+  |
+|  [ + Add Line Item ]                                        |
+|                                                             |
+|  Grand Total: 2,950,000 VND                                 |
+|  Notes:                                                     |
+|  [ Restock materials                                  ]     |
+|                                                             |
+|                 [ SUBMIT ]      [ CANCEL ]                  |
++-------------------------------------------------------------+
 ```
 
 #### Table 3-25: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Item Name | Dropdown | Yes | | Scopes stock items list available for branch. |
-| 2 | Quantity | Text | Yes | 10 | Import decimal volume. |
-| 3 | Supplier | Text | No | 100 | Supplier source name. |
-| 4 | Unit Price | Text | Yes | 15 | Purchase cost per unit in VND. |
-| 5 | Notes | Text | No | 250 | Transaction notes. |
-| 6 | Submit | Button | | | Submits transaction and increases inventory levels. |
-| 7 | Cancel | Button | | | Discards edits and returns to Stock list. |
+| 1 | Supplier | Text | Yes | 100 | Supplier source name. |
+| 2 | Invoice No | Text | No | 50 | Supplier invoice number for audit trace. |
+| 3 | Import Grid | Grid | Yes | | Dynamic table of imported items containing dropdown for Item Name, text fields for Qty and Unit Price, and displaying line Totals. |
+| 4 | Add Line Item | Button | | | Adds a new empty row to the Import Grid. |
+| 5 | Grand Total | Label | | | Displays total calculated invoice cost dynamically. |
+| 6 | Notes | Text | No | 250 | General transaction notes. |
+| 7 | Submit | Button | | | Submits batch transaction and increases stock quantities. |
+| 8 | Cancel | Button | | | Discards edits and returns to Stock list screen. |
 
 ### 3.5.2.2 Use Case Description
 
 | Use Case ID | UC-32 | Use Case Name | Import Stock |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Store Manager |
-| **Description** | Records incoming items received from suppliers to replenish local inventory levels. |
+| **Description** | Records incoming batch of items received from suppliers to replenish local inventory levels in a single transaction. |
 | **Precondition** | Manager is logged in. |
 | **Trigger** | Manager clicks "Import" button. |
 | **Post-Condition** | Stock is replenished. |
@@ -110,9 +111,9 @@ This section details specifications for viewing inventory, managing imports/expo
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Manager | Selects item, inputs quantity, supplier, unit cost, and notes, then clicks "Submit". |
-| 2 | Portal | Validates quantity and cost are positive. |
-| 3 | Portal | Increments stock quantity and records transaction logs. |
+| 1 | Manager | Enters Supplier, Invoice No, notes, and adds line items in the Import Grid (specifying item, quantity, unit price). |
+| 2 | Portal | Calculates dynamic line totals and grand total. Validates all quantities and prices are positive numbers. |
+| 3 | Portal | Increments stock quantities of all listed items and records a batch transaction log. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -120,7 +121,7 @@ This section details specifications for viewing inventory, managing imports/expo
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Please enter a positive numeric quantity and cost."` |
+| 2.1 | Portal | Displays error message: `"Please enter positive numeric values for quantity and unit price."` |
 
 ---
 
@@ -347,5 +348,6 @@ This section details specifications for viewing inventory, managing imports/expo
 | ID | Rule Description |
 |---|---|
 | BR-32 | *(Applies)* Any discrepancy between expected and actual counts must be noted. |
-| BR-07 | If an order is cancelled in `PREPARING` or `READY` state, stock is **not** restored (consumed ingredients are logged as operational waste). If cancelled in `PENDING` state (before stock deduction occurs), no deduction was made, so no rollback is needed. |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
+
 

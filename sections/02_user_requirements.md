@@ -17,8 +17,7 @@ The system defines the following roles (actors), structured under a generalizati
    - Inherits from `User`. Operates the POS terminal for order-taking, member lookups, checkout, and receipt printing.
 5. **Barista**:
    - Inherits from `User`. Coordinates drink preparation using the queue monitor and prints label stickers.
-6. **Delivery Partner**:
-   - An external API actor representing third-party delivery platforms (GrabFood, ShopeeFood) from which the system retrieves sales and revenue data.
+
 
 ```mermaid
 graph TD
@@ -105,10 +104,15 @@ graph LR
         UC_ViewCustHistory([View Customer History])
 
         UC_ListMenu([View Menu & Categories List])
+        UC_ViewMenuDetail([View Menu Item Detail])
+        UC_ListCategories([View Categories List])
         UC_AddCat([Add Category])
         UC_UpdateCat([Update Category])
+        UC_DeleteCat([Delete Category])
         UC_AddMenu([Add Menu Item & Recipe])
         UC_UpdateMenu([Update Menu Item & Recipe])
+        UC_DeleteMenu([Delete Menu Item])
+        UC_ManageToppings([Manage Toppings & Options])
 
         UC_ViewReports([View Consolidated Business Reports])
         UC_ExportReports([Export HQ Reports])
@@ -146,10 +150,15 @@ graph LR
     UC_ViewCustHistory -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCustomers
 
     %% Menu/Category extends
-    UC_AddCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
-    UC_UpdateCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_ViewMenuDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_ListCategories -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_AddCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
+    UC_UpdateCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
+    UC_DeleteCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
     UC_AddMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
     UC_UpdateMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_DeleteMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_ManageToppings -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewMenuDetail
 
     %% Reports extends
     UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
@@ -176,6 +185,7 @@ graph LR
         UC_ImportStock([Import Stock])
         UC_ExportStock([Export Stock])
         UC_AuditStock([Perform Inventory Audit])
+        UC_ViewHistory([View Import/Export History])
 
         UC_ViewSchedule([View Staff Schedule])
         UC_CreateSchedule([Create Staff Schedule])
@@ -187,8 +197,11 @@ graph LR
         UC_ExportStoreRev([Export Store Reports])
         
         UC_ConfigBranch([Configure Local Branch Settings])
-        UC_ApproveOverride([Cancel Preparing/Ready Order])
         UC_ViewStaffList([View Branch Staff List])
+        UC_UpdateMenu([Update Menu Item - Store Availability Toggle])
+
+        UC_ViewLocalHistory([View Local Order History])
+        UC_ViewOrderDetail([View Order Detail])
     end
 
     %% Connections
@@ -196,13 +209,15 @@ graph LR
     Actor_Manager --> UC_ViewSchedule
     Actor_Manager --> UC_ViewRevStore
     Actor_Manager --> UC_ConfigBranch
-    Actor_Manager --> UC_ApproveOverride
     Actor_Manager --> UC_ViewStaffList
+    Actor_Manager --> UC_UpdateMenu
+    Actor_Manager --> UC_ViewLocalHistory
 
     %% Stock extends
     UC_ImportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
     UC_ExportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
     UC_AuditStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
+    UC_ViewHistory -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
 
     %% Schedule extends
     UC_CreateSchedule -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewSchedule
@@ -212,13 +227,16 @@ graph LR
 
     %% Revenue extends
     UC_ExportStoreRev -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewRevStore
+
+    %% Order detail extends
+    UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
 ```
 
 
 ---
 
 ### 2.2.4 Cashier Use Cases
-The Cashier uses the POS terminal to process orders, apply vouchers, lookup customer memberships, and print receipts.
+The Cashier uses the POS terminal to process orders, apply vouchers, lookup customer memberships, register/update customers, and print receipts.
 
 ```mermaid
 graph LR
@@ -239,7 +257,11 @@ graph LR
         UC_CloseShift([Close Shift])
         
         UC_ViewLocalHistory([View Local Order History])
+        UC_ViewOrderDetail([View Order Detail])
         UC_RequestRefund([Request Transaction Refund])
+        
+        UC_AddCustomer([Add Customer / Register Member])
+        UC_UpdateCustomer([Update Customer])
     end
 
     %% Connections
@@ -253,9 +275,12 @@ graph LR
     Actor_Cashier --> UC_IssueInvoice
     Actor_Cashier --> UC_CloseShift
     Actor_Cashier --> UC_ViewLocalHistory
+    Actor_Cashier --> UC_AddCustomer
+    Actor_Cashier --> UC_UpdateCustomer
 
     %% Extends & Includes
     UC_UpdateCart -.-> |"&lt;&lt;extend&gt;&gt;"| UC_AddCart
+    UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
     UC_RequestRefund -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
 ```
 
@@ -273,6 +298,7 @@ graph LR
     %% Use Cases
     subgraph Kitchen Queue & Preparation
         UC_ViewQueue([View Order Queue Display])
+        UC_ViewOrderDetail([View Order Detail])
         UC_UpdatePrep([Update Preparation Status])
         UC_PrintLabel([Print Drink Label Sticker])
         UC_ReportIssue([Report Issue / Escalate Order])
@@ -285,6 +311,7 @@ graph LR
 
     %% Extends
     UC_PrintLabel -.-> |"&lt;&lt;extend&gt;&gt;"| UC_UpdatePrep
+    UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewQueue
 ```
 
 ---
@@ -316,15 +343,15 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-70** | Menu & Categories | Delete Category | Admin | **Description**: Deactivates/deletes an empty category.<br>**Main Flow**:<br>1. Admin clicks delete on a row.<br>2. Portal displays Delete Category Confirmation modal.<br>3. Admin clicks "Confirm Delete".<br>4. Portal deletes category and returns to list view. |
 | **UC-18** | Menu & Categories | Add Menu Item & Recipe | Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
 | **UC-71** | Menu & Categories | Manage Toppings & Options | Admin | **Description**: Configures modifiers that customers can add to their drinks.<br>**Main Flow**:<br>1. Admin enters Name and Price, and clicks "Add Topping".<br>2. Portal validates inputs and saves new topping. |
-| **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin | **Description**: Edits product details or recipes.<br>**Main Flow**:<br>1. Admin alters item pricing, availability, or raw material recipe counts.<br>2. Adjustments are saved, instantly modifying local POS catalogs. |
+| **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin, Store Manager | **Description**: Edits product details or recipes, or toggles store availability.<br>**Main Flow**:<br>1. Actor alters item pricing, details, or store availability.<br>2. Adjustments are saved, updating local POS catalogs. |
 | **UC-72** | Menu & Categories | Delete Menu Item | Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
 | **UC-20** | Voucher Management | View Vouchers List | Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
 | **UC-21** | Voucher Management | Add Voucher | Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
 | **UC-22** | Voucher Management | Update Voucher | Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
 | **UC-23** | Voucher Management | Delete Voucher | Admin | **Description**: Deactivates or removes a voucher code.<br>**Main Flow**:<br>1. Admin selects voucher and deactivates it.<br>2. The voucher code is disabled, preventing further usage at checkout. |
 | **UC-24** | Customer Management | View Customer List | Admin | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Admin views customer directory.<br>2. Admin reviews list of active members and membership levels. |
-| **UC-25** | Customer Management | Add Customer | Admin | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Admin enters member details (name, phone, email) and saves.<br>2. Customer is registered as a Bronze loyalty member. |
-| **UC-26** | Customer Management | Update Customer | Admin | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Admin edits member details and saves.<br>2. The membership profile is updated. |
+| **UC-25** | Customer Management | Add Customer | Admin, Cashier | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Admin or Cashier enters member details (name, phone, email) and saves.<br>2. Customer is registered as a Bronze loyalty member. |
+| **UC-26** | Customer Management | Update Customer | Admin, Cashier | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Admin or Cashier edits member details and saves.<br>2. The membership profile is updated. |
 | **UC-27** | Customer Management | View Customer History | Admin | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Admin opens member profile.<br>2. Admin reviews historical orders, point accumulation ledger, and milestones. |
 | **UC-28** | Reports & Analytics | View Consolidated Business Reports | Admin | **Description**: Accesses centralized reports.<br>**Main Flow**:<br>1. Admin opens consolidation dashboard.<br>2. Admin reviews global brand revenue, compares branch performance, and views best-seller charts. |
 | **UC-29** | Reports & Analytics | Export HQ Reports | Admin | **Description**: Downloads brand report sheets.<br>**Main Flow**:<br>1. Admin triggers export.<br>2. The report files are generated and downloaded. |
@@ -342,7 +369,6 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-40** | Reports & Analytics | View Store Revenue Reports | Store Manager | **Description**: Accesses local branch reports.<br>**Main Flow**:<br>1. Manager opens store report panel.<br>2. Manager reviews local sales revenue, shift closures, and payment breakdowns. |
 | **UC-41** | Reports & Analytics | Export Store Reports | Store Manager | **Description**: Exports store-specific files.<br>**Main Flow**:<br>1. Manager exports local sales and inventory spreadsheets.<br>2. Report files are generated and downloaded. |
 | **UC-42** | System Configuration | Configure Local Branch Settings | Store Manager | **Description**: Configures local branch settings (timezone, hardware connection, receipt logo) for their assigned branch.<br>**Main Flow**:<br>1. Store Manager opens Local Branch settings.<br>2. Store Manager updates operational parameters and saves. |
-| **UC-43** | POS Sales & Billing | Approve Cashier Override / Refund | Store Manager | **Description**: Allows Store Manager to cancel orders in preparing/ready states directly on the POS terminal.<br>**Main Flow**:<br>1. Manager logs into the POS or accesses the active order.<br>2. Manager selects the order, enters cancellation reason/notes, and voids the transaction. |
 | **UC-44** | POS Sales & Billing | Open Shift | Cashier | **Description**: Opens cashier POS session.<br>**Main Flow**:<br>1. Cashier inputs POS register ID and opening drawer cash float (VND).<br>2. The shift state is validated and the session is opened. |
 | **UC-45** | POS Sales & Billing | Add Item to Order | Cashier | **Description**: Adds product to checkout cart.<br>**Main Flow**:<br>1. Cashier clicks a menu item or scans SKU barcode.<br>2. Availability is validated and the item is added to the order cart. |
 | **UC-46** | POS Sales & Billing | Update Cart Item | Cashier | **Description**: Modifies quantity or toppings in cart.<br>**Main Flow**:<br>1. Cashier adjusts quantity or selects option toppings.<br>2. The cart items are updated and the subtotal is recalculated. |
@@ -355,7 +381,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-53** | POS Sales & Billing | Close Shift | Cashier | **Description**: Closes POS session.<br>**Main Flow**:<br>1. Cashier counts cash and inputs closing float.<br>2. Discrepancies are calculated and flagged, and the session is closed. |
 | **UC-54** | POS Sales & Billing | View Local Order History | Cashier | **Description**: Displays local branch orders.<br>**Main Flow**:<br>1. Cashier opens order history grid.<br>2. Cash drawer orders processed during the current shift are displayed. |
 | **UC-73** | POS Sales & Billing | View Order Detail | Cashier, Store Manager, Barista | **Description**: Displays receipt details, payments, and fulfillment tracking metrics for an order.<br>**Main Flow**:<br>1. User taps on specific order.<br>2. Portal displays details, payments log, and order item list. |
-| **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund and cancellation process for PENDING orders.<br>**Main Flow**:<br>1. Cashier selects a pending order and clicks Cancel Order.<br>2. Cashier inputs cancellation reason and details, then confirms cancellation. POS voids transaction and updates stock immediately. |
+| **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund and cancellation process for PENDING orders.<br>**Precondition**: Order must be in `PENDING` state.<br>**Main Flow**:<br>1. Cashier selects a pending order and clicks Cancel Order.<br>2. Cashier inputs cancellation reason and details, then confirms cancellation. POS voids transaction and updates stock immediately. |
 | **UC-57** | Order Prep & Queue | View Order Queue Display | Barista | **Description**: Monitors preparation queue.<br>**Main Flow**:<br>1. Barista opens queue display.<br>2. Pending, preparing, and ready orders are displayed. |
 | **UC-58** | Order Prep & Queue | Update Preparation Status | Barista | **Description**: Modifies preparation flags.<br>**Main Flow**:<br>1. Barista selects active order and moves it to preparing/ready.<br>2. Timestamps are logged and the cashier status is updated. |
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
@@ -365,6 +391,6 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
 | **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
 | **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
-| **UC-67** | Delivery Partner Integration | Fetch Delivery Partner Sales | System (automated) | **Description**: Automatically fetches daily consolidated revenue and sales figures from delivery partner APIs.<br>**Main Flow**:<br>1. Nightly scheduler triggers API request.<br>2. Consolidated sales metrics are downloaded and stored. |
+
 
 

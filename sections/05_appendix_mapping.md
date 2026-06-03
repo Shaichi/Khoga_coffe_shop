@@ -8,15 +8,15 @@ This section contains business rules, global requirements, common application me
 
 | ID | Rule Definition |
 |---|---|
-| BR-01 | **Membership Point Accrual**: Customers accumulate 1 point for every 10,000 VND of **Net Total Payable** (after all discounts and point redemptions are applied) spent, rounded down to the nearest whole integer. Formula: `points_earned = floor(netTotalPayable / 10000)`. Points are not accrued for the portion of the order covered by point redemption discounts. |
-| BR-02 | **Membership Point Redemption**: 100 points can be redeemed for 10,000 VND discount at checkout, applicable only for customers who have reached at least the **Silver** tier. |
+| BR-01 | **Membership Point Accrual**: Customers accumulate loyalty points as a percentage of the **Net Total Payable** value of their invoice, up to a maximum points accrual limit per order (configurable via system parameters). Points are not accrued for the portion of the order covered by loyalty points redemption. |
+| BR-02 | **Membership Point Redemption**: Points can be redeemed for discounts at checkout, subject to point balance validation, with a limit on the maximum percentage of the invoice value that can be paid using points, and a maximum discount amount per order (configurable via central system parameters). |
 | BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
 | BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
-| BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
+| BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
+| BR-06 | [RESERVED / DELETED] |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
-| BR-09 | **Refund Authorization & Execution**: Refunds for orders in `PENDING` status can be performed directly by the Cashier without manager approval. Refunds for orders in `PREPARING`, `HOLD`, or `READY` statuses require authorization by a Store Manager or Admin. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
+| BR-09 | **Refund Authorization & Execution**: Refunds for orders in the `PENDING` status can be performed directly by the Cashier without manager approval. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | **Account Suspension**: Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | **Force Password Change Block**: Mandatory password change flag blocks navigation to any other module. User cannot bypass the Force Password Change screen. |
@@ -41,11 +41,11 @@ This section contains business rules, global requirements, common application me
 | BR-31 | **Category Deletion Restriction**: Cannot delete a category if it currently contains active menu items. |
 | BR-32 | **Audit Discrepancy Note**: Explanatory notes are mandatory if physically counted actual quantity does not match expected value. |
 | BR-33 | **Cash Float Limit**: Starting cash float must be greater than or equal to zero. |
-| BR-34 | **Real-Time Membership Tier Levels**: Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
-| BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
+| BR-34 | **[RESERVED / DELETED]** (Previously: Real-Time Membership Tier Levels) |
+| BR-35 | **Loyalty Points Expiry**: Loyalty points expire after 12 months of customer inactivity (no new transactions made by the customer). |
 | BR-36 | **Past Schedules Block**: Cannot modify schedules that occurred in the past. |
 | BR-37 | **Schedules Deletion Notify**: Deletion removes the shift and sends notification alerts to affected employees. |
-| BR-38 | **Attendance Login Registration**: Check-in records are automatically created based on employee logins at local terminal stations. |
+| BR-38 | **Attendance PIN Verification**: Staff attendance check-in and check-out records are recorded manually via the dedicated attendance popup, and are not automatically created upon logging into the user account session. |
 | BR-39 | **Lateness Calculation Rule**: Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
 | BR-40 | **Read-Only Voucher Code**: Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | **Deactivation Redemption Block**: Deactivating a voucher immediately stops all checkout redemptions. |
@@ -57,18 +57,18 @@ This section contains business rules, global requirements, common application me
 | BR-47 | **Manager Config scope**: Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
 | BR-48 | **IP/COM Printer Port Validation**: Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 | BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Admin role. |
-| BR-50 | **Discount Cap**: The Net Total Payable after all discounts (tier discount, voucher discount, and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
-| BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` database log for audit and reporting purposes. No manager PIN or override code verification is required. |
+| BR-50 | **Discount Cap**: The Net Total Payable after all discounts (voucher discount and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
+| BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` log. No manager PIN or override code verification is required. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
-| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
 | BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
 | BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
-| BR-60 | **Delivery Partner Authentication**: All outbound requests to delivery partner endpoints must include valid, encrypted authorization headers generated from active integration keys configured by HQ Admin. |
-| BR-61 | **Data Reconciliation**: Consolidated delivery sales records are flagged as external transactions. They bypass local drawer cash calculations and shift session totals, but are included in store performance reports. |
+| BR-60 | [RESERVED / DELETED] |
+| BR-61 | [RESERVED / DELETED] |
 
 
 
@@ -102,12 +102,12 @@ The table below lists the standardized messages.
 | 8 | MSG08 | Dialog pop-up | User attempts to access a restricted screen or feature | *Unauthorized action. You do not have permission to access this page.* |
 | 9 | MSG09 | In red / Toast message | Voucher code input is invalid, expired, or doesn't meet minimum order value | *Voucher code is invalid or has expired.* |
 | 10 | MSG10 | In red / Toast message | Entering incorrect or expired OTP recovery code | *Incorrect or expired OTP. Please check your email and try again.* |
-| 11 | MSG11 | Toast message / Pop-up | Customer doesn't have enough loyalty points to redeem or is below Silver tier | *Insufficient points balance or membership tier ineligible for redemption.* |
+| 11 | MSG11 | Toast message / Pop-up | Customer doesn't have enough loyalty points to redeem | *Insufficient points balance.* |
 | 12 | MSG12 | Toast message / Pop-up | Assigning employee to a shift that conflicts with their existing scheduled shifts | *Employee shift conflict. The employee is already scheduled for another shift during this time block.* |
 | 13 | MSG13 | [RESERVED / DELETED] | *[Reserved for future use]* | *[Reserved for future use]* |
-| 14 | MSG14 | In red / Toast message | Cashier enters points count not in multiples of 100 for loyalty points redemption | *Redemption points must be entered in multiples of 100.* |
+| 14 | MSG14 | In red / Toast message | Entering points value that is not a multiple of 100 | *Redemption points must be in multiples of 100.* |
 | 15 | MSG15 | Toast message | Admin successfully creates a new branch | *Branch successfully created.* |
-| 16 | MSG16 | Dialog pop-up | Admin attempts to add a branch when maximum capacity (5) is reached | *Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one.* |
+| 16 | MSG16 | Dialog pop-up | Admin attempts to add a branch when maximum configured capacity is reached | *Maximum branch capacity reached. Please deactivate an existing branch or increase the limit before adding a new one.* |
 | 17 | MSG17 | Dialog pop-up | Cashier attempts to log out with an active open shift | *You have an active shift session open. You must close your shift (UC-53) before logging out.* |
 
 
@@ -134,7 +134,7 @@ The matrix below maps operational modules and system features to employee roles,
 | **Customer Loyalty Registry** | C / R / U / D | C / R / U | C / R / U | — |
 | **Staff Scheduling & Shift planner** | — | C / R / U / D | R (Read-Only) | R (Read-Only) |
 | **Staff Attendance Logs & Reports** | — | C / R / U | — | — |
-| **Inventory Stock Management** | R (Auditing) | C / R / U / D | — | — |
+| **Inventory Stock Management** | R (Auditing) | C / R / U | — | — |
 | **POS Shift Session Control** | — | U (Override) | C / R / U | — |
 | **POS Checkout & Invoicing** | — | U (Override) | C / R / U | — |
 | **Order Prep & Kitchen Queue** | — | R (Read-Only) | R (Read-Only) | C / R / U |

@@ -1,10 +1,8 @@
-﻿# 3.8 Customer & Membership Management
+# 3.8 Customer & Membership Management
 
 This section details specifications for loyalty membership profiles search, enrollment, and history views.
 
 ---
-
-## 3.8.1 F40 - List Customer / UC-24 View Customer List
 
 ### 3.8.1.1 Screen Mock-up (Mobile Portrait)
 ```
@@ -12,12 +10,11 @@ This section details specifications for loyalty membership profiles search, enro
 |             Customers              |
 |                                    |
 |  Search: [ 0987654321            ] |
-|  Tier: [ All Tiers           ][v]  |
 |                                    |
-|  - Nguyen Van A (Gold)             |
+|  - Nguyen Van A                    |
 |    Phone: 0987654321  (340 pts)    |
 |                                    |
-|  - Tran Thi B (Silver)             |
+|  - Tran Thi B                      |
 |    Phone: 0912345678  (120 pts)    |
 |                                    |
 |          [ + Add Customer ]        |
@@ -28,15 +25,14 @@ This section details specifications for loyalty membership profiles search, enro
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Filter members by phone number or name. |
-| 2 | Tier | Dropdown | Yes | | Filter members list by loyalty tier. |
-| 3 | Add Customer | Button | | | Navigates to Add Customer registration screen. |
+| 2 | Add Customer | Button | | | Navigates to Add Customer registration screen. |
 
 ### 3.8.1.2 Use Case Description
 
 | Use Case ID | UC-24 | Use Case Name | View Customer List |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
@@ -50,7 +46,7 @@ This section details specifications for loyalty membership profiles search, enro
 | Step | Actor | Action |
 |---|---|---|
 | 1 | User | Opens Customers directory. |
-| 2 | Portal | Displays listing grid of enrolled members, tiers, and points. |
+| 2 | Portal | Displays listing grid of enrolled members and their points balance. |
 
 ---
 
@@ -90,21 +86,19 @@ This section details specifications for loyalty membership profiles search, enro
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |
 
-| Field | Description |
 |---|---|
 | **Actor** | Cashier, Store Manager, Admin |
 | **Description** | Registers a new customer into the membership loyalty program. |
 | **Precondition** | Customer is not enrolled. |
 | **Trigger** | User clicks "+ Add Customer". |
-| **Post-Condition** | Customer is registered as a Bronze loyalty member. |
+| **Post-Condition** | Customer is registered as a loyalty member. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
 | 1 | User | Enters customer Name, Phone, and optional Email. Clicks "Register". |
 | 2 | Portal | Validates phone syntax format and checks for duplicates. |
-| 3 | Portal | Saves new customer record with 0 starting points and status Bronze, returning to list view. |
-
+| 3 | Portal | Saves new customer record with 0 starting points, returning to list view. |
 #### Alternative Flows
 ##### AT1: Phone Number Duplicate
 - **Trigger**: At step 2, phone number is already registered.
@@ -129,8 +123,10 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 |           Edit Customer            |
 |                                    |
-|  Full Name: Nguyen Van A           |
-|  Phone: 0987654321                 |
+|  Full Name                         |
+|  [ Nguyen Van A                  ] |
+|                                    |
+|  Phone: 0987654321  (Read-only)    |
 |                                    |
 |  Contact Email                     |
 |  [ nva@example.com               ] |
@@ -146,11 +142,13 @@ This section details specifications for loyalty membership profiles search, enro
 #### Table 3-44: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Contact Email | Text | Yes | 100 | Customer email address. |
-| 2 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
-| 3 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
-| 4 | Save | Button | | | Saves customer details changes. |
-| 5 | Cancel | Button | | | Returns to list page. |
+| 1 | Full Name | Text | Yes | 100 | Customer's full name (editable). |
+| 2 | Phone | Label | | | Customer phone number lookup key (read-only/locked). |
+| 3 | Contact Email | Text | Yes | 100 | Customer email address. |
+| 4 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
+| 5 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
+| 6 | Save | Button | | | Saves customer details changes. |
+| 7 | Cancel | Button | | | Returns to list page. |
 
 ### 3.8.3.2 Use Case Description
 
@@ -170,7 +168,7 @@ This section details specifications for loyalty membership profiles search, enro
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | User | Modifies contact details (or Admin inputs point changes) and clicks "Save". |
+| 1 | User | Modifies Full Name or Contact Email (or Admin inputs point changes) and clicks "Save". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, logs adjust audit notes (if point changes occur), and returns. |
 
@@ -194,8 +192,6 @@ This section details specifications for loyalty membership profiles search, enro
 |---|---|
 | BR-49 | Manual points adjustments require a recorded reason and are locked to Admin role. |
 
----
-
 ## 3.8.4 F43 - View Customer History / UC-27 View Customer History
 
 ### 3.8.4.1 Screen Mock-up (Mobile Portrait)
@@ -203,7 +199,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 |          Customer History          |
 |                                    |
-|  Customer: Nguyen Van A (Gold)     |
+|  Customer: Nguyen Van A            |
 |  Phone: 0987654321  Points: 340    |
 |                                    |
 |  Completed Orders:                 |
@@ -226,8 +222,8 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Use Case ID | UC-27 | Use Case Name | View Customer History |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
@@ -246,9 +242,5 @@ This section details specifications for loyalty membership profiles search, enro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-34 | Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
-| BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
-
-
-
-
+| BR-34 | **[RESERVED / DELETED]** (Previously: Real-Time Membership Tier Levels). |
+| BR-35 | **Loyalty Points Expiry**: Loyalty points expire after 12 months of customer inactivity (no new transactions made by the customer). |

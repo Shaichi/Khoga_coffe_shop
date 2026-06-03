@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -63,13 +63,6 @@
 
             <div class="filter-bar">
                 <input type="text" class="search-box" placeholder="Tìm theo tên hoặc số điện thoại..." oninput="searchCustomer(this.value)">
-                <select onchange="filterTier(this.value)">
-                    <option value="">Tất cả hạng</option>
-                    <option value="BRONZE">Bronze</option>
-                    <option value="SILVER">Silver</option>
-                    <option value="GOLD">Gold</option>
-                    <option value="DIAMOND">Diamond</option>
-                </select>
             </div>
 
             <table>
@@ -79,7 +72,6 @@
                         <th>Số điện thoại</th>
                         <th>Email</th>
                         <th>Điểm tích lũy</th>
-                        <th>Hạng thành viên</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -89,7 +81,6 @@
                         <td>0912345678</td>
                         <td>lan.tran@example.com</td>
                         <td>320 điểm</td>
-                        <td><span class="badge badge-gold">GOLD</span></td>
                         <td>
                             <a href="customer_edit_web.html" class="action-link">Sửa</a>
                             <a href="customer_history_web.html" class="action-link">Lịch sử</a>
@@ -100,7 +91,6 @@
                         <td>0909876543</td>
                         <td>—</td>
                         <td>150 điểm</td>
-                        <td><span class="badge badge-silver">SILVER</span></td>
                         <td>
                             <a href="customer_edit_web.html" class="action-link">Sửa</a>
                             <a href="customer_history_web.html" class="action-link">Lịch sử</a>
@@ -111,7 +101,6 @@
                         <td>0971234567</td>
                         <td>mai.ngo@email.com</td>
                         <td>45 điểm</td>
-                        <td><span class="badge badge-bronze">BRONZE</span></td>
                         <td>
                             <a href="customer_edit_web.html" class="action-link">Sửa</a>
                             <a href="customer_history_web.html" class="action-link">Lịch sử</a>
@@ -126,11 +115,6 @@
         function searchCustomer(query) {
             document.querySelectorAll('#customer-list tr').forEach(row => {
                 row.style.display = row.innerText.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
-            });
-        }
-        function filterTier(tier) {
-            document.querySelectorAll('#customer-list tr').forEach(row => {
-                row.style.display = (!tier || row.innerText.includes(tier)) ? '' : 'none';
             });
         }
     </script>

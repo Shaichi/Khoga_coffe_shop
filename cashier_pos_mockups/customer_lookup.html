@@ -71,7 +71,6 @@
             <div class="result-box" id="resultBox">
                 <div class="result-title">Thông tin hội viên</div>
                 <strong>Tên khách hàng:</strong> <span id="resName">-</span><br>
-                <strong>Hạng hội viên:</strong> <span id="resTier">-</span><br>
                 <strong>Điểm tích lũy khả dụng:</strong> <span id="resPoints">-</span>
             </div>
 
@@ -123,12 +122,10 @@
             if (phone === '0987654321') {
                 matchedCustomer = {
                     name: 'Nguyễn Văn A',
-                    tier: 'GOLD',
                     points: 340
                 };
                 
                 document.getElementById('resName').textContent = matchedCustomer.name;
-                document.getElementById('resTier').textContent = "Gold (Chiết khấu 10%)";
                 document.getElementById('resPoints').textContent = "340 điểm";
                 
                 resultBox.style.display = 'block';

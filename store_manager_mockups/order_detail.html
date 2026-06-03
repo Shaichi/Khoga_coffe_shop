@@ -29,6 +29,7 @@
         .item-price { font-weight: 700; color: #2c1a11; }
 
         .status-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
+        .status-pending { background: #ffe0b2; color: #e65100; }
         .status-preparing { background: #e3f2fd; color: #1565c0; }
         .status-ready { background: #fff8e1; color: #b78103; }
         .status-completed { background: #e8f5e9; color: #2e7d32; }
@@ -84,7 +85,7 @@
                 </div>
                 <div class="detail-row" style="margin-top: 8px; border-top: 1px dashed #eaddd3; padding-top: 8px;">
                     <span>Trạng thái đơn hàng:</span>
-                    <span class="status-badge" id="detStatusBadge">Đang chuẩn bị</span>
+                    <span class="status-badge" id="detStatusBadge">Chờ pha chế</span>
                 </div>
             </div>
 
@@ -123,7 +124,6 @@
 
         <!-- Footer Actions -->
         <div class="action-buttons">
-            <button class="btn btn-danger" id="btnCancel" onclick="requestCancelOrder()">HỦY ĐƠN & HOÀN TIỀN</button>
             <button class="btn btn-primary" onclick="triggerReprint()">IN LẠI HÓA ĐƠN</button>
             <a href="order_history.html" class="btn btn-secondary">QUAY LẠI</a>
         </div>
@@ -131,7 +131,7 @@
 
     <script>
         let orderId = "012";
-        let orderStatus = "PREPARING";
+        let orderStatus = "PENDING";
         let orderTotal = 30000;
         let orderType = "Dine-in";
         let orderTime = "09:15";
@@ -139,7 +139,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             orderId = urlParams.get('id') || "012";
-            orderStatus = urlParams.get('status') || "PREPARING";
+            orderStatus = urlParams.get('status') || "PENDING";
             orderTotal = parseFloat(urlParams.get('total')) || 30000;
             orderType = urlParams.get('type') || "Dine-in";
             orderTime = urlParams.get('time') || "09:15";
@@ -152,7 +152,10 @@
             const badge = document.getElementById('detStatusBadge');
             badge.className = 'status-badge';
             
-            if (orderStatus === 'PREPARING') {
+            if (orderStatus === 'PENDING') {
+                badge.classList.add('status-pending');
+                badge.textContent = "Chờ pha chế";
+            } else if (orderStatus === 'PREPARING') {
                 badge.classList.add('status-preparing');
                 badge.textContent = "Đang pha chế";
             } else if (orderStatus === 'READY') {
@@ -161,17 +164,9 @@
             } else if (orderStatus === 'COMPLETED') {
                 badge.classList.add('status-completed');
                 badge.textContent = "Đã hoàn thành";
-                
-                const cancelBtn = document.getElementById('btnCancel');
-                cancelBtn.disabled = true;
-                cancelBtn.style.opacity = '0.5';
-                cancelBtn.textContent = "Không thể hủy đơn đã hoàn thành";
             } else if (orderStatus === 'CANCELLED') {
                 badge.classList.add('status-cancelled');
                 badge.textContent = "Đã hủy đơn";
-                
-                const cancelBtn = document.getElementById('btnCancel');
-                cancelBtn.style.display = 'none';
             }
 
             // Set Totals
@@ -187,14 +182,6 @@
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 2000);
-        }
-
-        function requestCancelOrder() {
-            if (orderStatus === 'COMPLETED') return;
-            
-            // Redirect to Manager cancellation page (directly voids it)
-            const redirectUrl = `cancel_override.html?id=${orderId}&status=${orderStatus}&total=${orderTotal}`;
-            window.location.href = redirectUrl;
         }
     </script>
 </body>

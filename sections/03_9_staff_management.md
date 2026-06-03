@@ -65,7 +65,7 @@ This section details specifications for staff shifts assignment, schedules views
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays warning message: `"Employee is already assigned to another shift on this day."` |
+| 2.1 | Portal | Displays conflict error message: "Employee shift conflict. The employee is already scheduled..." (MSG12). |
 
 ---
 
@@ -234,9 +234,9 @@ This section details specifications for staff shifts assignment, schedules views
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-38 | **Attendance Check-in Registration**: A check-in record is automatically created based on the employee's first successful login at a local terminal station within their scheduled shift time window. Subsequent logins within the same shift window do not create duplicate check-in records. If no scheduled shift exists for the login time, no check-in record is created. |
+| BR-38 | **Attendance Log Recording**: The system records check-in and check-out entries under the local branch's `store_id` where the attendance action was taken, calculating lateness against the scheduled shift. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
+| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
 
 ---
 

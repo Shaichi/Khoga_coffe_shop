@@ -1,4 +1,4 @@
-﻿# SOFTWARE REQUIREMENT SPECIFICATION
+# SOFTWARE REQUIREMENT SPECIFICATION
 ## Coffee Shop Management System
 
 ---
@@ -17,6 +17,11 @@ This section tracks the revision history and modifications made to the Software 
 | **1.5** | 2026-05-24 | Resolved comprehensive review v1.4 issues: added full Section 3.6.5 F31.1 for UC-49 (containing mock-up, field definition, and alternate flows), updated the Table of Contents, fully synchronized BR-42 in Section 5.1, and standardized MSG12 to pure English dictionary key text. | Software Engineering Team | Store Management / Product Owner |
 | **1.6** | 2026-05-24 | Addressed final review feedback: mapped Redeem Loyalty Points Modal (37a) in functional overview and authorization matrix, assigned MSG14 for invalid loyalty redemption multiples, and updated POS transactions flow AT3. | Software Engineering Team | Store Management / Product Owner |
 | **1.7** | 2026-06-02 | Added Branch Management functionality (Section 3.13.3): UC-63 View Branch List, UC-64 Add Branch, UC-65 Update/Deactivate Branch. Added 3 new screens (45-47) to Admin Portal flow, updated screen authorization matrix, Feature-Actor Mapping Matrix, and added business rules BR-54, BR-55, BR-56. Added application messages MSG15, MSG16. | Software Engineering Team | Store Management / Product Owner |
+| **1.8** | 2026-06-03 | Simplified cancellation to PENDING only (no manager PIN), popup-based 4-digit PIN + camera snapshot attendance, team-based barista KPI, branch menu status table, dynamic branch limit (MAX_ACTIVE_BRANCHES), bulk stock import invoice grid, custom loyalty cap fields, and removed all ShopeeFood/Grab integrations. | Software Engineering Team | Store Management / Product Owner |
+| **1.8.1** | 2026-06-03 | Patched discrepancies in v1.8: aligned BR-07/BR-09 with BR-05 (restricting cancellation/refund to PENDING only), added missing use cases (UC-68 to UC-72, UC-61, UC-73) to diagrams, resolved loyalty point config conflict and restored MSG14, authorized Barista for Order Detail screen, and fixed screen numbering gaps. | Software Engineering Team | Store Management / Product Owner |
+| **1.8.2** | 2026-06-03 | Integrated Central Loyalty configurations (Accrual rate, Redeem value, Max redeem %, Max discount limit) under Admin system settings. Completely removed customer membership tiers (Bronze/Silver/Gold/Diamond) and their automatic discounts. Simplified checkout stacking and discount priority rules. | Software Engineering Team | Store Management / Product Owner |
+
+
 
 # Table of Contents
 
@@ -120,10 +125,6 @@ This section tracks the revision history and modifications made to the Software 
      - 3.10.2 Add Voucher / Promotion
      - 3.10.3 Update/Delete Voucher / Promotion
 
-   - **3.11 Delivery Partner Revenue Integration**
-     - 3.11.1 Consolidated Revenue Integration
-     - 3.11.2 Error Handling & Retry Policy
-
    - **3.12 Dashboard & Reporting**
      - 3.12.1 HQ Revenue Dashboard
      - 3.12.2 Export Report
@@ -171,7 +172,6 @@ The primary purpose of the Coffee Shop Management System is to automate, coordin
 - **Inventory Control**: Real-time tracking of ingredients, automated low-stock alerts, and structured audit procedures to minimize wastage and stockouts.
 - **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for admins, managers, cashiers, and baristas.
 - **Data-Driven Insights**: Deliver comprehensive financial, inventory, and staff performance reports to enable management to make informed business decisions.
-- **Consolidated Revenue Reporting**: Automatically retrieve sales and revenue figures from third-party delivery partners via API for unified store performance analysis.
 
 ## 1.2 Product Scope
 The system will manage the following core domains:
@@ -185,7 +185,7 @@ The system will manage the following core domains:
 
 ### Out of Scope
 The system will *not* support:
-- **Real-time Order Processing & Delivery Integration**: Direct handling of online order lifecycles, courier dispatching, or kitchen sync with third-party delivery apps. Instead, the system only fetches aggregate sales reports from third-party delivery partner APIs.
+- **Real-time Order Processing & Delivery Integration**: Direct handling of online order lifecycles, courier dispatching, or kitchen sync with third-party delivery apps.
 - **Payroll Calculation & Payouts**: The system will track staff schedules and attendance reports, but financial payroll calculations and payroll payouts are handled by external accounting systems.
 
 ---
@@ -202,14 +202,12 @@ graph LR
     MANAGER[Store Manager]
     CASHIER[Cashier]
     BARISTA[Barista]
-    DELIVERY[Delivery Partners]
 
     style SYS fill:#fff,stroke:#000,stroke-width:2px
     style ADMIN fill:#fff,stroke:#000,stroke-width:1px
     style MANAGER fill:#fff,stroke:#000,stroke-width:1px
     style CASHIER fill:#fff,stroke:#000,stroke-width:1px
     style BARISTA fill:#fff,stroke:#000,stroke-width:1px
-    style DELIVERY fill:#fff,stroke:#000,stroke-width:1px
 
     %% 1. Admin Data Flows
     ADMIN --> |"Central Menu Data"| SYS
@@ -239,9 +237,6 @@ graph LR
     BARISTA --> |"Order Status Update"| SYS
     SYS --> |"Drink Label Data (Sticker)"| BARISTA
     SYS --> |"Queue Display Data"| BARISTA
-
-    %% 5. Delivery Partner Data Flows
-    DELIVERY --> |"Sales/Revenue API Report"| SYS
 ```
 
 
@@ -266,8 +261,7 @@ The system defines the following roles (actors), structured under a generalizati
    - Inherits from `User`. Operates the POS terminal for order-taking, member lookups, checkout, and receipt printing.
 5. **Barista**:
    - Inherits from `User`. Coordinates drink preparation using the queue monitor and prints label stickers.
-6. **Delivery Partner**:
-   - An external API actor representing third-party delivery platforms (GrabFood, ShopeeFood) from which the system retrieves sales and revenue data.
+
 
 ```mermaid
 graph TD
@@ -354,10 +348,15 @@ graph LR
         UC_ViewCustHistory([View Customer History])
 
         UC_ListMenu([View Menu & Categories List])
+        UC_ViewMenuDetail([View Menu Item Detail])
+        UC_ListCategories([View Categories List])
         UC_AddCat([Add Category])
         UC_UpdateCat([Update Category])
+        UC_DeleteCat([Delete Category])
         UC_AddMenu([Add Menu Item & Recipe])
         UC_UpdateMenu([Update Menu Item & Recipe])
+        UC_DeleteMenu([Delete Menu Item])
+        UC_ManageToppings([Manage Toppings & Options])
 
         UC_ViewReports([View Consolidated Business Reports])
         UC_ExportReports([Export HQ Reports])
@@ -395,10 +394,15 @@ graph LR
     UC_ViewCustHistory -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCustomers
 
     %% Menu/Category extends
-    UC_AddCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
-    UC_UpdateCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_ViewMenuDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_ListCategories -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_AddCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
+    UC_UpdateCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
+    UC_DeleteCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
     UC_AddMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
     UC_UpdateMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_DeleteMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    UC_ManageToppings -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewMenuDetail
 
     %% Reports extends
     UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
@@ -425,6 +429,7 @@ graph LR
         UC_ImportStock([Import Stock])
         UC_ExportStock([Export Stock])
         UC_AuditStock([Perform Inventory Audit])
+        UC_ViewHistory([View Import/Export History])
 
         UC_ViewSchedule([View Staff Schedule])
         UC_CreateSchedule([Create Staff Schedule])
@@ -436,8 +441,11 @@ graph LR
         UC_ExportStoreRev([Export Store Reports])
         
         UC_ConfigBranch([Configure Local Branch Settings])
-        UC_ApproveOverride([Cancel Preparing/Ready Order])
         UC_ViewStaffList([View Branch Staff List])
+        UC_UpdateMenu([Update Menu Item - Store Availability Toggle])
+
+        UC_ViewLocalHistory([View Local Order History])
+        UC_ViewOrderDetail([View Order Detail])
     end
 
     %% Connections
@@ -445,13 +453,15 @@ graph LR
     Actor_Manager --> UC_ViewSchedule
     Actor_Manager --> UC_ViewRevStore
     Actor_Manager --> UC_ConfigBranch
-    Actor_Manager --> UC_ApproveOverride
     Actor_Manager --> UC_ViewStaffList
+    Actor_Manager --> UC_UpdateMenu
+    Actor_Manager --> UC_ViewLocalHistory
 
     %% Stock extends
     UC_ImportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
     UC_ExportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
     UC_AuditStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
+    UC_ViewHistory -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
 
     %% Schedule extends
     UC_CreateSchedule -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewSchedule
@@ -461,13 +471,16 @@ graph LR
 
     %% Revenue extends
     UC_ExportStoreRev -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewRevStore
+
+    %% Order detail extends
+    UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
 ```
 
 
 ---
 
 ### 2.2.4 Cashier Use Cases
-The Cashier uses the POS terminal to process orders, apply vouchers, lookup customer memberships, and print receipts.
+The Cashier uses the POS terminal to process orders, apply vouchers, lookup customer memberships, register/update customers, and print receipts.
 
 ```mermaid
 graph LR
@@ -488,7 +501,11 @@ graph LR
         UC_CloseShift([Close Shift])
         
         UC_ViewLocalHistory([View Local Order History])
+        UC_ViewOrderDetail([View Order Detail])
         UC_RequestRefund([Request Transaction Refund])
+        
+        UC_AddCustomer([Add Customer / Register Member])
+        UC_UpdateCustomer([Update Customer])
     end
 
     %% Connections
@@ -502,9 +519,12 @@ graph LR
     Actor_Cashier --> UC_IssueInvoice
     Actor_Cashier --> UC_CloseShift
     Actor_Cashier --> UC_ViewLocalHistory
+    Actor_Cashier --> UC_AddCustomer
+    Actor_Cashier --> UC_UpdateCustomer
 
     %% Extends & Includes
     UC_UpdateCart -.-> |"&lt;&lt;extend&gt;&gt;"| UC_AddCart
+    UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
     UC_RequestRefund -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
 ```
 
@@ -522,6 +542,7 @@ graph LR
     %% Use Cases
     subgraph Kitchen Queue & Preparation
         UC_ViewQueue([View Order Queue Display])
+        UC_ViewOrderDetail([View Order Detail])
         UC_UpdatePrep([Update Preparation Status])
         UC_PrintLabel([Print Drink Label Sticker])
         UC_ReportIssue([Report Issue / Escalate Order])
@@ -534,6 +555,7 @@ graph LR
 
     %% Extends
     UC_PrintLabel -.-> |"&lt;&lt;extend&gt;&gt;"| UC_UpdatePrep
+    UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewQueue
 ```
 
 ---
@@ -565,16 +587,16 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-70** | Menu & Categories | Delete Category | Admin | **Description**: Deactivates/deletes an empty category.<br>**Main Flow**:<br>1. Admin clicks delete on a row.<br>2. Portal displays Delete Category Confirmation modal.<br>3. Admin clicks "Confirm Delete".<br>4. Portal deletes category and returns to list view. |
 | **UC-18** | Menu & Categories | Add Menu Item & Recipe | Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
 | **UC-71** | Menu & Categories | Manage Toppings & Options | Admin | **Description**: Configures modifiers that customers can add to their drinks.<br>**Main Flow**:<br>1. Admin enters Name and Price, and clicks "Add Topping".<br>2. Portal validates inputs and saves new topping. |
-| **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin | **Description**: Edits product details or recipes.<br>**Main Flow**:<br>1. Admin alters item pricing, availability, or raw material recipe counts.<br>2. Adjustments are saved, instantly modifying local POS catalogs. |
+| **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin, Store Manager | **Description**: Edits product details or recipes, or toggles store availability.<br>**Main Flow**:<br>1. Actor alters item pricing, details, or store availability.<br>2. Adjustments are saved, updating local POS catalogs. |
 | **UC-72** | Menu & Categories | Delete Menu Item | Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
 | **UC-20** | Voucher Management | View Vouchers List | Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
 | **UC-21** | Voucher Management | Add Voucher | Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
 | **UC-22** | Voucher Management | Update Voucher | Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
 | **UC-23** | Voucher Management | Delete Voucher | Admin | **Description**: Deactivates or removes a voucher code.<br>**Main Flow**:<br>1. Admin selects voucher and deactivates it.<br>2. The voucher code is disabled, preventing further usage at checkout. |
-| **UC-24** | Customer Management | View Customer List | Admin | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Admin views customer directory.<br>2. Admin reviews list of active members and membership levels. |
-| **UC-25** | Customer Management | Add Customer | Admin | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Admin enters member details (name, phone, email) and saves.<br>2. Customer is registered as a Bronze loyalty member. |
-| **UC-26** | Customer Management | Update Customer | Admin | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Admin edits member details and saves.<br>2. The membership profile is updated. |
-| **UC-27** | Customer Management | View Customer History | Admin | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Admin opens member profile.<br>2. Admin reviews historical orders, point accumulation ledger, and milestones. |
+| **UC-24** | Customer Management | View Customer List | Admin, Store Manager, Cashier | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Admin views customer directory.<br>2. Admin reviews list of active members and membership levels. |
+| **UC-25** | Customer Management | Add Customer | Admin, Store Manager, Cashier | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Actor enters member details (name, phone, email) and saves.<br>2. Customer is registered as a loyalty member. |
+| **UC-26** | Customer Management | Update Customer | Admin, Store Manager, Cashier | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Admin or Cashier edits member details and saves.<br>2. The membership profile is updated. |
+| **UC-27** | Customer Management | View Customer History | Admin, Store Manager, Cashier | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Admin opens member profile.<br>2. Admin reviews historical orders, point accumulation ledger, and milestones. |
 | **UC-28** | Reports & Analytics | View Consolidated Business Reports | Admin | **Description**: Accesses centralized reports.<br>**Main Flow**:<br>1. Admin opens consolidation dashboard.<br>2. Admin reviews global brand revenue, compares branch performance, and views best-seller charts. |
 | **UC-29** | Reports & Analytics | Export HQ Reports | Admin | **Description**: Downloads brand report sheets.<br>**Main Flow**:<br>1. Admin triggers export.<br>2. The report files are generated and downloaded. |
 | **UC-30** | System Configuration | Configure Central System Settings | Admin | **Description**: Configures central parameters.<br>**Main Flow**:<br>1. Admin modifies tax rates, loyalty points rates, or API credentials.<br>2. Changes to central configurations are saved. |
@@ -591,7 +613,6 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-40** | Reports & Analytics | View Store Revenue Reports | Store Manager | **Description**: Accesses local branch reports.<br>**Main Flow**:<br>1. Manager opens store report panel.<br>2. Manager reviews local sales revenue, shift closures, and payment breakdowns. |
 | **UC-41** | Reports & Analytics | Export Store Reports | Store Manager | **Description**: Exports store-specific files.<br>**Main Flow**:<br>1. Manager exports local sales and inventory spreadsheets.<br>2. Report files are generated and downloaded. |
 | **UC-42** | System Configuration | Configure Local Branch Settings | Store Manager | **Description**: Configures local branch settings (timezone, hardware connection, receipt logo) for their assigned branch.<br>**Main Flow**:<br>1. Store Manager opens Local Branch settings.<br>2. Store Manager updates operational parameters and saves. |
-| **UC-43** | POS Sales & Billing | Approve Cashier Override / Refund | Store Manager | **Description**: Allows Store Manager to cancel orders in preparing/ready states directly on the POS terminal.<br>**Main Flow**:<br>1. Manager logs into the POS or accesses the active order.<br>2. Manager selects the order, enters cancellation reason/notes, and voids the transaction. |
 | **UC-44** | POS Sales & Billing | Open Shift | Cashier | **Description**: Opens cashier POS session.<br>**Main Flow**:<br>1. Cashier inputs POS register ID and opening drawer cash float (VND).<br>2. The shift state is validated and the session is opened. |
 | **UC-45** | POS Sales & Billing | Add Item to Order | Cashier | **Description**: Adds product to checkout cart.<br>**Main Flow**:<br>1. Cashier clicks a menu item or scans SKU barcode.<br>2. Availability is validated and the item is added to the order cart. |
 | **UC-46** | POS Sales & Billing | Update Cart Item | Cashier | **Description**: Modifies quantity or toppings in cart.<br>**Main Flow**:<br>1. Cashier adjusts quantity or selects option toppings.<br>2. The cart items are updated and the subtotal is recalculated. |
@@ -604,7 +625,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-53** | POS Sales & Billing | Close Shift | Cashier | **Description**: Closes POS session.<br>**Main Flow**:<br>1. Cashier counts cash and inputs closing float.<br>2. Discrepancies are calculated and flagged, and the session is closed. |
 | **UC-54** | POS Sales & Billing | View Local Order History | Cashier | **Description**: Displays local branch orders.<br>**Main Flow**:<br>1. Cashier opens order history grid.<br>2. Cash drawer orders processed during the current shift are displayed. |
 | **UC-73** | POS Sales & Billing | View Order Detail | Cashier, Store Manager, Barista | **Description**: Displays receipt details, payments, and fulfillment tracking metrics for an order.<br>**Main Flow**:<br>1. User taps on specific order.<br>2. Portal displays details, payments log, and order item list. |
-| **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund and cancellation process for PENDING orders.<br>**Main Flow**:<br>1. Cashier selects a pending order and clicks Cancel Order.<br>2. Cashier inputs cancellation reason and details, then confirms cancellation. POS voids transaction and updates stock immediately. |
+| **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund and cancellation process for PENDING orders.<br>**Precondition**: Order must be in `PENDING` state.<br>**Main Flow**:<br>1. Cashier selects a pending order and clicks Cancel Order.<br>2. Cashier inputs cancellation reason and details, then confirms cancellation. POS voids transaction and updates stock immediately. |
 | **UC-57** | Order Prep & Queue | View Order Queue Display | Barista | **Description**: Monitors preparation queue.<br>**Main Flow**:<br>1. Barista opens queue display.<br>2. Pending, preparing, and ready orders are displayed. |
 | **UC-58** | Order Prep & Queue | Update Preparation Status | Barista | **Description**: Modifies preparation flags.<br>**Main Flow**:<br>1. Barista selects active order and moves it to preparing/ready.<br>2. Timestamps are logged and the cashier status is updated. |
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
@@ -614,7 +635,7 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
 | **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
 | **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
-| **UC-67** | Delivery Partner Integration | Fetch Delivery Partner Sales | System (automated) | **Description**: Automatically fetches daily consolidated revenue and sales figures from delivery partner APIs.<br>**Main Flow**:<br>1. Nightly scheduler triggers API request.<br>2. Consolidated sales metrics are downloaded and stored. |
+
 
 
 
@@ -672,9 +693,9 @@ graph LR
     AdminHome --> HQReports[23. HQ Business Reports Screen]
     
     AdminHome --> CentralConfig[24. Central System Settings Screen]
-    CentralConfig --> BranchMgmt[45. Branch Management List Screen]
-    BranchMgmt --> AddBranch[46. Add Branch Form]
-    BranchMgmt --> EditBranch[47. Edit / Deactivate Branch Screen]
+    CentralConfig --> BranchMgmt[44. Branch Management List Screen]
+    BranchMgmt --> AddBranch[45. Add Branch Form]
+    BranchMgmt --> EditBranch[46. Edit / Deactivate Branch Screen]
 ```
 
 ### 3. Store Manager Console Screen Flow
@@ -682,19 +703,26 @@ A tablet or desktop dashboard for local store management overseeing logistics, i
 
 ```mermaid
 graph LR
-    ManagerHome[25. Manager Dashboard Home] --> StockView[26. Stock List & History View Screen]
-    StockView --> StockImport[27. Stock Import Form Screen]
-    StockView --> StockExport[28. Stock Export Form Screen]
-    StockView --> StockAudit[29. Stock Audit Screen]
+    ManagerHome[25. Manager Dashboard Home] --> StockList[26. Stock List Screen]
+    StockList --> StockHistory[26a. Stock History Log Screen]
+    StockList --> StockImport[27. Stock Import Form Screen]
+    StockList --> StockExport[28. Stock Export Form Screen]
+    StockList --> StockAudit[29. Stock Audit Screen]
     
     ManagerHome --> ShiftSchedule[30. Staff Shift Scheduler Screen]
+    ShiftSchedule --> ScheduleAdd[30a. Add Shift Screen]
+    ShiftSchedule --> ScheduleEdit[30b. Edit Shift Screen]
     ShiftSchedule --> AttendanceReport[31. Staff Attendance Report Screen]
     
-    ManagerHome --> BranchReports[32. Store Revenue & Order Reports Screen]
+    ManagerHome --> BranchReports[32. Store Revenue Reports Screen]
+    BranchReports --> ReportsExport[32a. Reports Export Modal]
+    
+    ManagerHome --> OrderHistory[48. Manager Order History Screen]
+    OrderHistory --> OrderDetail[49. Order Detail Screen]
     
     ManagerHome --> BranchSettings[33. Branch Local Settings Screen]
     
-    ManagerHome --> ViewBranchStaff[48. View Branch Staff List Screen]
+    ManagerHome --> ViewBranchStaff[47. View Branch Staff List Screen]
 ```
 
 ### 4. Cashier POS Terminal Screen Flow
@@ -713,10 +741,9 @@ graph LR
     PayModal -->|failure/timeout| PayFail[39. Payment Retry & Cancel Modal]
     
     CashierSale --> OrderHistory[40. Order History & Refund Request Screen]
-    OrderHistory --> AuthOverride[41. Manager Auth Override Screen]
-    AuthOverride --> RefundConfirm[Process Refund & Update Stock]
+    OrderHistory --> RefundConfirm[Process Refund & Update Stock]
     
-    CashierSale --> ShiftClose[42. Shift Reconciliation Close Shift Screen]
+    CashierSale --> ShiftClose[41. Shift Reconciliation Close Shift Screen]
 ```
 
 ### 5. Barista Queue Monitor Screen Flow
@@ -724,10 +751,10 @@ An interactive tablet console in the preparation zone to manage product lines, c
 
 ```mermaid
 graph LR
-    BaristaHome[43. Barista Queue Monitor Screen] --> UpdatePrep[Update Prep Status]
+    BaristaHome[42. Barista Queue Monitor Screen] --> UpdatePrep[Update Prep Status]
     UpdatePrep --> PrintLabel[Print Drink Label Sticker]
     
-    BaristaHome --> ReportIssue[44. Report Issue & Hold Order Screen]
+    BaristaHome --> ReportIssue[43. Report Issue & Hold Order Screen]
 ```
 
 ---
@@ -761,18 +788,22 @@ The system comprises the following screens across its user portals:
 | | | Edit Voucher Form | Form to modify voucher dates or total usage limits. |
 | 5 | Customer Management | Customer List & Loyalty History Screen | Customer registry for searching and registering membership details. |
 | 6 | Reports & Analytics | HQ Business Reports Screen | HQ dashboard comparing revenue, best-sellers, and store metrics. |
-| | | Store Revenue & Order Reports Screen | Local branch dashboard showing sales, shift closures, and cash reports. |
+| | | Store Revenue Reports Screen | Local branch dashboard showing retail sales, shift closures, and payment metrics. |
+| | | Reports Export Modal | Modal to export branch sales and inventory reports to PDF/Excel. |
 | 7 | System Configuration | Central System Settings Screen | Central configuration screen for tax rates and brand settings. |
 | | | Branch Local Settings Screen | Local settings screen for branch hardware and POS registers. |
 | | | Branch Management List Screen | Lists all store branches with status indicators for Admin management. |
 | | | Add Branch Form | Form for Admin to register a new store branch with name, address, and phone. |
 | | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
 | 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
-| | | Stock List & History View Screen | Displays branch inventory quantities and historical ledger logs. |
+| | | Stock List Screen | Displays branch inventory quantities and alert flags. |
+| | | Stock History Log Screen | Displays historical ledger logs of all stock imports/exports. |
 | | | Stock Import Form Screen | Form to record supplier inventory imports. |
 | | | Stock Export Form Screen | Form to log physical stock exports, wastage, or damage. |
 | | | Stock Audit Screen | Grid to count physical stock and reconcile discrepancies. |
 | 9 | Staff & Shift Management | Staff Shift Scheduler Screen | Calendar to schedule cashiers and baristas into shift blocks. |
+| | | Add Shift Screen | Form to schedule a cashier or barista to a new shift. |
+| | | Edit Shift Screen | Form to modify or delete an existing staff shift. |
 | | | Staff Attendance Report Screen | Logs check-in/out times and attendance details. |
 | | | View Branch Staff List Screen | Roster directory showing assigned branch staff contact details and operational roles. |
 | 10 | POS Sales & Billing | Shift Initiation Open Shift Screen | Prompts cashier for register ID and starting cash float. |
@@ -783,8 +814,9 @@ The system comprises the following screens across its user portals:
 | | | Payment Checkout Modal | Modal to process card, cash, or dynamic QR code payments. |
 | | | Payment Retry & Cancel Modal | Modal to handle payment failures and gateway timeouts. |
 | | | Order History & Refund Request Screen | Logs local terminal transactions for refund requests. |
-| | | Manager Auth Override Screen | Gate for manager credential validation during overrides. |
 | | | Shift Reconciliation Close Shift Screen | Prompts cashier for counted closing cash drawer float input. |
+| | | Manager Order History Screen | Displays list of orders processed at the branch with filters. |
+| | | Order Detail Screen | Displays item details, payment transactions, and fulfillment logs for a specific order, allowing managers, cashiers, and baristas to view it, and managers to cancel/refund pending orders directly. |
 | 11 | Order Prep & Queue | Barista Queue Monitor Screen | Live prep queue for Baristas showing order status columns. |
 | | | Report Issue & Hold Order Screen | Modal to flag drink prep issues to cashiers and managers. |
 ---
@@ -820,13 +852,17 @@ The table below specifies access control policies across all 48 screens:
 | 23. HQ Business Reports | **Yes** | No | No | No |
 | 24. Central System Settings | **Yes** | No | No | No |
 | 25. Manager Dashboard Home | No | **Yes** | No | No |
-| 26. Stock List & History View | **Yes** | **Yes** | No | No |
+| 26. Stock List Screen | **Yes** | **Yes** | No | No |
+| 26a. Stock History Log Screen | **Yes** | **Yes** | No | No |
 | 27. Stock Import Form | No | **Yes** | No | No |
 | 28. Stock Export Form | No | **Yes** | No | No |
 | 29. Stock Audit Screen | No | **Yes** | No | No |
 | 30. Staff Shift Scheduler | No | **Yes** | No | No |
+| 30a. Add Shift Screen | No | **Yes** | No | No |
+| 30b. Edit Shift Screen | No | **Yes** | No | No |
 | 31. Staff Attendance Report | No | **Yes** | No | No |
-| 32. Store Revenue & Order Reports | No | **Yes** | No | No |
+| 32. Store Revenue Reports Screen | No | **Yes** | No | No |
+| 32a. Reports Export Modal | No | **Yes** | No | No |
 | 33. Branch Local Settings | No | **Yes** | No | No |
 | 34. Shift Initiation Open Shift | No | No | **Yes** | No |
 | 35. POS Checkout Grid & Cart | No | No | **Yes** | No |
@@ -836,14 +872,15 @@ The table below specifies access control policies across all 48 screens:
 | 38. Payment Checkout Modal | No | No | **Yes** | No |
 | 39. Payment Retry & Cancel Modal | No | No | **Yes** | No |
 | 40. Order History & Refund Request | No | No | **Yes** | No |
-| 41. Manager Auth Override | **Yes** | **Yes** | No | No |
-| 42. Shift Reconciliation Close Shift | No | No | **Yes** | No |
-| 43. Barista Queue Monitor | No | Yes | Yes | **Yes** |
-| 44. Report Issue & Hold Order | No | No | No | **Yes** |
-| 45. Branch Management List | **Yes** | No | No | No |
-| 46. Add Branch Form | **Yes** | No | No | No |
-| 47. Edit / Deactivate Branch | **Yes** | No | No | No |
-| 48. View Branch Staff List Screen | No | **Yes** | No | No |
+| 41. Shift Reconciliation Close Shift | No | No | **Yes** | No |
+| 42. Barista Queue Monitor | No | Yes | Yes | **Yes** |
+| 43. Report Issue & Hold Order | No | No | No | **Yes** |
+| 44. Branch Management List | **Yes** | No | No | No |
+| 45. Add Branch Form | **Yes** | No | No | No |
+| 46. Edit / Deactivate Branch | **Yes** | No | No | No |
+| 47. View Branch Staff List Screen | No | **Yes** | No | No |
+| 48. Manager Order History Screen | No | **Yes** | No | No |
+| 49. Order Detail Screen | No | **Yes** | **Yes** | **Yes** |
 
 ---
 
@@ -858,7 +895,7 @@ These automated backend processes do not require direct human interaction:
 | 4 | Inventory Management | Low Stock Notification Engine | Evaluates active stock levels against thresholds in real-time, displaying alert badges and sending nightly aggregated emails at 22:00. |
 | 5 | POS Transaction | Auto-Close Abandoned Shifts | Nightly scheduler runs at 11:59 PM to automatically close active cashier shifts left open, logging discrepancies. |
 | 6 | POS Transaction | Order Timeout Handler | Automatically cancels orders that are in a pending payment state for more than 15 minutes. |
-| 7 | Delivery Partner Integration | Revenue Report Fetcher | Automatically fetch daily consolidated revenue and sales figures from delivery partner APIs at 23:00 to populate dashboards and reports. |
+
 
 ---
 
@@ -873,14 +910,19 @@ erDiagram
     STORE ||--o{ STOCK_ITEM : holds
     STORE ||--o{ STAFF_SCHEDULE : schedules
     STORE ||--o{ ATTENDANCE : tracks
+    STORE ||--o{ BRANCH_MENU_STATUS : "manages availability in"
     USER ||--o{ SHIFT_SESSION : opens
     USER ||--o{ STOCK_TRANSACTION : performs
     USER ||--o{ STAFF_SCHEDULE : scheduled
     USER ||--o{ ATTENDANCE : logs
+    USER ||--o{ ORDER_CANCELLATION : "executes"
+    USER ||--o{ AUDIT_LOG : "triggers"
     CATEGORY ||--o{ MENU_ITEM : contains
     MENU_ITEM ||--o{ OPTION_TOPPING : contains
     MENU_ITEM ||--o{ ORDER_ITEM : ordered
+    MENU_ITEM ||--o{ BRANCH_MENU_STATUS : "has local status at"
     ORDER ||--o{ ORDER_ITEM : contains
+    ORDER ||--o| ORDER_CANCELLATION : "is cancelled by"
     ORDER_ITEM ||--o{ ORDER_ITEM_TOPPING : customized-with
     OPTION_TOPPING ||--o{ ORDER_ITEM_TOPPING : applied
     CUSTOMER ||--o{ ORDER : places
@@ -900,9 +942,10 @@ erDiagram
 |---|---|---|
 | 1 | users | Stores login credentials and role-based permissions for employees (Admin, Manager, Cashier, Barista) within the system. |
 | 2 | categories | Represents main food and beverage groups to organize the product catalog. |
-| 3 | menu_items | Holds individual beverage and food listings, including catalog pricing, barcodes, availability status, and image references. |
+| 3 | menu_items | Holds individual beverage and food listings, including catalog pricing, barcodes, chain-wide active status, and image references. |
+| 3a | branch_menu_status | Manages item availability status independently per branch store. |
 | 4 | option_toppings | Stores customizable add-ons that can be added to menu items. |
-| 5 | customers | Registry of all enrolled loyalty membership customers, tracking membership tiers and accrued points. |
+| 5 | customers | Registry of all enrolled loyalty membership customers, tracking points. |
 | 6 | shift_sessions | Tracks active work sessions of POS cashier registers, including opening/closing float values. |
 | 7 | orders | Represents sales transactions, linking customers, shifts, payment statuses, and fulfillment statuses. |
 | 8 | order_items | Line items detailing the specific menu products and quantities purchased in an order. |
@@ -913,7 +956,8 @@ erDiagram
 | 13 | recipe_items | Defines the raw stock ingredient quantity consumed to produce one unit of a menu item or topping. |
 | 14 | stores | Represents physical store branches and geographic coffee shop locations. |
 | 15 | staff_schedules | Stores assigned employee work shifts, scheduled date blocks, and register terminals allocations. |
-| 16 | attendances | Logs employee clock-in/out timestamps, date records, and lateness metadata. |
+| 16 | attendances | Logs employee clock-in/out timestamps, date records, snapshot photos, and lateness metadata. |
+| 17 | audit_logs | Central security audit logs for critical database updates. |
 
 ---
 
@@ -924,220 +968,259 @@ Represents employees and system administrators.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the user. |
-| 2 | username | | VARCHAR(50) | Yes | Account login name, unique. |
-| 3 | password_hash | | VARCHAR(255) | Yes | Securely hashed password. |
-| 4 | role | | Enum | Yes | User role: `ADMIN`, `STORE_MANAGER`, `CASHIER`, `BARISTA`. |
-| 5 | full_name | | VARCHAR(100) | Yes | Employee full name. |
-| 6 | is_active | | BOOLEAN | Yes | Current status of the account. |
-| 7 | email | | VARCHAR(100) | Yes | Employee contact email address, unique. |
-| 8 | phone | | VARCHAR(20) | Yes | Employee contact phone number. |
-| 9 | store_id | | UUID | No | Foreign Key (FK) - references store/branch. Null for HQ Admin. |
-| 10 | created_at | | TIMESTAMP | Yes | Account creation timestamp. |
-| 11 | last_login_at | | TIMESTAMP | No | Timestamp of the most recent successful login. |
-| 12 | must_change_password | | BOOLEAN | Yes | Flag indicating if the user must reset their password upon next login. Default: true. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the user. |
+| 2 | username | | Text (Max 50 characters) | Yes | Account login name, unique. |
+| 3 | password_hash | | Text (Max 255 characters) | Yes | Securely hashed password. |
+| 4 | role | | Selection (Role: ADMIN, STORE_MANAGER, CASHIER, BARISTA) | Yes | User role. |
+| 5 | full_name | | Text (Max 100 characters) | Yes | Employee full name. |
+| 6 | is_active | | Yes/No (Boolean) | Yes | Current status of the account. |
+| 7 | email | | Text (Max 100 characters) | Yes | Employee contact email address, unique. |
+| 8 | phone | | Text (Max 20 characters) | Yes | Employee contact phone number, unique. |
+| 9 | store_id | | Unique ID (UUID) | No | Foreign Key (FK) - references store/branch. Null for HQ Admin. |
+| 10 | created_at | | Date & Time | Yes | Account creation timestamp. |
+| 11 | last_login_at | | Date & Time | No | Timestamp of the most recent successful login. |
+| 12 | must_change_password | | Yes/No (Boolean) | Yes | Flag indicating if the user must reset their password upon next login. Default: true. |
 
 ### 2. `CATEGORY`
 Main food and beverage groups.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the category. |
-| 2 | name | | VARCHAR(100) | Yes | Category name (e.g., "Coffee", "Tea", "Pastry"). |
-| 3 | description | | TEXT | No | Details of the category. |
-| 4 | is_active | | BOOLEAN | Yes | Visibility flag. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the category. |
+| 2 | name | | Text (Max 100 characters) | Yes | Category name (e.g., "Coffee", "Tea", "Pastry"). |
+| 3 | description | | Long Text | No | Details of the category. |
+| 4 | is_active | | Yes/No (Boolean) | Yes | Visibility flag. |
 
 ### 3. `MENU_ITEM`
 Individual food/beverage listings.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the menu item. |
-| 2 | category_id | | UUID | Yes | Foreign Key (FK) - references CATEGORY(id). |
-| 3 | name | | VARCHAR(100) | Yes | Name of the food or beverage (e.g., "Espresso", "Peach Tea"). |
-| 4 | price | | DECIMAL(12,2) | Yes | Base price. |
-| 5 | description | | TEXT | No | Description of the item. |
-| 6 | is_available | | BOOLEAN | Yes | Availability status in stock. |
-| 7 | image_url | | VARCHAR(255) | No | URL path to the product image file. |
-| 8 | barcode | | VARCHAR(50) | No | Barcode or SKU for POS barcode scanner lookup (unique). |
-| 9 | abbreviation | | VARCHAR(50) | Yes | Auto-generated abbreviation (e.g. cfd). |
-| 10 | created_at | | TIMESTAMP | Yes | Date and time the item was added to the catalog. |
-| 11 | is_deleted | | BOOLEAN | Yes | Soft-delete status flag. Default: false. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the menu item. |
+| 2 | category_id | | Unique ID (UUID) | No | Foreign Key (FK) - references CATEGORY(id). Nullable to set NULL on category deletion. |
+| 3 | name | | Text (Max 100 characters) | Yes | Name of the food or beverage (e.g., "Espresso", "Peach Tea"). |
+| 4 | price | | Decimal (Currency/VND) | Yes | Base price. |
+| 5 | description | | Long Text | No | Description of the item. |
+| 6 | is_active | | Yes/No (Boolean) | Yes | Visibility flag for entire chain, decided by HQ Admin (default: true). |
+| 7 | image_url | | Text (Max 255 characters) | No | URL path to the product image file. |
+| 8 | barcode | | Text (Max 50 characters) | No | Barcode or SKU for POS barcode scanner lookup (unique). |
+| 9 | abbreviation | | Text (Max 50 characters) | Yes | Auto-generated abbreviation (e.g. cfd). |
+| 10 | created_at | | Date & Time | Yes | Date and time the item was added to the catalog. |
+| 11 | is_deleted | | Yes/No (Boolean) | Yes | Soft-delete status flag. Default: false. |
+
+### 3a. `BRANCH_MENU_STATUS`
+Manages item availability status independently per branch store.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | store_id | x | Unique ID (UUID) | Yes | Foreign Key (FK) - references STORE(id). |
+| 2 | menu_item_id | x | Unique ID (UUID) | Yes | Foreign Key (FK) - references MENU_ITEM(id). |
+| 3 | is_available | | Yes/No (Boolean) | Yes | Availability status of menu item in this specific branch store. |
 
 ### 4. `OPTION_TOPPING`
 Add-ons like extra espresso shots, milk options, or tapioca pearls.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the option/topping. |
-| 2 | menu_item_id | | UUID | No | Foreign Key (FK) - references MENU_ITEM(id). Optional link, null for global toppings. |
-| 3 | name | | VARCHAR(100) | Yes | Option or topping name (e.g., "Extra Espresso Shot", "Oat Milk"). |
-| 4 | price | | DECIMAL(12,2) | Yes | Add-on cost in VND. |
-| 5 | is_active | | BOOLEAN | Yes | Active/inactive visibility status. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the option/topping. |
+| 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Optional link, null for global toppings. |
+| 3 | name | | Text (Max 100 characters) | Yes | Option or topping name (e.g., "Extra Espresso Shot", "Oat Milk"). |
+| 4 | price | | Decimal (Currency/VND) | Yes | Add-on cost in VND. |
+| 5 | is_active | | Yes/No (Boolean) | Yes | Active/inactive visibility status. |
 
 ### 5. `CUSTOMER`
 Registered membership details.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the customer. |
-| 2 | phone | | VARCHAR(20) | Yes | Primary lookup identifier (phone number, unique). |
-| 3 | full_name | | VARCHAR(100) | Yes | Customer's full name. |
-| 4 | points | | INTEGER | Yes | Loyalty points accrued. |
-| 5 | membership_tier | | Enum | Yes | Loyalty tier: `BRONZE`, `SILVER`, `GOLD`, `DIAMOND`. |
-| 6 | email | | VARCHAR(100) | No | Customer contact email. |
-| 7 | created_at | | TIMESTAMP | Yes | Date and time of membership enrollment. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the customer. |
+| 2 | phone | | Text (Max 20 characters) | Yes | Primary lookup identifier (phone number, unique). |
+| 3 | full_name | | Text (Max 100 characters) | Yes | Customer's full name. |
+| 4 | points | | Whole Number | Yes | Loyalty points accrued. |
+| 5 | email | | Text (Max 100 characters) | No | Customer contact email. |
+| 6 | created_at | | Date & Time | Yes | Date and time of membership enrollment. |
 
 ### 6. `SHIFT_SESSION`
 Tracks cashier sessions at POS terminals.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the shift session. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references store branch. |
-| 3 | user_id | | UUID | Yes | Foreign Key (FK) - references USER(id). The cashier who opened the shift. |
-| 4 | start_time | | TIMESTAMP | Yes | Timestamp when the shift started. |
-| 5 | end_time | | TIMESTAMP | No | Timestamp when the shift was closed. |
-| 6 | starting_cash | | DECIMAL(12,2) | Yes | Float cash amount in cash drawer at start. |
-| 7 | ending_cash | | DECIMAL(12,2) | No | Actual cash counted in drawer at close. |
-| 8 | status | | Enum | Yes | Shift session status: `OPEN`, `CLOSED`. |
-| 9 | pos_register_id | | VARCHAR(50) | Yes | Identifier of the POS terminal/register (e.g., "POS-01"). |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the shift session. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
+| 3 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who opened the shift. |
+| 4 | start_time | | Date & Time | Yes | Timestamp when the shift started. |
+| 5 | end_time | | Date & Time | No | Timestamp when the shift was closed. |
+| 6 | starting_cash | | Decimal (Currency/VND) | Yes | Float cash amount in cash drawer at start. |
+| 7 | ending_cash | | Decimal (Currency/VND) | No | Actual cash counted in drawer at close. |
+| 8 | status | | Selection (Shift Status: OPEN, CLOSED) | Yes | Shift session status. |
+| 9 | pos_register_id | | Text (Max 50 characters) | Yes | Identifier of the POS terminal/register (e.g., "POS-01"). |
 
 ### 7. `ORDER`
 Sales transactions.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the order. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references store branch. |
-| 3 | order_number | | VARCHAR(50) | Yes | Short 3-digit order sequence (e.g., `#001`), reset daily per branch. If the count exceeds 999, it continues to 1000 without truncating. |
-| 4 | shift_session_id | | UUID | No | Foreign Key (FK) - references SHIFT_SESSION(id). Null for online delivery orders. |
-| 5 | customer_id | | UUID | No | Foreign Key (FK) - references CUSTOMER(id). Null for guest orders. |
-| 6 | voucher_id | | UUID | No | Foreign Key (FK) - references VOUCHER(id). Null if no discount applied. |
-| 7 | order_type | | Enum | Yes | Order type: `DINE_IN`, `TAKE_AWAY`, `DELIVERY`. |
-| 8 | subtotal | | DECIMAL(12,2) | Yes | Total price before discounts. |
-| 9 | discount | | DECIMAL(12,2) | Yes | Total discount amount subtracted. |
-| 10 | tax_amount | | DECIMAL(12,2) | Yes | The VAT amount calculated for this order based on global config. |
-| 11 | total | | DECIMAL(12,2) | Yes | Net payable amount. |
-| 12 | payment_method | | Enum | Yes | Payment method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
-| 13 | payment_status | | Enum | Yes | Payment status: `PENDING`, `COMPLETED`, `FAILED`, `REFUNDED`. |
-| 14 | order_status | | Enum | Yes | Fulfillment status: `PENDING`, `PREPARING`, `HOLD`, `READY`, `COMPLETED`, `CANCELLED`. |
-| 15 | created_at | | TIMESTAMP | Yes | Date and time the order was placed. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the order. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
+| 3 | order_number | | Text (Max 50 characters) | Yes | Short 3-digit order sequence (e.g., `#001`), reset daily per branch. If the count exceeds 999, it continues to 1000 without truncating. |
+| 4 | shift_session_id | | Unique ID (UUID) | No | Foreign Key (FK) - references SHIFT_SESSION(id). Null for online delivery orders. |
+| 5 | customer_id | | Unique ID (UUID) | No | Foreign Key (FK) - references CUSTOMER(id). Null for guest orders. |
+| 6 | voucher_id | | Unique ID (UUID) | No | Foreign Key (FK) - references VOUCHER(id). Null if no discount applied. |
+| 7 | order_type | | Selection (Order Type: DINE_IN, TAKE_AWAY, DELIVERY) | Yes | Order type. |
+| 8 | subtotal | | Decimal (Currency/VND) | Yes | Total price before discounts. |
+| 9 | discount | | Decimal (Currency/VND) | Yes | Total discount amount subtracted. |
+| 10 | tax_amount | | Decimal (Currency/VND) | Yes | The VAT amount calculated for this order based on global config. |
+| 11 | total | | Decimal (Currency/VND) | Yes | Net payable amount. |
+| 12 | payment_method | | Selection (Payment Method: CASH, CARD, VIETQR) | Yes | Payment method. |
+| 13 | payment_status | | Selection (Payment Status: PENDING, COMPLETED, FAILED, REFUNDED) | Yes | Payment status. |
+| 14 | order_status | | Selection (Fulfillment Status: PENDING, PREPARING, HOLD, READY, COMPLETED, CANCELLED) | Yes | Fulfillment status. |
+| 15 | created_at | | Date & Time | Yes | Date and time the order was placed. |
+| 16 | points_redeemed | | Whole Number | Yes | Loyalty points redeemed for discount on this order. Default: 0. |
+| 17 | points_earned | | Whole Number | Yes | Loyalty points earned from this transaction. Default: 0. |
+| 18 | loyalty_discount | | Decimal (Currency/VND) | Yes | Cash discount amount from loyalty points redemption. Default: 0. |
+
+### 7a. `ORDER_CANCELLATION`
+Fulfillment cancellation and refund audits logs.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the cancellation. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | cashier_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who cancelled. |
+| 4 | reason | | Text (Max 100 characters) | Yes | Reason string. |
+| 5 | notes | | Long Text | Yes | Detailed comments. |
+| 6 | created_at | | Date & Time | Yes | Timestamp of cancellation. |
 
 ### 8. `ORDER_ITEM`
 Line items in an order.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the order line item. |
-| 2 | order_id | | UUID | Yes | Foreign Key (FK) - references ORDER(id). |
-| 3 | menu_item_id | | UUID | Yes | Foreign Key (FK) - references MENU_ITEM(id). |
-| 4 | quantity | | INTEGER | Yes | Quantity purchased. |
-| 5 | unit_price | | DECIMAL(12,2) | Yes | Price of the item at the time of purchase. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the order line item. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | menu_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references MENU_ITEM(id). |
+| 4 | quantity | | Whole Number | Yes | Quantity purchased. |
+| 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the item at the time of purchase. |
 
 ### 9. `ORDER_ITEM_TOPPING`
 Toppings attached to a specific order line item.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the order item topping. |
-| 2 | order_item_id | | UUID | Yes | Foreign Key (FK) - references ORDER_ITEM(id). |
-| 3 | topping_id | | UUID | Yes | Foreign Key (FK) - references OPTION_TOPPING(id). |
-| 4 | quantity | | INTEGER | Yes | Quantity of the topping applied. |
-| 5 | unit_price | | DECIMAL(12,2) | Yes | Price of the topping at the time of purchase. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the order item topping. |
+| 2 | order_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER_ITEM(id). |
+| 3 | topping_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references OPTION_TOPPING(id). |
+| 4 | quantity | | Whole Number | Yes | Quantity of the topping applied. |
+| 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the topping at the time of purchase. |
 
 ### 10. `STOCK_ITEM`
 Raw inventory tracking (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the stock item. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references store branch. |
-| 3 | name | | VARCHAR(100) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
-| 4 | unit | | VARCHAR(20) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
-| 5 | current_quantity | | DECIMAL(12,4) | Yes | Remaining physical amount in stock. |
-| 6 | min_alert_threshold | | DECIMAL(12,4) | Yes | Threshold triggering low stock alert. |
-| 7 | category | | VARCHAR(50) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock item. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
+| 3 | name | | Text (Max 100 characters) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
+| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
+| 5 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
+| 6 | min_alert_threshold | | Decimal (Quantity) | Yes | Threshold triggering low stock alert. |
+| 7 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
 
 ### 11. `STOCK_TRANSACTION`
 Historical ledger of stock modifications.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the stock transaction. |
-| 2 | stock_item_id | | UUID | Yes | Foreign Key (FK) - references STOCK_ITEM(id). |
-| 3 | manager_id | | UUID | No | Foreign Key (FK) - references USER(id). The manager who logged it. Null for system-triggered automated recipe deductions. |
-| 4 | transaction_type | | Enum | Yes | Transaction type: `IMPORT`, `EXPORT`, `AUDIT_ADJUSTMENT`. |
-| 5 | quantity | | DECIMAL(12,4) | Yes | Volume of stock moved. |
-| 6 | reason | | TEXT | No | Reason details (e.g., "Weekly Restock", "Soured Milk Disposal"). |
-| 7 | created_at | | TIMESTAMP | Yes | Date and time of the transaction. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock transaction. |
+| 2 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id). |
+| 3 | manager_id | | Unique ID (UUID) | No | Foreign Key (FK) - references USER(id). The manager who logged it. Null for system-triggered automated recipe deductions. |
+| 4 | transaction_type | | Selection (Transaction Type: IMPORT, EXPORT, AUDIT_ADJUSTMENT, AUTO) | Yes | Transaction type. |
+| 5 | quantity | | Decimal (Quantity) | Yes | Volume of stock moved. |
+| 6 | reason | | Long Text | No | Reason details (e.g., "Weekly Restock", "Soured Milk Disposal"). |
+| 7 | created_at | | Date & Time | Yes | Date and time of the transaction. |
 
 ### 12. `VOUCHER`
 Marketing and promotional discount codes.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the voucher. |
-| 2 | code | | VARCHAR(50) | Yes | Unique alphanumeric code (e.g., "COFFEE20"). |
-| 3 | discount_type | | Enum | Yes | Discount type: `PERCENTAGE`, `FIXED_AMOUNT`. |
-| 4 | discount_value | | DECIMAL(12,2) | Yes | Value of discount (percentage or flat amount). |
-| 5 | min_order_value | | DECIMAL(12,2) | Yes | Minimum subtotal value required to apply voucher. |
-| 6 | start_date | | TIMESTAMP | Yes | Voucher validity start date and time. |
-| 7 | end_date | | TIMESTAMP | Yes | Voucher expiration date and time. |
-| 8 | is_active | | BOOLEAN | Yes | Active status flag. |
-| 9 | usage_limit_per_customer | | INTEGER | No | Maximum usage count per customer (null for unlimited). |
-| 10 | total_usage_count | | INTEGER | Yes | Total redemptions count across all customers. Default: 0. |
-| 11 | max_total_uses | | INTEGER | No | Overall maximum total uses cap (null for unlimited). |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the voucher. |
+| 2 | code | | Text (Max 50 characters) | Yes | Unique alphanumeric code (e.g., "COFFEE20"). |
+| 3 | discount_type | | Selection (Discount Type: PERCENTAGE, FIXED_AMOUNT) | Yes | Discount type. |
+| 4 | discount_value | | Decimal (Currency/VND) | Yes | Value of discount (percentage or flat amount). |
+| 5 | min_order_value | | Decimal (Currency/VND) | Yes | Minimum subtotal value required to apply voucher. |
+| 6 | start_date | | Date & Time | Yes | Voucher validity start date and time. |
+| 7 | end_date | | Date & Time | Yes | Voucher expiration date and time. |
+| 8 | is_active | | Yes/No (Boolean) | Yes | Active status flag. |
+| 9 | usage_limit_per_customer | | Whole Number | No | Maximum usage count per customer (null for unlimited). |
+| 10 | total_usage_count | | Whole Number | Yes | Total redemptions count across all customers. Default: 0. |
+| 11 | max_total_uses | | Whole Number | No | Overall maximum total uses cap (null for unlimited). |
+| 12 | max_discount_amount | | Decimal (Currency/VND) | No | Maximum discount amount cap for percentage vouchers. |
 
 ### 13. `RECIPE_ITEM`
 Defines the ingredients/stock consumed to produce menu items and toppings.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the recipe item. |
-| 2 | menu_item_id | | UUID | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
-| 3 | option_topping_id | | UUID | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
-| 4 | stock_item_id | | UUID | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
-| 5 | quantity_required | | DECIMAL(12,4) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the recipe item. |
+| 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
+| 3 | option_topping_id | | Unique ID (UUID) | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
+| 4 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
+| 5 | quantity_required | | Decimal (Quantity) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
 
 ### 14. `STORE`
 Represents physical store branches and geographic coffee shop locations.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the store branch. |
-| 2 | name | | VARCHAR(100) | Yes | Store/Branch name (e.g. "Nguyen Du Branch"). |
-| 3 | address | | VARCHAR(255) | Yes | Physical address of the branch store. |
-| 4 | phone | | VARCHAR(20) | Yes | Branch contact phone number. |
-| 5 | is_active | | BOOLEAN | Yes | Flag indicating if store is active. Default: true. |
-| 6 | created_at | | TIMESTAMP | Yes | Timestamp of store registration. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the store branch. |
+| 2 | name | | Text (Max 100 characters) | Yes | Store/Branch name (e.g. "Nguyen Du Branch"). |
+| 3 | address | | Text (Max 255 characters) | Yes | Physical address of the branch store. |
+| 4 | phone | | Text (Max 20 characters) | Yes | Branch contact phone number. |
+| 5 | is_active | | Yes/No (Boolean) | Yes | Flag indicating if store is active. Default: true. |
+| 6 | created_at | | Date & Time | Yes | Timestamp of store registration. |
 
 ### 15. `STAFF_SCHEDULE`
 Stores assigned employee work shifts, scheduled date blocks, and register terminals allocations.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the schedule slot. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references STORE(id). Scopes schedule to branch. |
-| 3 | user_id | | UUID | Yes | Foreign Key (FK) - references USER(id). The scheduled employee. |
-| 4 | shift_date | | DATE | Yes | Date of the scheduled shift. |
-| 5 | shift_type | | Enum | Yes | Shift type block: `MORNING`, `AFTERNOON`, `FULL_DAY`. |
-| 6 | pos_register_id | | VARCHAR(50) | No | Reference to register terminal ID, if register allocated. |
-| 7 | created_at | | TIMESTAMP | Yes | Timestamp when schedule slot was created. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the schedule slot. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STORE(id). Scopes schedule to branch. |
+| 3 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The scheduled employee. |
+| 4 | shift_date | | Date | Yes | Date of the scheduled shift. |
+| 5 | shift_type | | Selection (Shift Block: MORNING, AFTERNOON, FULL_DAY) | Yes | Shift type block. |
+| 6 | pos_register_id | | Text (Max 50 characters) | No | Reference to register terminal ID, if register allocated. |
+| 7 | created_at | | Date & Time | Yes | Timestamp when schedule slot was created. |
 
 ### 16. `ATTENDANCE`
 Logs employee clock-in/out timestamps, date records, and lateness metadata.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the attendance slot. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references STORE(id). Scopes attendance to branch. |
-| 3 | user_id | | UUID | Yes | Foreign Key (FK) - references USER(id). The employee user profile. |
-| 4 | shift_date | | DATE | Yes | Date of the recorded attendance. |
-| 5 | check_in_at | | TIMESTAMP | No | Actual clock-in timestamp (null if absent). |
-| 6 | check_out_at | | TIMESTAMP | No | Actual clock-out timestamp (null if absent or active shift). |
-| 7 | lateness_minutes | | INTEGER | Yes | Calculated late check-in minutes relative to shift. Default: 0. |
-| 8 | status | | Enum | Yes | Attendance status: `ON_TIME`, `LATE`, `ABSENT`. Default: `ABSENT`. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the attendance slot. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STORE(id). Scopes attendance to branch. |
+| 3 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The employee user profile. |
+| 4 | shift_date | | Date | Yes | Date of the recorded attendance. |
+| 5 | check_in_at | | Date & Time | No | Actual clock-in timestamp (null if absent). |
+| 6 | check_out_at | | Date & Time | No | Actual clock-out timestamp (null if absent or active shift). |
+| 7 | lateness_minutes | | Whole Number | Yes | Calculated late check-in minutes relative to shift. Default: 0. |
+| 8 | status | | Selection (Attendance Status: ON_TIME, LATE, ABSENT) | Yes | Attendance status. |
+| 9 | photo_url | | Text (Max 255 characters) | No | URL to staff check-in camera snapshot photo. |
+
+### 17. `AUDIT_LOG`
+Central security audit logs for critical database updates.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the audit log. |
+| 2 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). |
+| 3 | action_type | | Selection (Action Type: CREATE, UPDATE, DELETE) | Yes | Action type. |
+| 4 | entity_affected | | Text (Max 100 characters) | Yes | Affected database table name. |
+| 5 | old_value_json | | Long Text | No | Previous state of record in JSON format. |
+| 6 | new_value_json | | Long Text | No | Updated state of record in JSON format. |
+| 7 | created_at | | Date & Time | Yes | Timestamp of log event. |
+
 
 
 
@@ -1221,7 +1304,7 @@ This section details the functional requirements for authentication, user profil
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Suspends the user account from login attempts for 15 minutes. |
+| 2.1 | Portal | Suspends the user account from login attempts for 15 minutes, unless manually unlocked by a Store Manager (for branch staff) or HQ Admin (for any user). |
 
 #### Business Rules
 | ID | Rule Description |
@@ -1556,7 +1639,7 @@ This section details the functional requirements for authentication, user profil
 |---|---|---|
 | 1 | User | Enters new password, confirms it, and clicks "Reset Password". |
 | 2 | Portal | Validates password complexity and match. |
-| 3 | Portal | Updates account password, closes all active sessions elsewhere, and displays: `"Password reset successful. Please login with your new credentials."` |
+| 3 | Portal | Updates account password, sets `must_change_password = false`, closes all active sessions elsewhere, and displays: `"Password reset successful. Please login with your new credentials."` |
 
 #### Alternative Flows
 ##### AT1: Validation Failure
@@ -1737,7 +1820,7 @@ This section details the functional requirements for authentication, user profil
 | Step | Actor | Action |
 |---|---|---|
 | 1 | User | Edits Email or Phone, and clicks "Save Profile". |
-| 2 | Portal | Validates inputs. |
+| 2 | Portal | Validates inputs (conformance to email/phone format patterns, and checks uniqueness in the database; email and phone must not be registered to another active user account). |
 | 3 | Portal | Updates account details and returns to View Profile screen. |
 
 #### Alternative Flows
@@ -1747,6 +1830,13 @@ This section details the functional requirements for authentication, user profil
 | Sub-step | Actor | Action |
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Please enter a valid email and phone number."` |
+
+##### AT2: Duplicate Fields
+- **Trigger**: At step 2, the entered email or phone number is already registered to another user account in the system.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays error message: `"This email address or phone number is already in use by another account."` |
 
 #### Business Rules
 | ID | Rule Description |
@@ -1874,7 +1964,6 @@ This section details the functional requirements for authentication, user profil
 |  Username: [ nva_cashier      ]   Full Name:   [ Nguyen Van A             ]     |
 |  Email:    [ nva@coffee.com   ]   Phone:       [ 0987654321               ]     |
 |  Role:     [ Cashier      ] [v]   Branch Store:[ Branch 1             ] [v]     |
-|  Password: [ *************    ]                                                 |
 |                                                                                 |
 |                                                [ Save Account ]    [ Cancel ]   |
 +---------------------------------------------------------------------------------+
@@ -1889,7 +1978,7 @@ This section details the functional requirements for authentication, user profil
 | 4 | Phone | Text | Yes | 20 | Contact phone number. |
 | 5 | Role | Dropdown | Yes | | Selects role (`ADMIN`, `STORE_MANAGER`, `CASHIER`, `BARISTA`). |
 | 6 | Branch Store | Dropdown | No | | Scopes cashier/barista/manager to branch (Null for HQ Admins). |
-| 7 | Password | Password | Yes | 255 | Temporary password for first-time use. |
+| 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by Admin). |
 | 8 | Save Account | Button | | | Submits details to create account. |
 | 9 | Cancel | Button | | | Discards details and returns to Employee list. |
 
@@ -1912,8 +2001,8 @@ This section details the functional requirements for authentication, user profil
 | Step | Actor | Action |
 |---|---|---|
 | 1 | Admin | Fills out employee fields, assigns role and branch, and clicks "Save Account". |
-| 2 | Portal | Validates constraints (username uniqueness, email syntax, password complexity). |
-| 3 | Portal | Registers account as active, sets password-reset flag, sends welcome email with credentials, and returns to list view. |
+| 2 | Portal | Validates constraints (username uniqueness, email uniqueness, phone uniqueness, and syntax format). |
+| 3 | Portal | Registers account as active, auto-generates a secure random temporary password, sets the `must_change_password` flag to true, sends an activation welcome email with these credentials to the user, and returns to list view. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -1928,7 +2017,7 @@ This section details the functional requirements for authentication, user profil
 |---|---|
 | BR-22 | Created accounts default status to active, and force a password change on next login. |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
-| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. The first letter of the main name must be lowercase (e.g. "Nguyễn Văn An" with sequence ID 43 -> "anNV43"). |
 
 
 ---
@@ -1991,6 +2080,14 @@ This section details the functional requirements for authentication, user profil
 | Sub-step | Actor | Action |
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Cannot deactivate the last remaining Admin account."` |
+
+##### AT2: Unlock Suspended User
+- **Trigger**: Admin (via Edit User) or Store Manager (via Branch Staff Details) views a user account currently suspended due to 5 failed login attempts.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1 | Actor | Clicks "Unlock Account" button on the employee details screen. |
+| 2 | Portal | Resets the failed login attempts counter to 0 and immediately unlocks the account. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -2125,14 +2222,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 | HQ Admin Portal > Menu Management > Add Menu Item                               |
 +---------------------------------------------------------------------------------+
 |  Product Name:  [                              ]   Category: [ Coffee     ] [v] |
-|  Base Price:    [ 35,000 VND                   ]   Barcode:  [ 8930000000000  ] |
+|  Variants/Sizes (e.g. S, M, L) and Prices:                                       |
+|  [x] S / Regular: [ 30,000 ] VND   [ ] L / Large:   [ 40,000 ] VND               |
+|  Barcode:       [ 8930000000000  ]                                               |
 |                                                                                 |
 |  Description:                                                                   |
 |  +---------------------------------------------------------------------------+  |
 |  | Rich traditional Vietnamese drip coffee...                                |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [ ] Available (Show on POS)                                                    |
+|  [ ] Active (Show on POS)                                                       |
 |  Image Upload:  [ Choose File ] (No file chosen)                                |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -2147,7 +2246,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
 | 2 | Category | Dropdown | Yes | | Category selection from existing categories list. |
-| 3 | Base Price | Decimal | Yes | | Base sales price in VND. |
+| 3 | Prices/Variants | Grid | Yes | | Multiple variants/sizes configuration (e.g. S, M, L) and prices. |
 | 4 | Barcode | Text | No | 50 | Optional barcode for scanner check. |
 | 5 | Description | Text | No | 500 | Description of the item. |
 | 6 | Available | Checkbox | Yes | | Flag indicating if item is active for sale (Default: Checked). |
@@ -2174,9 +2273,9 @@ This section details specifications for viewing, adding, updating, and deactivat
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name, Base Price, Category, and checks associated toppings. Clicks "Save Item". |
-| 2 | Portal | Validates uniqueness of product name and positive price. |
-| 3 | Portal | Saves new item, auto-generates search abbreviation, and returns to menu list. |
+| 1 | Admin | Enters Name, configures variants/sizes and prices, enters Category, and checks associated toppings. Clicks "Save Item". |
+| 2 | Portal | Validates uniqueness of product name and positive prices. |
+| 3 | Portal | Saves new item and variants, auto-generates search abbreviation, and returns to menu list. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -2201,14 +2300,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 | HQ Admin Portal > Menu Management > Edit Menu Item                              |
 +---------------------------------------------------------------------------------+
 |  Product Name:  [ Espresso                   ]   Category: [ Coffee     ] [v] |
-|  Base Price:    [ 30,000 VND                 ]   Barcode:  [ 89311111111    ] |
+|  Variants/Sizes (e.g. S, M, L) and Prices:                                       |
+|  [x] S / Regular: [ 30,000 ] VND   [ ] L / Large:   [ 40,000 ] VND               |
+|  Barcode:       [ 89311111111    ]                                               |
 |                                                                                 |
 |  Description:                                                                   |
 |  +---------------------------------------------------------------------------+  |
 |  | Strong traditional black coffee...                                        |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [x] Available (Show on POS)                                                    |
+|  [x] Active (Show on POS)                                                       |
 |  Image Upload:  [ Choose File ] (espresso.png)                                  |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -2223,10 +2324,10 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
 | 2 | Category | Dropdown | Yes | | Category selection. |
-| 3 | Base Price | Decimal | Yes | | Unit price in VND. |
+| 3 | Prices/Variants | Grid | Yes | | Multiple variants/sizes and prices. |
 | 4 | Barcode | Text | No | 50 | Barcode/SKU value. |
 | 5 | Description | Text | No | 500 | Description. |
-| 6 | Available | Checkbox | Yes | | Availability status. |
+| 6 | Active | Checkbox | Yes | | Active status globally (Admin only). Branch availability status toggle (Store Manager only - updates `branch_menu_status` mapping). |
 | 7 | Image Upload | File | No | | Upload/replace image. |
 | 8 | Linked Toppings | Checkboxes | No | | Modifier selections. |
 | 9 | Save Changes | Button | | | Saves modified properties. |
@@ -2242,17 +2343,17 @@ This section details specifications for viewing, adding, updating, and deactivat
 | Field | Description |
 |---|---|
 | **Actor** | Admin, Store Manager |
-| **Description** | Modifies properties of an existing item. |
+| **Description** | Modifies properties of an existing item (Admin) or toggles local branch availability (Store Manager). |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager may toggle item Availability only. |
-| **Post-Condition** | Product listings are modified. |
+| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager accesses the item to toggle its branch availability (`branch_menu_status.is_available`). |
+| **Post-Condition** | Product listings or availability mapping are modified. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Edits product fields and clicks "Save Changes". |
+| 1 | Actor | Admin edits product fields and clicks "Save Changes". Alternatively, Store Manager toggles branch-level item availability and clicks "Save Changes". |
 | 2 | Portal | Validates inputs. |
-| 3 | Portal | Updates parameters, re-generates abbreviation if name changed, and returns to detail card. |
+| 3 | Portal | Updates parameters (or `branch_menu_status` record), re-generates abbreviation if name changed, and returns to detail card. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -2547,7 +2648,7 @@ This section details specifications for managing product categories.
 
 ---
 
-## 3.4.4 F22 - Delete Category / UC-17 Update Category
+## 3.4.4 F22 - Delete Category / UC-70 Delete Category
 
 ### 3.4.4.1 Screen Mock-up (Desktop Landscape Modal)
 ```
@@ -2669,52 +2770,53 @@ This section details specifications for viewing inventory, managing imports/expo
 
 ## 3.5.2 F24 - Import Stock / UC-32 Import Stock
 
-### 3.5.2.1 Screen Mock-up (Mobile Portrait)
+### 3.5.2.1 Screen Mock-up (Desktop Landscape / Multi-line Grid)
 ```
-+------------------------------------+
-|            Import Stock            |
-|                                    |
-|  Item Name                         |
-|  [ Coffee Beans                ][v]|
-|                                    |
-|  Quantity (kg)                     |
-|  [ 15.0                          ] |
-|                                    |
-|  Supplier                          |
-|  [ Highlands Supplier            ] |
-|                                    |
-|  Unit Price (VND)                  |
-|  [ 180,000                       ] |
-|                                    |
-|  Notes                             |
-|  [ Restock coffee beans          ] |
-|                                    |
-|        [ SUBMIT ]   [ CANCEL ]     |
-+------------------------------------+
++-------------------------------------------------------------+
+|                        Import Stock                         |
+|                                                             |
+|  Supplier: [ Highlands Supplier                       ]     |
+|  Invoice No: [ INV-2026-001                           ]     |
+|                                                             |
+|  +---------------------+------------+------------+-------+  |
+|  | Item Name           | Qty        | Unit Price | Total |  |
+|  +---------------------+------------+------------+-------+  |
+|  | [ Coffee Beans  ][v]| [ 15.0  ]  | [ 180,000] | 2.7M  |  |
+|  | [ Fresh Milk    ][v]| [ 10.0  ]  | [  25,000] | 250k  |  |
+|  +---------------------+------------+------------+-------+  |
+|  [ + Add Line Item ]                                        |
+|                                                             |
+|  Grand Total: 2,950,000 VND                                 |
+|  Notes:                                                     |
+|  [ Restock materials                                  ]     |
+|                                                             |
+|                 [ SUBMIT ]      [ CANCEL ]                  |
++-------------------------------------------------------------+
 ```
 
 #### Table 3-25: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Item Name | Dropdown | Yes | | Scopes stock items list available for branch. |
-| 2 | Quantity | Text | Yes | 10 | Import decimal volume. |
-| 3 | Supplier | Text | No | 100 | Supplier source name. |
-| 4 | Unit Price | Text | Yes | 15 | Purchase cost per unit in VND. |
-| 5 | Notes | Text | No | 250 | Transaction notes. |
-| 6 | Submit | Button | | | Submits transaction and increases inventory levels. |
-| 7 | Cancel | Button | | | Discards edits and returns to Stock list. |
+| 1 | Supplier | Text | Yes | 100 | Supplier source name. |
+| 2 | Invoice No | Text | No | 50 | Supplier invoice number for audit trace. |
+| 3 | Import Grid | Grid | Yes | | Dynamic table of imported items containing dropdown for Item Name, text fields for Qty and Unit Price, and displaying line Totals. |
+| 4 | Add Line Item | Button | | | Adds a new empty row to the Import Grid. |
+| 5 | Grand Total | Label | | | Displays total calculated invoice cost dynamically. |
+| 6 | Notes | Text | No | 250 | General transaction notes. |
+| 7 | Submit | Button | | | Submits batch transaction and increases stock quantities. |
+| 8 | Cancel | Button | | | Discards edits and returns to Stock list screen. |
 
 ### 3.5.2.2 Use Case Description
 
 | Use Case ID | UC-32 | Use Case Name | Import Stock |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Store Manager |
-| **Description** | Records incoming items received from suppliers to replenish local inventory levels. |
+| **Description** | Records incoming batch of items received from suppliers to replenish local inventory levels in a single transaction. |
 | **Precondition** | Manager is logged in. |
 | **Trigger** | Manager clicks "Import" button. |
 | **Post-Condition** | Stock is replenished. |
@@ -2722,9 +2824,9 @@ This section details specifications for viewing inventory, managing imports/expo
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Manager | Selects item, inputs quantity, supplier, unit cost, and notes, then clicks "Submit". |
-| 2 | Portal | Validates quantity and cost are positive. |
-| 3 | Portal | Increments stock quantity and records transaction logs. |
+| 1 | Manager | Enters Supplier, Invoice No, notes, and adds line items in the Import Grid (specifying item, quantity, unit price). |
+| 2 | Portal | Calculates dynamic line totals and grand total. Validates all quantities and prices are positive numbers. |
+| 3 | Portal | Increments stock quantities of all listed items and records a batch transaction log. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -2732,7 +2834,7 @@ This section details specifications for viewing inventory, managing imports/expo
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Please enter a positive numeric quantity and cost."` |
+| 2.1 | Portal | Displays error message: `"Please enter positive numeric values for quantity and unit price."` |
 
 ---
 
@@ -2959,7 +3061,8 @@ This section details specifications for viewing inventory, managing imports/expo
 | ID | Rule Description |
 |---|---|
 | BR-32 | *(Applies)* Any discrepancy between expected and actual counts must be noted. |
-| BR-07 | If an order is cancelled in `PREPARING` or `READY` state, stock is **not** restored (consumed ingredients are logged as operational waste). If cancelled in `PENDING` state (before stock deduction occurs), no deduction was made, so no rollback is needed. |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
+
 
 
 
@@ -3105,7 +3208,6 @@ This section details specifications for cashier POS checkout sessions, order pro
 |                                    |
 |  Result:                           |
 |  Name: Nguyen Van A                |
-|  Tier: Gold (10% Tier Discount)    |
 |  Points: 340                       |
 |                                    |
 |         [ LINK TO CART ]           |
@@ -3127,13 +3229,13 @@ This section details specifications for cashier POS checkout sessions, order pro
 
 | Use Case ID | UC-50 | Use Case Name | Lookup Customer Membership |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Cashier |
-| **Description** | Identifies customer loyalty profiles to track points and apply tier-based discounts. |
+| **Description** | Identifies customer loyalty profiles to track and redeem points. |
 | **Precondition** | Order cart is active. |
 | **Trigger** | Cashier clicks "Customer" link button. |
 | **Post-Condition** | Customer loyalty details are linked to order. |
@@ -3143,7 +3245,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 1 | Cashier | Enters customer phone number and clicks "Search Customer". |
 | 2 | Portal | Performs registry lookup. |
-| 3 | Portal | Displays profile details (Name, Tier, Points) and Cashier clicks "Link to Cart" to apply discounts. |
+| 3 | Portal | Displays profile details (Name, Points) and Cashier clicks "Link to Cart" to link customer to the cart. |
 
 #### Alternative Flows
 ##### AT1: Customer Offline Fallback
@@ -3231,7 +3333,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 |        Redeem Loyalty Points       |
 |                                    |
-|  Customer: Nguyen Van A (Gold)     |
+|  Customer: Nguyen Van A            |
 |  Available Points: 340             |
 |                                    |
 |  Points to Redeem (100pt = 10k):   |
@@ -3246,7 +3348,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Table 3-33: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Customer Info | Label | | | Displays linked customer name and active membership tier. |
+| 1 | Customer Info | Label | | | Displays linked customer name. |
 | 2 | Available Points | Label | | | Displays customer's available points balance. |
 | 3 | Points to Redeem | Text | Yes | 6 | Input field for loyalty points to redeem (multiples of 100). |
 | 4 | Apply Discount | Button | | | Submits points redemption discount to cart. |
@@ -3256,14 +3358,14 @@ This section details specifications for cashier POS checkout sessions, order pro
 
 | Use Case ID | UC-49 | Use Case Name | Redeem Loyalty Points |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Cashier |
 | **Description** | Redeems customer loyalty points for a cash discount at checkout. |
-| **Precondition** | Customer membership is looked up, linked to the cart, has reached at least the **Silver** tier, and has at least **100** points. |
+| **Precondition** | Customer membership is looked up, linked to the cart, and has at least **100** points. |
 | **Trigger** | Cashier clicks "Redeem Points" button from cart options. |
 | **Post-Condition** | Equivalent points discount is applied to checkout total. |
 
@@ -3271,8 +3373,8 @@ This section details specifications for cashier POS checkout sessions, order pro
 | Step | Actor | Action |
 |---|---|---|
 | 1 | Cashier | Enters quantity of points to redeem (e.g. 100) and clicks "Apply Discount". |
-| 2 | Portal | Validates point balance is sufficient, user is at least Silver tier, and value is a multiple of 100. |
-| 3 | Portal | Computes equivalent cash discount (10,000 VND per 100 points) and deducts points from active totals. |
+| 2 | Portal | Validates point balance is sufficient and value is a multiple of 100. |
+| 3 | Portal | Computes equivalent cash discount based on `LOYALTY_REDEMPTION_VALUE` (default: 100 VND per point) and deducts points from active totals. |
 
 #### Alternative Flows
 ##### AT1: Insufficient Points
@@ -3282,14 +3384,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Insufficient points balance."` (MSG11) |
 
-##### AT2: Ineligible Membership Tier
-- **Trigger**: At step 2, the linked customer is in the Bronze membership tier.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 2.1 | Portal | Displays error message: `"Insufficient points balance or membership tier ineligible for redemption."` (MSG11) |
-
-##### AT3: Invalid Points Multiple
+##### AT2: Invalid Points Multiple
 - **Trigger**: At step 2, entered points value is not a multiple of 100.
 
 | Sub-step | Actor | Action |
@@ -3299,7 +3394,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-02 | 100 points can be redeemed for 10,000 VND discount at checkout, applicable only for customers who have reached at least the **Silver** tier. Point redemption must be in multiples of 100. |
+| BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
 
 ---
 
@@ -3314,7 +3409,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |                                    |
 |  Payment Method:                   |
 |  ( ) Cash    ( ) Card              |
-|  (x) VietQR  ( ) ShopeeFood        |
+|  (x) VietQR                        |
 |                                    |
 |  +------------------------------+  |
 |  |                              |  |
@@ -3330,7 +3425,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Table 3-34: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
+| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`. |
 | 2 | Cash Received | Text | Yes | 15 | Mandatory only for Cash method to compute change. |
 | 3 | Cancel | Button | | | Cancels active payment flow and returns to cart. |
 | 4 | Retry QR | Button | | | Regenerates dynamic payment code request. |
@@ -3372,22 +3467,19 @@ This section details specifications for cashier POS checkout sessions, order pro
 This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap.
 
 ### 1. Stacking Rules & Restrictions
-- **Voucher and Membership Tier Discount Exclusivity**: Percentage-based or flat-rate **Voucher discounts** and **Membership Tier discounts** DO NOT stack. 
-  - The system compares the discount value of the linked membership tier against the active voucher discount and applies the one that yields the higher discount value.
-  - **Both discount types must first be converted to VND before comparison:** `Tier Discount (VND) = Gross Subtotal × Tier Percent / 100`; `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
-  - If a customer applies a voucher but the membership tier discount is higher, the system applies the membership tier discount instead.
-  - **Tie-breaking rule**: If `Tier Discount (VND) == Voucher Discount (VND)`, the Voucher discount takes priority.
-- **Loyalty Point Redemption Stackability**: Loyalty point redemptions (e.g. redeeming 100 points for a flat 10,000 VND discount) CAN stack with either a membership tier discount OR an active voucher discount.
+- **Voucher and Loyalty Point Redemption Stackability**: Percentage-based or flat-rate **Voucher discounts** and **Loyalty Point Redemption discounts** can stack together directly.
 - **Order of Calculations**:
   1. **Gross Subtotal**: Sum of the base prices of all selected menu items plus any applied custom toppings or option modifiers.
-  2. **Campaign / Tier Discount (Exclusivity applied)**:
-     - `Tier Discount (VND) = Gross Subtotal × Tier Percent / 100`
-     - `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND`
-     - `Selected Discount = Max(Tier Discount VND, Voucher Discount VND)` *(Voucher wins on tie)*
-     - `Discounted Subtotal = Gross Subtotal - Selected Discount`
+  2. **Voucher Discount**:
+     - If a voucher is applied, compute: `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
+     - `Discounted Subtotal = Gross Subtotal - Voucher Discount (VND)`.
   3. **Loyalty Point Redemption**:
-     - `Point Discount Value = (Redeemed Points / 100) * 10,000 VND`
-     - `Final Taxable Subtotal = Max(0, Discounted Subtotal - Point Discount Value)`
+     - Compute redemption value: `Raw Point Discount = Redeemed Points * LOYALTY_REDEMPTION_VALUE` (where `LOYALTY_REDEMPTION_VALUE` is configured globally, e.g. 100 VND per point).
+     - Apply config-based limits:
+       - Limit by maximum percentage: `Max Point Discount % = Discounted Subtotal * (LOYALTY_MAX_REDEMPTION_PERCENT / 100)`.
+       - `Point Discount Value = Min(Raw Point Discount, Max Point Discount %)`
+       - Limit by maximum absolute discount: `Point Discount Value = Min(Point Discount Value, LOYALTY_MAX_REDEMPTION_LIMIT)`.
+     - `Final Taxable Subtotal = Max(0, Discounted Subtotal - Point Discount Value)`.
   4. **Tax Calculations (10% VAT)**:
      - The active VAT rate (configured globally between 0% and 20%) is applied.
      - VAT is **inclusive** in final retail menu pricing. The stored `tax_amount` field is extracted as follows:
@@ -3395,7 +3487,7 @@ This section outlines the business logic for calculating and applying discounts 
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
   5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
-  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable / 10000)`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
+  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable * (LOYALTY_ACCRUAL_PERCENTAGE / 100))`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
 
 ---
 
@@ -3535,18 +3627,15 @@ This section details specifications for tracking orders, barista queue controls,
 All orders follow the state transitions below:
 
 ```
-[PENDING] ---(Barista: START PREP)---> [PREPARING]
+[PENDING] --(Barista: START PREP)---> [PREPARING]
              \--(Cashier cancel)------> [CANCELLED]
 
 [PREPARING] --(Barista: READY)--------> [READY]
-             \--(Manager/Admin cancel)-> [CANCELLED]
              \--(Barista: REPORT ISSUE)-> [HOLD]
 
 [HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
-            \--(Manager/Admin cancel)---> [CANCELLED]
 
 [READY] -----(Cashier: handover/pickup)-> [COMPLETED]
-         \--(Manager/Admin cancel)------> [CANCELLED]
 
 [COMPLETED] → Terminal state (no further transitions)
 [CANCELLED]  → Terminal state (no further transitions)
@@ -3554,7 +3643,7 @@ All orders follow the state transitions below:
 
 > **Note on COMPLETED state:** For DINE_IN and TAKE_AWAY orders, the transition from READY to COMPLETED is triggered by the Cashier confirming the order handover (customer pickup). For DELIVERY orders, it is triggered by delivery partner API sales report reconciliation.
 
-> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved, or the Manager/Admin can cancel the order.
+> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved.
 
 ---
 
@@ -3681,7 +3770,7 @@ All orders follow the state transitions below:
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | START PREP | Button | | | Transitions order status from Pending to Preparing. |
-| 2 | READY | Button | | | Transitions order status from Preparing to Ready and prints stickers. |
+| 2 | READY | Button | | | One-touch action. Transitions order status from Preparing to Ready and prints stickers without requiring any PIN or employee authentication. |
 | 3 | REPORT ISSUE | Button | | | Puts order on Hold due to prep issue. |
 
 ### 3.7.3.2 Use Case Description
@@ -3780,43 +3869,31 @@ All orders follow the state transitions below:
 
 | Use Case ID | UC-55 | Use Case Name | Request Transaction Refund |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.2 |
+| **Author** | Antigravity | **Version** | 1.3 |
 | **Date** | 2026-06-02 | | |
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager |
-| **Description** | Voids an active order and processes payment refund. |
-| **Precondition** | **For Cashier:** Order is in `PENDING` state (before kitchen queue entry). **For Store Manager / Admin:** Order is in `PENDING`, `PREPARING`, `HOLD`, or `READY` state (not `COMPLETED`). |
+| **Actor** | Cashier |
+| **Description** | Voids a pending order and processes payment refund. |
+| **Precondition** | Order is in `PENDING` state. |
 | **Trigger** | Cashier clicks Cancel Order. |
-| **Post-Condition** | Order is cancelled, stock rollbacked/marked waste, and refund completed. |
+| **Post-Condition** | Order is cancelled, stock rollbacked, and refund completed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Cashier | Taps Cancel, inputs reason and detailed notes. |
+| 1 | Cashier | Selects a PENDING order, taps Cancel, inputs reason and detailed notes. |
 | 2 | Cashier | Taps **Xác nhận hủy**. |
 | 3 | Portal | Updates order status to `CANCELLED`, reverses vouchers/points (BR-08), records inventory wastage logs (BR-07), and saves cancellation audit logs. |
 | 4 | Portal | Displays success notification and returns to order history screen. |
 
-#### Alternative Flows
-##### AT1: Order in PREPARING, HOLD, or READY state
-- **Trigger**: Cashier attempts to cancel an order that is no longer in the `PENDING` state.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 1.1 | Portal | Detects that the order is in `PREPARING`, `HOLD`, or `READY` status. |
-| 1.2 | Portal | Blocks direct cashier cancellation and displays warning that Manager authorization is required. |
-| 1.3 | Cashier | Taps "Request Manager Cancellation". |
-| 1.4 | Manager | Accesses the branch console, reviews the cancellation request (reason and notes), and taps "Approve Cancellation" (no PIN entry needed, authentication checked by manager account role). |
-| 1.5 | Portal | Transitions the order to `CANCELLED`, executes refund (BR-09), and logs the action in `order_cancellations`. |
-
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
+| BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
+| BR-06 | [RESERVED / DELETED] |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
 ---
@@ -3842,6 +3919,22 @@ CREATE INDEX idx_cancellations_created_at ON order_cancellations(created_at);
 ```
 
 
+---
+
+## 3.7.7 Cashier Shift Sessions & Multi-Store Attendance Tracking
+
+This section specifies operational guidelines for cash register shifts, session management, and employee cross-branch deployments.
+
+### 3.7.7.1 Separation of User Session & Shift Session
+- **Rule**: Cashiers are allowed to log out of their personal user account session (terminating their `User Session` token) without being forced to close the POS cash drawer ca làm việc (`Shift Session`).
+- **Operation**: The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. This bypasses the mandatory cash counting and closing float reconciliation when a cashier takes a short break or switches duties mid-shift.
+
+### 3.7.7.2 Cross-Branch Staff Mobility Support
+- **Rule**: Employees (Cashiers, Baristas) are permitted to log in, check-in for attendance, or open POS shifts at any active branch store in the chain when they are assigned as cross-branch support.
+- **Data Association**: The system dynamically identifies the active POS register terminal's `store_id` where the login or attendance popup action occurs. All resulting sales revenue, cash floats, and attendance logs are automatically recorded under that physical branch store's ID rather than the employee's default home branch.
+
+
+
 
 ---
 
@@ -3851,20 +3944,17 @@ This section details specifications for loyalty membership profiles search, enro
 
 ---
 
-## 3.8.1 F40 - List Customer / UC-24 View Customer List
-
 ### 3.8.1.1 Screen Mock-up (Mobile Portrait)
 ```
 +------------------------------------+
 |             Customers              |
 |                                    |
 |  Search: [ 0987654321            ] |
-|  Tier: [ All Tiers           ][v]  |
 |                                    |
-|  - Nguyen Van A (Gold)             |
+|  - Nguyen Van A                    |
 |    Phone: 0987654321  (340 pts)    |
 |                                    |
-|  - Tran Thi B (Silver)             |
+|  - Tran Thi B                      |
 |    Phone: 0912345678  (120 pts)    |
 |                                    |
 |          [ + Add Customer ]        |
@@ -3875,15 +3965,14 @@ This section details specifications for loyalty membership profiles search, enro
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
 | 1 | Search | Text | No | 50 | Filter members by phone number or name. |
-| 2 | Tier | Dropdown | Yes | | Filter members list by loyalty tier. |
-| 3 | Add Customer | Button | | | Navigates to Add Customer registration screen. |
+| 2 | Add Customer | Button | | | Navigates to Add Customer registration screen. |
 
 ### 3.8.1.2 Use Case Description
 
 | Use Case ID | UC-24 | Use Case Name | View Customer List |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
@@ -3897,7 +3986,7 @@ This section details specifications for loyalty membership profiles search, enro
 | Step | Actor | Action |
 |---|---|---|
 | 1 | User | Opens Customers directory. |
-| 2 | Portal | Displays listing grid of enrolled members, tiers, and points. |
+| 2 | Portal | Displays listing grid of enrolled members and their points balance. |
 
 ---
 
@@ -3937,21 +4026,19 @@ This section details specifications for loyalty membership profiles search, enro
 | **Author** | Antigravity | **Version** | 1.0 |
 | **Date** | 2026-05-24 | | |
 
-| Field | Description |
 |---|---|
 | **Actor** | Cashier, Store Manager, Admin |
 | **Description** | Registers a new customer into the membership loyalty program. |
 | **Precondition** | Customer is not enrolled. |
 | **Trigger** | User clicks "+ Add Customer". |
-| **Post-Condition** | Customer is registered as a Bronze loyalty member. |
+| **Post-Condition** | Customer is registered as a loyalty member. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
 | 1 | User | Enters customer Name, Phone, and optional Email. Clicks "Register". |
 | 2 | Portal | Validates phone syntax format and checks for duplicates. |
-| 3 | Portal | Saves new customer record with 0 starting points and status Bronze, returning to list view. |
-
+| 3 | Portal | Saves new customer record with 0 starting points, returning to list view. |
 #### Alternative Flows
 ##### AT1: Phone Number Duplicate
 - **Trigger**: At step 2, phone number is already registered.
@@ -3976,8 +4063,10 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 |           Edit Customer            |
 |                                    |
-|  Full Name: Nguyen Van A           |
-|  Phone: 0987654321                 |
+|  Full Name                         |
+|  [ Nguyen Van A                  ] |
+|                                    |
+|  Phone: 0987654321  (Read-only)    |
 |                                    |
 |  Contact Email                     |
 |  [ nva@example.com               ] |
@@ -3993,11 +4082,13 @@ This section details specifications for loyalty membership profiles search, enro
 #### Table 3-44: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Contact Email | Text | Yes | 100 | Customer email address. |
-| 2 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
-| 3 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
-| 4 | Save | Button | | | Saves customer details changes. |
-| 5 | Cancel | Button | | | Returns to list page. |
+| 1 | Full Name | Text | Yes | 100 | Customer's full name (editable). |
+| 2 | Phone | Label | | | Customer phone number lookup key (read-only/locked). |
+| 3 | Contact Email | Text | Yes | 100 | Customer email address. |
+| 4 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
+| 5 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
+| 6 | Save | Button | | | Saves customer details changes. |
+| 7 | Cancel | Button | | | Returns to list page. |
 
 ### 3.8.3.2 Use Case Description
 
@@ -4017,7 +4108,7 @@ This section details specifications for loyalty membership profiles search, enro
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | User | Modifies contact details (or Admin inputs point changes) and clicks "Save". |
+| 1 | User | Modifies Full Name or Contact Email (or Admin inputs point changes) and clicks "Save". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, logs adjust audit notes (if point changes occur), and returns. |
 
@@ -4041,8 +4132,6 @@ This section details specifications for loyalty membership profiles search, enro
 |---|---|
 | BR-49 | Manual points adjustments require a recorded reason and are locked to Admin role. |
 
----
-
 ## 3.8.4 F43 - View Customer History / UC-27 View Customer History
 
 ### 3.8.4.1 Screen Mock-up (Mobile Portrait)
@@ -4050,7 +4139,7 @@ This section details specifications for loyalty membership profiles search, enro
 +------------------------------------+
 |          Customer History          |
 |                                    |
-|  Customer: Nguyen Van A (Gold)     |
+|  Customer: Nguyen Van A            |
 |  Phone: 0987654321  Points: 340    |
 |                                    |
 |  Completed Orders:                 |
@@ -4073,8 +4162,8 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Use Case ID | UC-27 | Use Case Name | View Customer History |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
@@ -4093,12 +4182,8 @@ This section details specifications for loyalty membership profiles search, enro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-34 | Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
-| BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
-
-
-
-
+| BR-34 | **[RESERVED / DELETED]** (Previously: Real-Time Membership Tier Levels). |
+| BR-35 | **Loyalty Points Expiry**: Loyalty points expire after 12 months of customer inactivity (no new transactions made by the customer). |
 
 
 ---
@@ -4170,7 +4255,7 @@ This section details specifications for staff shifts assignment, schedules views
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays warning message: `"Employee is already assigned to another shift on this day."` |
+| 2.1 | Portal | Displays conflict error message: "Employee shift conflict. The employee is already scheduled..." (MSG12). |
 
 ---
 
@@ -4339,9 +4424,9 @@ This section details specifications for staff shifts assignment, schedules views
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-38 | **Attendance Check-in Registration**: A check-in record is automatically created based on the employee's first successful login at a local terminal station within their scheduled shift time window. Subsequent logins within the same shift window do not create duplicate check-in records. If no scheduled shift exists for the login time, no check-in record is created. |
+| BR-38 | **Attendance Log Recording**: The system records check-in and check-out entries under the local branch's `store_id` where the attendance action was taken, calculating lateness against the scheduled shift. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
+| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
 
 ---
 
@@ -4476,8 +4561,9 @@ This section details specifications for managing discount codes and promotional 
 | HQ Admin Portal > Promotions & Vouchers > Add Voucher                           |
 +---------------------------------------------------------------------------------+
 |  Voucher Code: [ COFFEE20       ]   Discount Type: [ Percentage     ] [v]       |
-|  Discount Val: [ 20             ]   Min Order Val: [ 50,000 VND       ]       |
-|  Start Date:   [ 2026-05-24     ]   End Date:      [ 2026-06-30       ]       |
+|  Discount Val: [ 20             ]   Max Disc Amount: [ 30,000 VND     ]         |
+|  Min Order Val: [ 50,000 VND       ]   Start Date:      [ 2026-05-24     ]      |
+|  End Date:     [ 2026-06-30       ]                                             |
 |  Usage Limit per Customer: [ 1  ]   Max Total Uses: [ 100             ]       |
 |                                                                                 |
 |  Description:                                                                   |
@@ -4495,9 +4581,10 @@ This section details specifications for managing discount codes and promotional 
 | 1 | Voucher Code | Text | Yes | 50 | Alphanumeric code (e.g. "COFFEE20"). |
 | 2 | Discount Type | Dropdown | Yes | | Discount type (`Percentage`, `Fixed Amount`). |
 | 3 | Discount Val | Text | Yes | 10 | Percentage discount or flat VND value. |
-| 4 | Min Order Val | Text | Yes | 15 | Minimum order subtotal threshold in VND. |
-| 5 | Start Date | Date | Yes | | Validity start timestamp. |
-| 6 | End Date | Date | Yes | | Validity expiration timestamp. |
+| 4 | Max Disc Amount | Text | No | 15 | Maximum discount amount cap in VND. Mandatory if Discount Type = Percentage. |
+| 5 | Min Order Val | Text | Yes | 15 | Minimum order subtotal threshold in VND. |
+| 6 | Start Date | Date | Yes | | Validity start timestamp. |
+| 7 | End Date | Date | Yes | | Validity expiration timestamp. |
 | 7 | Usage Limit | Text | No | 5 | Max usages per customer profile (guest checkout blocked if set). |
 | 8 | Max Total Uses | Text | No | 5 | Overall maximum total uses cap (null for unlimited). |
 | 9 | Description | Text | No | 250 | Promotion description text details. |
@@ -4544,8 +4631,9 @@ This section details specifications for managing discount codes and promotional 
 | HQ Admin Portal > Promotions & Vouchers > Edit Voucher                          |
 +---------------------------------------------------------------------------------+
 |  Voucher Code: COFFEE20 (Read-only) Discount Type: [ Percentage     ] [v]       |
-|  Discount Val: [ 20             ]   Min Order Val: [ 50,000 VND       ]       |
-|  Start Date:   [ 2026-05-24     ]   End Date:      [ 2026-06-30       ]       |
+|  Discount Val: [ 20             ]   Max Disc Amount: [ 30,000 VND     ]         |
+|  Min Order Val: [ 50,000 VND       ]   Start Date:      [ 2026-05-24     ]      |
+|  End Date:     [ 2026-06-30       ]                                             |
 |  Usage Limit per Customer: [ 1  ]   Max Total Uses: [ 100             ]       |
 |                                                                                 |
 |                                [ Save Changes ]   [ Deactivate ]   [ Cancel ]   |
@@ -4558,9 +4646,10 @@ This section details specifications for managing discount codes and promotional 
 | 1 | Voucher Code | Text | | | Read-only. Alphanumeric code — cannot be modified after creation (BR-40). |
 | 2 | Discount Type | Dropdown | Yes | | Discount type (`Percentage`, `Fixed Amount`). |
 | 3 | Discount Val | Text | Yes | 10 | Updated percentage discount or flat VND value. |
-| 4 | Min Order Val | Text | Yes | 15 | Updated minimum order subtotal threshold in VND. |
-| 5 | Start Date | Date | Yes | | Updated validity start date. |
-| 6 | End Date | Date | Yes | | Updated validity expiration date. Must be after Start Date. |
+| 4 | Max Disc Amount | Text | No | 15 | Updated maximum discount amount cap in VND. |
+| 5 | Min Order Val | Text | Yes | 15 | Updated minimum order subtotal threshold in VND. |
+| 6 | Start Date | Date | Yes | | Updated validity start date. |
+| 7 | End Date | Date | Yes | | Updated validity expiration date. Must be after Start Date. |
 | 7 | Usage Limit per Customer | Text | No | 5 | Updated max usages per customer. |
 | 8 | Max Total Uses | Text | No | 5 | Updated overall maximum total uses cap. |
 | 9 | Save Changes | Button | | | Saves updated voucher values. |
@@ -4594,54 +4683,20 @@ This section details specifications for managing discount codes and promotional 
 |---|---|
 | BR-40 | Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | Deactivating a voucher immediately stops all checkout redemptions. |
+| BR-42 | **Voucher Percentage Discount Cap**: When `discount_type = PERCENTAGE` and `max_discount_amount` is configured, the discount amount applied at checkout is capped at this limit: `applied_discount = min(subtotal * discount_value / 100, max_discount_amount)`. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed as follows: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive, and voucher is not deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
 
-
-
 ---
 
-# 3.11 Delivery Partner Revenue Integration
+## 3.10.4 Loyalty Points Program Configuration
 
-This section details specifications for background sales and revenue synchronization from third-party delivery partners.
+The loyalty program parameters are managed globally by the HQ Admin via central configuration parameters:
 
----
+- **LOYALTY_ACCRUAL_PERCENTAGE**: The percentage of the Net Total Payable value of the invoice earned as points. E.g., `LOYALTY_ACCRUAL_PERCENTAGE = 1.0%` means a customer earns 1 point for every 10,000 VND spent (10,000 * 1% = 1 pt).
+- **LOYALTY_MAX_ACC_POINTS_PER_ORDER**: The maximum points limit that a customer can accrue in a single order transaction (e.g. capped at 100 points per invoice).
+- **LOYALTY_MAX_REDEMPTION_PERCENTAGE**: The maximum percentage of the order subtotal that can be paid using redeemed points (e.g. customer cannot pay more than 50% of the invoice using loyalty points).
+- **LOYALTY_MAX_REDEMPTION_AMOUNT_PER_ORDER**: The maximum absolute cash discount in VND that can be redeemed using points per order (e.g. capped at 100,000 VND discount).
 
-## 3.11.1 F50 - Consolidated Revenue Integration / UC-67 Fetch Delivery Partner Sales
-
-### 3.11.1.1 Use Case Description
-
-| Use Case ID | UC-67 | Use Case Name | Fetch Delivery Partner Sales |
-|---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.2 |
-| **Date** | 2026-06-02 | | |
-
-| Field | Description |
-|---|---|
-| **Actor** | System (automated) |
-| **Description** | Automatically fetches daily consolidated revenue and sales figures from delivery partner APIs. |
-| **Precondition** | Secure API integration keys/tokens are configured in the system settings. |
-| **Trigger** | Nightly scheduler runs automatically at 23:00. |
-| **Post-Condition** | Consolidated sales data is stored and displayed on the HQ consolidated dashboards. |
-
-#### Main Flows (Fetch and Store Consolidated Sales)
-| Step | Actor | Action |
-|---|---|---|
-| 1 | System | Initiates secure API requests to registered delivery partners (e.g. GrabFood, ShopeeFood). |
-| 2 | System | Authenticates requests using configured access tokens (BR-60). |
-| 3 | System | Receives sales payloads containing daily consolidated transaction counts, item quantities, and gross totals. |
-| 4 | System | Processes and saves records into the reporting database, mapping sales figures to corresponding physical store branches. |
-
-#### Business Rules
-| ID | Rule Description |
-|---|---|
-| BR-60 | **Delivery Partner Authentication**: All outbound requests to delivery partner endpoints must include valid, encrypted authorization headers generated from active integration keys configured by HQ Admin. |
-| BR-61 | **Data Reconciliation**: Consolidated delivery sales records are flagged as external transactions. They bypass local drawer cash calculations and shift session totals, but are included in store performance reports. |
-
----
-
-## 3.11.2 Error Handling & Retry Policy
-- **Connection Timeout**: If a delivery partner API does not respond within 15 seconds, the request times out.
-- **Retry Schedule**: Failed synchronization requests are retried every hour up to 3 times. If all retries fail, a system alert is sent to the Admin dashboard and logged.
 
 
 ---
@@ -4847,6 +4902,11 @@ This section details specifications for system settings, store branding profiles
 |  Default VAT:   [ 10.0         ] %                                              |
 |  Header Title:  [ Welcome to Coffee Zone                                      ] |
 |  Footer Message:[ Thank you! See you again.                                   ] |
+|  Max Active Branches: [ 5      ]                                                |
+|                                                                                 |
+|  Loyalty Points Program Settings:                                               |
+|  Accrual Rate:  [ 1.0          ] %   Redeem Value:  [ 100          ] VND/point  |
+|  Max Redeem:    [ 50           ] %   Max Discount:  [ 100,000      ] VND/order  |
 |                                                                                 |
 |                                                     [ Save Settings ] [ Cancel ] |
 +---------------------------------------------------------------------------------+
@@ -4861,20 +4921,25 @@ This section details specifications for system settings, store branding profiles
 | 4 | Default VAT | Decimal | Yes | 5 | Percentage value for VAT rate calculation (0% to 20%). |
 | 5 | Header Title | Text | Yes | 150 | Text printed at the top of POS receipts. |
 | 6 | Footer Message | Text | Yes | 250 | Text printed at the bottom of POS receipts. |
-| 7 | Save Settings | Button | | | Commits and saves global brand changes. |
-| 8 | Cancel | Button | | | Discards edits and returns to dashboard home. |
+| 7 | Max Active Branches | Number | Yes | 3 | Maximum number of active store branches allowed simultaneously. |
+| 8 | Accrual Rate | Decimal | Yes | 5 | Percentage of net total payable earned as points (0% to 100%). |
+| 9 | Redeem Value | Number | Yes | 6 | Cash value per point in VND (must be > 0). |
+| 10 | Max Redeem | Decimal | Yes | 5 | Max percentage of order subtotal paid via points (0% to 100%). |
+| 11 | Max Discount | Number | Yes | 8 | Max absolute discount amount in VND via points per order (must be >= 0). |
+| 12 | Save Settings | Button | | | Commits and saves global brand changes. |
+| 13 | Cancel | Button | | | Discards edits and returns to dashboard home. |
 
 ### 3.13.1.2 Use Case Description
 
 | Use Case ID | UC-30 | Use Case Name | Configure Central System Settings |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Admin |
-| **Description** | Configures global parameters including brand name, tax rate, and receipt templates. |
+| **Description** | Configures global parameters including brand name, tax rate, receipt templates, and loyalty points configuration settings. |
 | **Precondition** | Admin is logged in. |
 | **Trigger** | Admin navigates to Central System Settings. |
 | **Post-Condition** | Central configuration parameters are updated. |
@@ -4882,7 +4947,7 @@ This section details specifications for system settings, store branding profiles
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Updates the Brand Name, Default VAT, Header Title, or Footer Message. |
+| 1 | Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
 | 2 | Admin | Clicks "Save Settings". |
 | 3 | Portal | Validates the input values. |
 | 4 | Portal | Saves the updated configurations. |
@@ -4895,12 +4960,17 @@ This section details specifications for system settings, store branding profiles
 |---|---|---|
 | 3.1 | Portal | If Brand Name is empty, displays message: `"Brand name cannot be empty."` |
 | 3.2 | Portal | If Default VAT is not between 0 and 20, displays message: `"VAT rate must be a numeric value between 0 and 20."` |
+| 3.3 | Portal | If Accrual Rate is not between 0 and 100, displays message: `"Accrual rate must be a numeric value between 0 and 100."` |
+| 3.4 | Portal | If Redeem Value is not greater than 0, displays message: `"Redeem value must be a numeric value greater than 0."` |
+| 3.5 | Portal | If Max Redeem is not between 0 and 100, displays message: `"Max redeem percentage must be a numeric value between 0 and 100."` |
+| 3.6 | Portal | If Max Discount is not greater than or equal to 0, displays message: `"Max discount must be a numeric value greater than or equal to 0."` |
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
-| BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the VAT rate that was active when they were created.** |
+| BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes and loyalty config changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the parameters that were active when they were created.** |
+| BR-62 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
 
 ---
 
@@ -5139,7 +5209,7 @@ This section specifies the branch lifecycle management functionality available e
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches do not count toward this limit. |
 
 ---
 
@@ -5260,7 +5330,7 @@ This section provides information to ensure that the system will communicate pro
 
 ### 4.1.3 Software & API Interfaces
 - **Payment Gateways**: API integration with bank systems (dynamic VietQR bank transfers) and payment services to receive instant payment confirmations.
-- **Third-Party Delivery APIs**: API integration to fetch consolidated daily revenue and sales reports.
+
 
 ---
 
@@ -5293,7 +5363,7 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
   - **Degraded Mode Operations (Offline POS)**:
     > [!IMPORTANT]
     > If the local store internet connection drops, the POS cashier terminal must continue to function. It will store orders locally in secure local storage.
-    - Offline operations allow cash and card checkouts. Online ShopeeFood validation and live VietQR transfers are suspended.
+    - Offline operations allow cash and card checkouts. Live VietQR transfers are suspended.
     - Loyalty points redemptions and online voucher verifications are suspended; only preloaded local vouchers can be verified.
     - Synchronizing queued offline orders to the cloud database must trigger automatically within **60 seconds** after internet connection recovery.
 - **Mean Time Between Failures (MTBF)**:
@@ -5324,7 +5394,7 @@ The system's performance characteristics, transaction response times, and capaci
 - **Throughput**:
   - The backend APIs must handle a minimum throughput of **100 transactions per second (TPS)** globally without degradation.
 - **Capacity**:
-  - The system must accommodate up to **5 branches** and **100 concurrent active cashier POS sessions**.
+  - The system must accommodate up to the configured `MAX_ACTIVE_BRANCHES` branches and **100 concurrent active cashier POS sessions**.
   - The central database must handle up to **10,000 daily order transactions**.
 - **Resource Utilization**:
   - **POS client memory**: The active application must consume **less than 512MB RAM** on terminal devices.
@@ -5339,7 +5409,7 @@ The system's performance characteristics, transaction response times, and capaci
 - **Access Control**: Strict role-based access control (RBAC) enforced on all resource endpoints. Unauthorised attempts to access administrative features will return access denied errors.
 
 ### 4.2.5 Scalability
-- The system architecture must support horizontal scaling to accommodate up to **5 branches** without requiring architectural redesign.
+- The system architecture must support horizontal scaling to accommodate a dynamic number of branches (configured via `MAX_ACTIVE_BRANCHES`) without requiring architectural redesign.
 - A single branch deployment must handle a minimum of **500 transactions per day** and **50 concurrent active users** without performance degradation.
 
 ### 4.2.6 Data Retention & Archival
@@ -5377,15 +5447,15 @@ This section contains business rules, global requirements, common application me
 
 | ID | Rule Definition |
 |---|---|
-| BR-01 | **Membership Point Accrual**: Customers accumulate 1 point for every 10,000 VND of **Net Total Payable** (after all discounts and point redemptions are applied) spent, rounded down to the nearest whole integer. Formula: `points_earned = floor(netTotalPayable / 10000)`. Points are not accrued for the portion of the order covered by point redemption discounts. |
-| BR-02 | **Membership Point Redemption**: 100 points can be redeemed for 10,000 VND discount at checkout, applicable only for customers who have reached at least the **Silver** tier. |
+| BR-01 | **Membership Point Accrual**: Customers accumulate loyalty points as a percentage of the **Net Total Payable** value of their invoice, up to a maximum points accrual limit per order (configurable via system parameters). Points are not accrued for the portion of the order covered by loyalty points redemption. |
+| BR-02 | **Membership Point Redemption**: Points can be redeemed for discounts at checkout, subject to point balance validation, with a limit on the maximum percentage of the invoice value that can be paid using points, and a maximum discount amount per order (configurable via central system parameters). |
 | BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
 | BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
-| BR-05 | **Cashier Cancellation Limit**: Cashiers can cancel orders only while they are in the `PENDING` state (prior to kitchen queue entry). |
-| BR-06 | **Manager/Admin Cancellation Limit**: Store Managers or Admins can cancel orders at any status except `COMPLETED` (including `PENDING`, `PREPARING`, `HOLD`, and `READY`). |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. If cancelled during `PREPARING`, `HOLD`, or `READY`, the already deducted stock is logged as operational waste and cannot be restored. |
+| BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
+| BR-06 | [RESERVED / DELETED] |
+| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
-| BR-09 | **Refund Authorization & Execution**: Refunds for orders in `PENDING` status can be performed directly by the Cashier without manager approval. Refunds for orders in `PREPARING`, `HOLD`, or `READY` statuses require authorization by a Store Manager or Admin. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
+| BR-09 | **Refund Authorization & Execution**: Refunds for orders in the `PENDING` status can be performed directly by the Cashier without manager approval. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | **Account Suspension**: Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | **Force Password Change Block**: Mandatory password change flag blocks navigation to any other module. User cannot bypass the Force Password Change screen. |
@@ -5410,15 +5480,15 @@ This section contains business rules, global requirements, common application me
 | BR-31 | **Category Deletion Restriction**: Cannot delete a category if it currently contains active menu items. |
 | BR-32 | **Audit Discrepancy Note**: Explanatory notes are mandatory if physically counted actual quantity does not match expected value. |
 | BR-33 | **Cash Float Limit**: Starting cash float must be greater than or equal to zero. |
-| BR-34 | **Real-Time Membership Tier Levels**: Real-time membership tier levels are updated instantly as soon as point thresholds are crossed: **Bronze** (0 - 99 points, 0% discount), **Silver** (100 - 499 points, 5% discount), **Gold** (500 - 999 points, 10% discount), and **Diamond** (1000+ points, 15% discount). **Tier Downgrade**: If order cancellation or refund causes points to drop below the active threshold, the customer's tier is immediately downgraded. |
-| BR-35 | **Annual Points Expiry & Audit**: Safety points audits run annually on December 31st. Loyalty points accumulated expire after **12 months of customer inactivity** (no purchases made in 12 months), and active tier thresholds are re-evaluated. |
+| BR-34 | **[RESERVED / DELETED]** (Previously: Real-Time Membership Tier Levels) |
+| BR-35 | **Loyalty Points Expiry**: Loyalty points expire after 12 months of customer inactivity (no new transactions made by the customer). |
 | BR-36 | **Past Schedules Block**: Cannot modify schedules that occurred in the past. |
 | BR-37 | **Schedules Deletion Notify**: Deletion removes the shift and sends notification alerts to affected employees. |
-| BR-38 | **Attendance Login Registration**: Check-in records are automatically created based on employee logins at local terminal stations. |
+| BR-38 | **Attendance PIN Verification**: Staff attendance check-in and check-out records are recorded manually via the dedicated attendance popup, and are not automatically created upon logging into the user account session. |
 | BR-39 | **Lateness Calculation Rule**: Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
 | BR-40 | **Read-Only Voucher Code**: Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | **Deactivation Redemption Block**: Deactivating a voucher immediately stops all checkout redemptions. |
-| BR-42 | [RESERVED / DELETED] |
+| BR-42 | **Voucher Percentage Discount Cap**: When `discount_type = PERCENTAGE` and `max_discount_amount` is configured, the discount amount applied at checkout is capped at this limit: `applied_discount = min(subtotal * discount_value / 100, max_discount_amount)`. |
 | BR-43 | [RESERVED / DELETED] |
 | BR-44 | **Reports & Metrics Scope**: Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
 | BR-45 | **VAT Configuration Limits**: Default VAT rate must be between 0% and 20%. |
@@ -5426,18 +5496,19 @@ This section contains business rules, global requirements, common application me
 | BR-47 | **Manager Config scope**: Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
 | BR-48 | **IP/COM Printer Port Validation**: Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 | BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Admin role. |
-| BR-50 | **Discount Cap**: The Net Total Payable after all discounts (tier discount, voucher discount, and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
-| BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` database log for audit and reporting purposes. No manager PIN or override code verification is required. |
+| BR-50 | **Discount Cap**: The Net Total Payable after all discounts (voucher discount and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
+| BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` log. No manager PIN or override code verification is required. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
-| BR-53 | **Attendance Check-out Registration**: A check-out record is automatically recorded when the employee closes their active POS shift session (UC-53 Close Shift). Since cashiers are blocked from logging out with an open shift, closing the shift is the primary check-out trigger. For non-cashier roles (who do not have POS shift sessions), a check-out record is recorded upon system logout. |
-| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously (aligned with NFR 4.2.3 Performance and 4.2.5 Scalability). Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
+| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
 | BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
 | BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
-| BR-60 | **Delivery Partner Authentication**: All outbound requests to delivery partner endpoints must include valid, encrypted authorization headers generated from active integration keys configured by HQ Admin. |
-| BR-61 | **Data Reconciliation**: Consolidated delivery sales records are flagged as external transactions. They bypass local drawer cash calculations and shift session totals, but are included in store performance reports. |
+| BR-60 | [RESERVED / DELETED] |
+| BR-61 | [RESERVED / DELETED] |
+| BR-62 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
 
 
 
@@ -5471,12 +5542,12 @@ The table below lists the standardized messages.
 | 8 | MSG08 | Dialog pop-up | User attempts to access a restricted screen or feature | *Unauthorized action. You do not have permission to access this page.* |
 | 9 | MSG09 | In red / Toast message | Voucher code input is invalid, expired, or doesn't meet minimum order value | *Voucher code is invalid or has expired.* |
 | 10 | MSG10 | In red / Toast message | Entering incorrect or expired OTP recovery code | *Incorrect or expired OTP. Please check your email and try again.* |
-| 11 | MSG11 | Toast message / Pop-up | Customer doesn't have enough loyalty points to redeem or is below Silver tier | *Insufficient points balance or membership tier ineligible for redemption.* |
+| 11 | MSG11 | Toast message / Pop-up | Customer doesn't have enough loyalty points to redeem | *Insufficient points balance.* |
 | 12 | MSG12 | Toast message / Pop-up | Assigning employee to a shift that conflicts with their existing scheduled shifts | *Employee shift conflict. The employee is already scheduled for another shift during this time block.* |
 | 13 | MSG13 | [RESERVED / DELETED] | *[Reserved for future use]* | *[Reserved for future use]* |
-| 14 | MSG14 | In red / Toast message | Cashier enters points count not in multiples of 100 for loyalty points redemption | *Redemption points must be entered in multiples of 100.* |
+| 14 | MSG14 | In red / Toast message | Entering points value that is not a multiple of 100 | *Redemption points must be in multiples of 100.* |
 | 15 | MSG15 | Toast message | Admin successfully creates a new branch | *Branch successfully created.* |
-| 16 | MSG16 | Dialog pop-up | Admin attempts to add a branch when maximum capacity (5) is reached | *Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one.* |
+| 16 | MSG16 | Dialog pop-up | Admin attempts to add a branch when maximum configured capacity is reached | *Maximum branch capacity reached. Please deactivate an existing branch or increase the limit before adding a new one.* |
 | 17 | MSG17 | Dialog pop-up | Cashier attempts to log out with an active open shift | *You have an active shift session open. You must close your shift (UC-53) before logging out.* |
 
 
@@ -5503,7 +5574,7 @@ The matrix below maps operational modules and system features to employee roles,
 | **Customer Loyalty Registry** | C / R / U / D | C / R / U | C / R / U | — |
 | **Staff Scheduling & Shift planner** | — | C / R / U / D | R (Read-Only) | R (Read-Only) |
 | **Staff Attendance Logs & Reports** | — | C / R / U | — | — |
-| **Inventory Stock Management** | R (Auditing) | C / R / U / D | — | — |
+| **Inventory Stock Management** | R (Auditing) | C / R / U | — | — |
 | **POS Shift Session Control** | — | U (Override) | C / R / U | — |
 | **POS Checkout & Invoicing** | — | U (Override) | C / R / U | — |
 | **Order Prep & Kitchen Queue** | — | R (Read-Only) | R (Read-Only) | C / R / U |

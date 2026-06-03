@@ -12,6 +12,11 @@ This section tracks the revision history and modifications made to the Software 
 | **1.5** | 2026-05-24 | Resolved comprehensive review v1.4 issues: added full Section 3.6.5 F31.1 for UC-49 (containing mock-up, field definition, and alternate flows), updated the Table of Contents, fully synchronized BR-42 in Section 5.1, and standardized MSG12 to pure English dictionary key text. | Software Engineering Team | Store Management / Product Owner |
 | **1.6** | 2026-05-24 | Addressed final review feedback: mapped Redeem Loyalty Points Modal (37a) in functional overview and authorization matrix, assigned MSG14 for invalid loyalty redemption multiples, and updated POS transactions flow AT3. | Software Engineering Team | Store Management / Product Owner |
 | **1.7** | 2026-06-02 | Added Branch Management functionality (Section 3.13.3): UC-63 View Branch List, UC-64 Add Branch, UC-65 Update/Deactivate Branch. Added 3 new screens (45-47) to Admin Portal flow, updated screen authorization matrix, Feature-Actor Mapping Matrix, and added business rules BR-54, BR-55, BR-56. Added application messages MSG15, MSG16. | Software Engineering Team | Store Management / Product Owner |
+| **1.8** | 2026-06-03 | Simplified cancellation to PENDING only (no manager PIN), popup-based 4-digit PIN + camera snapshot attendance, team-based barista KPI, branch menu status table, dynamic branch limit (MAX_ACTIVE_BRANCHES), bulk stock import invoice grid, custom loyalty cap fields, and removed all ShopeeFood/Grab integrations. | Software Engineering Team | Store Management / Product Owner |
+| **1.8.1** | 2026-06-03 | Patched discrepancies in v1.8: aligned BR-07/BR-09 with BR-05 (restricting cancellation/refund to PENDING only), added missing use cases (UC-68 to UC-72, UC-61, UC-73) to diagrams, resolved loyalty point config conflict and restored MSG14, authorized Barista for Order Detail screen, and fixed screen numbering gaps. | Software Engineering Team | Store Management / Product Owner |
+| **1.8.2** | 2026-06-03 | Integrated Central Loyalty configurations (Accrual rate, Redeem value, Max redeem %, Max discount limit) under Admin system settings. Completely removed customer membership tiers (Bronze/Silver/Gold/Diamond) and their automatic discounts. Simplified checkout stacking and discount priority rules. | Software Engineering Team | Store Management / Product Owner |
+
+
 
 # Table of Contents
 
@@ -114,10 +119,6 @@ This section tracks the revision history and modifications made to the Software 
      - 3.10.1 List Voucher / Promotion
      - 3.10.2 Add Voucher / Promotion
      - 3.10.3 Update/Delete Voucher / Promotion
-
-   - **3.11 Delivery Partner Revenue Integration**
-     - 3.11.1 Consolidated Revenue Integration
-     - 3.11.2 Error Handling & Retry Policy
 
    - **3.12 Dashboard & Reporting**
      - 3.12.1 HQ Revenue Dashboard

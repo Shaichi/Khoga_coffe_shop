@@ -118,14 +118,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 | HQ Admin Portal > Menu Management > Add Menu Item                               |
 +---------------------------------------------------------------------------------+
 |  Product Name:  [                              ]   Category: [ Coffee     ] [v] |
-|  Base Price:    [ 35,000 VND                   ]   Barcode:  [ 8930000000000  ] |
+|  Variants/Sizes (e.g. S, M, L) and Prices:                                       |
+|  [x] S / Regular: [ 30,000 ] VND   [ ] L / Large:   [ 40,000 ] VND               |
+|  Barcode:       [ 8930000000000  ]                                               |
 |                                                                                 |
 |  Description:                                                                   |
 |  +---------------------------------------------------------------------------+  |
 |  | Rich traditional Vietnamese drip coffee...                                |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [ ] Available (Show on POS)                                                    |
+|  [ ] Active (Show on POS)                                                       |
 |  Image Upload:  [ Choose File ] (No file chosen)                                |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -140,7 +142,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
 | 2 | Category | Dropdown | Yes | | Category selection from existing categories list. |
-| 3 | Base Price | Decimal | Yes | | Base sales price in VND. |
+| 3 | Prices/Variants | Grid | Yes | | Multiple variants/sizes configuration (e.g. S, M, L) and prices. |
 | 4 | Barcode | Text | No | 50 | Optional barcode for scanner check. |
 | 5 | Description | Text | No | 500 | Description of the item. |
 | 6 | Available | Checkbox | Yes | | Flag indicating if item is active for sale (Default: Checked). |
@@ -167,9 +169,9 @@ This section details specifications for viewing, adding, updating, and deactivat
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name, Base Price, Category, and checks associated toppings. Clicks "Save Item". |
-| 2 | Portal | Validates uniqueness of product name and positive price. |
-| 3 | Portal | Saves new item, auto-generates search abbreviation, and returns to menu list. |
+| 1 | Admin | Enters Name, configures variants/sizes and prices, enters Category, and checks associated toppings. Clicks "Save Item". |
+| 2 | Portal | Validates uniqueness of product name and positive prices. |
+| 3 | Portal | Saves new item and variants, auto-generates search abbreviation, and returns to menu list. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -194,14 +196,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 | HQ Admin Portal > Menu Management > Edit Menu Item                              |
 +---------------------------------------------------------------------------------+
 |  Product Name:  [ Espresso                   ]   Category: [ Coffee     ] [v] |
-|  Base Price:    [ 30,000 VND                 ]   Barcode:  [ 89311111111    ] |
+|  Variants/Sizes (e.g. S, M, L) and Prices:                                       |
+|  [x] S / Regular: [ 30,000 ] VND   [ ] L / Large:   [ 40,000 ] VND               |
+|  Barcode:       [ 89311111111    ]                                               |
 |                                                                                 |
 |  Description:                                                                   |
 |  +---------------------------------------------------------------------------+  |
 |  | Strong traditional black coffee...                                        |  |
 |  +---------------------------------------------------------------------------+  |
 |                                                                                 |
-|  [x] Available (Show on POS)                                                    |
+|  [x] Active (Show on POS)                                                       |
 |  Image Upload:  [ Choose File ] (espresso.png)                                  |
 |                                                                                 |
 |  Linked Toppings:                                                               |
@@ -216,10 +220,10 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|---|---|---|
 | 1 | Product Name | Text | Yes | 100 | Name of the food or beverage. |
 | 2 | Category | Dropdown | Yes | | Category selection. |
-| 3 | Base Price | Decimal | Yes | | Unit price in VND. |
+| 3 | Prices/Variants | Grid | Yes | | Multiple variants/sizes and prices. |
 | 4 | Barcode | Text | No | 50 | Barcode/SKU value. |
 | 5 | Description | Text | No | 500 | Description. |
-| 6 | Available | Checkbox | Yes | | Availability status. |
+| 6 | Active | Checkbox | Yes | | Active status globally (Admin only). Branch availability status toggle (Store Manager only - updates `branch_menu_status` mapping). |
 | 7 | Image Upload | File | No | | Upload/replace image. |
 | 8 | Linked Toppings | Checkboxes | No | | Modifier selections. |
 | 9 | Save Changes | Button | | | Saves modified properties. |
@@ -235,17 +239,17 @@ This section details specifications for viewing, adding, updating, and deactivat
 | Field | Description |
 |---|---|
 | **Actor** | Admin, Store Manager |
-| **Description** | Modifies properties of an existing item. |
+| **Description** | Modifies properties of an existing item (Admin) or toggles local branch availability (Store Manager). |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager may toggle item Availability only. |
-| **Post-Condition** | Product listings are modified. |
+| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager accesses the item to toggle its branch availability (`branch_menu_status.is_available`). |
+| **Post-Condition** | Product listings or availability mapping are modified. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Edits product fields and clicks "Save Changes". |
+| 1 | Actor | Admin edits product fields and clicks "Save Changes". Alternatively, Store Manager toggles branch-level item availability and clicks "Save Changes". |
 | 2 | Portal | Validates inputs. |
-| 3 | Portal | Updates parameters, re-generates abbreviation if name changed, and returns to detail card. |
+| 3 | Portal | Updates parameters (or `branch_menu_status` record), re-generates abbreviation if name changed, and returns to detail card. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors

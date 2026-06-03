@@ -138,7 +138,6 @@ This section details specifications for cashier POS checkout sessions, order pro
 |                                    |
 |  Result:                           |
 |  Name: Nguyen Van A                |
-|  Tier: Gold (10% Tier Discount)    |
 |  Points: 340                       |
 |                                    |
 |         [ LINK TO CART ]           |
@@ -160,13 +159,13 @@ This section details specifications for cashier POS checkout sessions, order pro
 
 | Use Case ID | UC-50 | Use Case Name | Lookup Customer Membership |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Cashier |
-| **Description** | Identifies customer loyalty profiles to track points and apply tier-based discounts. |
+| **Description** | Identifies customer loyalty profiles to track and redeem points. |
 | **Precondition** | Order cart is active. |
 | **Trigger** | Cashier clicks "Customer" link button. |
 | **Post-Condition** | Customer loyalty details are linked to order. |
@@ -176,7 +175,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 1 | Cashier | Enters customer phone number and clicks "Search Customer". |
 | 2 | Portal | Performs registry lookup. |
-| 3 | Portal | Displays profile details (Name, Tier, Points) and Cashier clicks "Link to Cart" to apply discounts. |
+| 3 | Portal | Displays profile details (Name, Points) and Cashier clicks "Link to Cart" to link customer to the cart. |
 
 #### Alternative Flows
 ##### AT1: Customer Offline Fallback
@@ -264,7 +263,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 +------------------------------------+
 |        Redeem Loyalty Points       |
 |                                    |
-|  Customer: Nguyen Van A (Gold)     |
+|  Customer: Nguyen Van A            |
 |  Available Points: 340             |
 |                                    |
 |  Points to Redeem (100pt = 10k):   |
@@ -279,7 +278,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Table 3-33: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Customer Info | Label | | | Displays linked customer name and active membership tier. |
+| 1 | Customer Info | Label | | | Displays linked customer name. |
 | 2 | Available Points | Label | | | Displays customer's available points balance. |
 | 3 | Points to Redeem | Text | Yes | 6 | Input field for loyalty points to redeem (multiples of 100). |
 | 4 | Apply Discount | Button | | | Submits points redemption discount to cart. |
@@ -289,14 +288,14 @@ This section details specifications for cashier POS checkout sessions, order pro
 
 | Use Case ID | UC-49 | Use Case Name | Redeem Loyalty Points |
 |---|---|---|---|
-| **Author** | Antigravity | **Version** | 1.0 |
-| **Date** | 2026-05-24 | | |
+| **Author** | Antigravity | **Version** | 1.1 |
+| **Date** | 2026-06-03 | | |
 
 | Field | Description |
 |---|---|
 | **Actor** | Cashier |
 | **Description** | Redeems customer loyalty points for a cash discount at checkout. |
-| **Precondition** | Customer membership is looked up, linked to the cart, has reached at least the **Silver** tier, and has at least **100** points. |
+| **Precondition** | Customer membership is looked up, linked to the cart, and has at least **100** points. |
 | **Trigger** | Cashier clicks "Redeem Points" button from cart options. |
 | **Post-Condition** | Equivalent points discount is applied to checkout total. |
 
@@ -304,8 +303,8 @@ This section details specifications for cashier POS checkout sessions, order pro
 | Step | Actor | Action |
 |---|---|---|
 | 1 | Cashier | Enters quantity of points to redeem (e.g. 100) and clicks "Apply Discount". |
-| 2 | Portal | Validates point balance is sufficient, user is at least Silver tier, and value is a multiple of 100. |
-| 3 | Portal | Computes equivalent cash discount (10,000 VND per 100 points) and deducts points from active totals. |
+| 2 | Portal | Validates point balance is sufficient and value is a multiple of 100. |
+| 3 | Portal | Computes equivalent cash discount based on `LOYALTY_REDEMPTION_VALUE` (default: 100 VND per point) and deducts points from active totals. |
 
 #### Alternative Flows
 ##### AT1: Insufficient Points
@@ -315,14 +314,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Insufficient points balance."` (MSG11) |
 
-##### AT2: Ineligible Membership Tier
-- **Trigger**: At step 2, the linked customer is in the Bronze membership tier.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 2.1 | Portal | Displays error message: `"Insufficient points balance or membership tier ineligible for redemption."` (MSG11) |
-
-##### AT3: Invalid Points Multiple
+##### AT2: Invalid Points Multiple
 - **Trigger**: At step 2, entered points value is not a multiple of 100.
 
 | Sub-step | Actor | Action |
@@ -332,7 +324,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-02 | 100 points can be redeemed for 10,000 VND discount at checkout, applicable only for customers who have reached at least the **Silver** tier. Point redemption must be in multiples of 100. |
+| BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
 
 ---
 
@@ -347,7 +339,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |                                    |
 |  Payment Method:                   |
 |  ( ) Cash    ( ) Card              |
-|  (x) VietQR  ( ) ShopeeFood        |
+|  (x) VietQR                        |
 |                                    |
 |  +------------------------------+  |
 |  |                              |  |
@@ -363,7 +355,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Table 3-34: Screen Definition
 | # | Field Name | Type | Mandatory | Max Length | Description |
 |---|---|---|---|---|---|
-| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
+| 1 | Payment Method | Radio | Yes | | Selects method: `CASH`, `CARD`, `VIETQR`. |
 | 2 | Cash Received | Text | Yes | 15 | Mandatory only for Cash method to compute change. |
 | 3 | Cancel | Button | | | Cancels active payment flow and returns to cart. |
 | 4 | Retry QR | Button | | | Regenerates dynamic payment code request. |
@@ -405,22 +397,19 @@ This section details specifications for cashier POS checkout sessions, order pro
 This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap.
 
 ### 1. Stacking Rules & Restrictions
-- **Voucher and Membership Tier Discount Exclusivity**: Percentage-based or flat-rate **Voucher discounts** and **Membership Tier discounts** DO NOT stack. 
-  - The system compares the discount value of the linked membership tier against the active voucher discount and applies the one that yields the higher discount value.
-  - **Both discount types must first be converted to VND before comparison:** `Tier Discount (VND) = Gross Subtotal × Tier Percent / 100`; `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
-  - If a customer applies a voucher but the membership tier discount is higher, the system applies the membership tier discount instead.
-  - **Tie-breaking rule**: If `Tier Discount (VND) == Voucher Discount (VND)`, the Voucher discount takes priority.
-- **Loyalty Point Redemption Stackability**: Loyalty point redemptions (e.g. redeeming 100 points for a flat 10,000 VND discount) CAN stack with either a membership tier discount OR an active voucher discount.
+- **Voucher and Loyalty Point Redemption Stackability**: Percentage-based or flat-rate **Voucher discounts** and **Loyalty Point Redemption discounts** can stack together directly.
 - **Order of Calculations**:
   1. **Gross Subtotal**: Sum of the base prices of all selected menu items plus any applied custom toppings or option modifiers.
-  2. **Campaign / Tier Discount (Exclusivity applied)**:
-     - `Tier Discount (VND) = Gross Subtotal × Tier Percent / 100`
-     - `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND`
-     - `Selected Discount = Max(Tier Discount VND, Voucher Discount VND)` *(Voucher wins on tie)*
-     - `Discounted Subtotal = Gross Subtotal - Selected Discount`
+  2. **Voucher Discount**:
+     - If a voucher is applied, compute: `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
+     - `Discounted Subtotal = Gross Subtotal - Voucher Discount (VND)`.
   3. **Loyalty Point Redemption**:
-     - `Point Discount Value = (Redeemed Points / 100) * 10,000 VND`
-     - `Final Taxable Subtotal = Max(0, Discounted Subtotal - Point Discount Value)`
+     - Compute redemption value: `Raw Point Discount = Redeemed Points * LOYALTY_REDEMPTION_VALUE` (where `LOYALTY_REDEMPTION_VALUE` is configured globally, e.g. 100 VND per point).
+     - Apply config-based limits:
+       - Limit by maximum percentage: `Max Point Discount % = Discounted Subtotal * (LOYALTY_MAX_REDEMPTION_PERCENT / 100)`.
+       - `Point Discount Value = Min(Raw Point Discount, Max Point Discount %)`
+       - Limit by maximum absolute discount: `Point Discount Value = Min(Point Discount Value, LOYALTY_MAX_REDEMPTION_LIMIT)`.
+     - `Final Taxable Subtotal = Max(0, Discounted Subtotal - Point Discount Value)`.
   4. **Tax Calculations (10% VAT)**:
      - The active VAT rate (configured globally between 0% and 20%) is applied.
      - VAT is **inclusive** in final retail menu pricing. The stored `tax_amount` field is extracted as follows:
@@ -428,7 +417,7 @@ This section outlines the business logic for calculating and applying discounts 
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
   5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
-  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable / 10000)`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
+  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable * (LOYALTY_ACCRUAL_PERCENTAGE / 100))`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
 
 ---
 

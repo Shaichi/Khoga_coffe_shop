@@ -16,7 +16,6 @@ $files = @(
     "sections/03_8_customer_membership.md",
     "sections/03_9_staff_management.md",
     "sections/03_10_promotion_campaign.md",
-    "sections/03_11_delivery_partner.md",
     "sections/03_12_dashboard_reporting.md",
     "sections/03_13_system_configuration.md",
     "sections/04_non_functional_requirements.md",

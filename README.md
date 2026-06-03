@@ -19,10 +19,15 @@ To facilitate collaboration and version control (aligned with the suggested grou
 3. **Section 3: Software Features & Specifications**
    - **[3.1: Functional Overview](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_1_functional_overview.md)**: Screen Flow, Authorization matrix, ERD, and Entity schemas.
    - **[3.2: System Access & Security](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_2_system_access_security.md)**: Login, password recovery, profiles, and account management.
-   - **[3.3, 3.4 & 3.10: Menu, Categories & Promotions](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_3_menu_category_promotion.md)**: Menu catalog, modifier groups, categories, and vouchers.
-   - **[3.5 & 3.9: Inventory & Staff Management](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_5_inventory_staff.md)**: Stock import/export/audit, shift schedules, and attendance.
-   - **[3.6 & 3.7: POS Transactions & Orders](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_6_pos_order_transaction.md)**: Cash drawer sessions, payments, invoicing, order queues, and stickers.
-   - **[3.8, 3.11 & 3.12: Customer CRM, Delivery Webhooks & Dashboards](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_8_customer_delivery_dashboard.md)**: Membership point tiers, GrabFood/ShopeeFood integrations, revenue reports.
+   - **[3.3: Menu Management](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_3_menu_management.md)**: Menu item size configurations and read-only manager access.
+   - **[3.4: Category Management](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_4_category_management.md)**: Menu categories.
+   - **[3.5: Inventory Management](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_5_inventory_management.md)**: Stock import/export/audit, and multi-line invoice imports.
+   - **[3.6: POS Transactions](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_6_pos_transaction.md)**: Cash drawer sessions, payments, and invoicing.
+   - **[3.7: Order Management](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_7_order_management.md)**: Order queues, status tracking, and simplified cancellation.
+   - **[3.8: Customer CRM](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_8_customer_membership.md)**: Membership point tiers, points expiry rules.
+   - **[3.9: Staff Management](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_9_staff_management.md)**: Staff profiles, schedules, and popup-based attendance.
+   - **[3.10: Promotions & Vouchers](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_10_promotion_campaign.md)**: Campaigns and vouchers discount caps.
+   - **[3.12: Dashboard Reporting](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_12_dashboard_reporting.md)**: Revenue reports.
    - **[3.13: System Configuration](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/03_13_system_configuration.md)**: Store info settings, taxation settings, hardware printers.
 
 4. **[Section 4: Non-Functional Requirements](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/04_non_functional_requirements.md)**

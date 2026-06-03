@@ -8,7 +8,6 @@ The primary purpose of the Coffee Shop Management System is to automate, coordin
 - **Inventory Control**: Real-time tracking of ingredients, automated low-stock alerts, and structured audit procedures to minimize wastage and stockouts.
 - **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for admins, managers, cashiers, and baristas.
 - **Data-Driven Insights**: Deliver comprehensive financial, inventory, and staff performance reports to enable management to make informed business decisions.
-- **Consolidated Revenue Reporting**: Automatically retrieve sales and revenue figures from third-party delivery partners via API for unified store performance analysis.
 
 ## 1.2 Product Scope
 The system will manage the following core domains:
@@ -22,7 +21,7 @@ The system will manage the following core domains:
 
 ### Out of Scope
 The system will *not* support:
-- **Real-time Order Processing & Delivery Integration**: Direct handling of online order lifecycles, courier dispatching, or kitchen sync with third-party delivery apps. Instead, the system only fetches aggregate sales reports from third-party delivery partner APIs.
+- **Real-time Order Processing & Delivery Integration**: Direct handling of online order lifecycles, courier dispatching, or kitchen sync with third-party delivery apps.
 - **Payroll Calculation & Payouts**: The system will track staff schedules and attendance reports, but financial payroll calculations and payroll payouts are handled by external accounting systems.
 
 ---
@@ -39,14 +38,12 @@ graph LR
     MANAGER[Store Manager]
     CASHIER[Cashier]
     BARISTA[Barista]
-    DELIVERY[Delivery Partners]
 
     style SYS fill:#fff,stroke:#000,stroke-width:2px
     style ADMIN fill:#fff,stroke:#000,stroke-width:1px
     style MANAGER fill:#fff,stroke:#000,stroke-width:1px
     style CASHIER fill:#fff,stroke:#000,stroke-width:1px
     style BARISTA fill:#fff,stroke:#000,stroke-width:1px
-    style DELIVERY fill:#fff,stroke:#000,stroke-width:1px
 
     %% 1. Admin Data Flows
     ADMIN --> |"Central Menu Data"| SYS
@@ -76,7 +73,4 @@ graph LR
     BARISTA --> |"Order Status Update"| SYS
     SYS --> |"Drink Label Data (Sticker)"| BARISTA
     SYS --> |"Queue Display Data"| BARISTA
-
-    %% 5. Delivery Partner Data Flows
-    DELIVERY --> |"Sales/Revenue API Report"| SYS
 ```

@@ -165,7 +165,7 @@ This section details specifications for managing product categories.
 
 ---
 
-## 3.4.4 F22 - Delete Category / UC-17 Update Category
+## 3.4.4 F22 - Delete Category / UC-70 Delete Category
 
 ### 3.4.4.1 Screen Mock-up (Desktop Landscape Modal)
 ```

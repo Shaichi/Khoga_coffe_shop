@@ -281,7 +281,6 @@
                 <div class="modal-result" id="custResultBox">
                     <strong>Hội viên tìm thấy:</strong><br>
                     Tên: <span id="resCustName">-</span><br>
-                    Hạng: <span id="resCustTier">-</span><br>
                     Tích điểm: <span id="resCustPoints">-</span>
                 </div>
 
@@ -326,7 +325,7 @@
                         <button type="button" class="modal-btn btn-primary-m" id="btnPointsApply" style="width:70px; height:38px;" disabled onclick="applyRedeemPoints()">ĐỔI</button>
                     </div>
                     <div style="margin-top: 4px; font-size:10px; color:#8c766c;" id="pointsRedeemHint">
-                        Yêu cầu hạng Bạc trở lên và gắn thẻ hội viên trước.
+                        Yêu cầu gắn thẻ hội viên trước.
                     </div>
                 </div>
 
@@ -529,8 +528,8 @@
         let foundCustomerTemp = null;
         function searchCustomer() {
             const phone = document.getElementById('custPhoneInput').value.trim();
-            const err = document.getElementById('custError');
             const resultBox = document.getElementById('custResultBox');
+            const err = document.getElementById('custError');
             
             err.style.display = 'none';
             resultBox.style.display = 'none';
@@ -546,13 +545,10 @@
             if (phone === '0987654321') {
                 foundCustomerTemp = {
                     name: 'Nguyễn Văn A',
-                    tier: 'GOLD',
-                    tierDiscountPercent: 10,
                     points: 340
                 };
                 
                 document.getElementById('resCustName').textContent = foundCustomerTemp.name;
-                document.getElementById('resCustTier').textContent = "Gold (Chiết khấu 10%)";
                 document.getElementById('resCustPoints').textContent = `${foundCustomerTemp.points} điểm`;
                 
                 resultBox.style.display = 'block';
@@ -560,12 +556,9 @@
             } else if (phone === '0912345678') {
                 foundCustomerTemp = {
                     name: 'Trần Thị B',
-                    tier: 'BRONZE',
-                    tierDiscountPercent: 0,
                     points: 50
                 };
                 document.getElementById('resCustName').textContent = foundCustomerTemp.name;
-                document.getElementById('resCustTier').textContent = "Bronze (Chưa có chiết khấu)";
                 document.getElementById('resCustPoints').textContent = `${foundCustomerTemp.points} điểm`;
                 
                 resultBox.style.display = 'block';
@@ -582,12 +575,12 @@
             linkedCustomer = foundCustomerTemp;
             
             const badge = document.getElementById('linkedCustomerInfo');
-            document.getElementById('custNameLabel').textContent = `Khách: ${linkedCustomer.name} (${linkedCustomer.tier})`;
-            document.getElementById('custDiscountLabel').textContent = linkedCustomer.tierDiscountPercent > 0 ? `Hạng thẻ: -${linkedCustomer.tierDiscountPercent}%` : "Hạng thẻ: 0%";
+            document.getElementById('custNameLabel').textContent = `Khách: ${linkedCustomer.name}`;
+            document.getElementById('custDiscountLabel').textContent = `Điểm tích lũy: ${linkedCustomer.points}`;
             badge.style.display = 'flex';
 
-            // Enable points redemption input if points >= 100 and tier is Silver+ (Silver, Gold, Diamond)
-            const redeemable = (linkedCustomer.tier === 'GOLD' || linkedCustomer.tier === 'SILVER' || linkedCustomer.tier === 'DIAMOND') && linkedCustomer.points >= 100;
+            // Enable points redemption input if points >= 100
+            const redeemable = linkedCustomer.points >= 100;
             const pointsInput = document.getElementById('pointsInput');
             const btnPointsApply = document.getElementById('btnPointsApply');
             const hint = document.getElementById('pointsRedeemHint');
@@ -599,7 +592,7 @@
             } else {
                 pointsInput.disabled = true;
                 btnPointsApply.disabled = true;
-                hint.textContent = `Không đủ điều kiện (Yêu cầu Hạng Bạc/Vàng & từ 100 điểm trở lên).`;
+                hint.textContent = `Không đủ điều kiện (Yêu cầu tối thiểu từ 100 điểm trở lên).`;
             }
 
             closeModal('customerModal');
@@ -682,7 +675,7 @@
 
             // Success loading
             pointsRedeemedTemp = inputVal;
-            alert(`Đã chuẩn bị quy đổi ${pointsRedeemedTemp} điểm để giảm ${(pointsRedeemedTemp / 100 * 10000).toLocaleString('vi-VN')} VND.`);
+            alert(`Đã chuẩn bị quy đổi ${pointsRedeemedTemp} điểm để giảm ${(pointsRedeemedTemp * 100).toLocaleString('vi-VN')} VND.`);
         }
 
         function confirmPromoChanges() {
@@ -705,12 +698,6 @@
             let discountValue = 0;
             let chosenText = "";
 
-            // 1. Exclusive Comparison: Max(Membership Tier, Voucher)
-            let tierDiscount = 0;
-            if (linkedCustomer && linkedCustomer.tierDiscountPercent > 0) {
-                tierDiscount = Math.round(subtotal * (linkedCustomer.tierDiscountPercent / 100));
-            }
-
             let voucherDiscount = 0;
             if (appliedVoucher) {
                 if (appliedVoucher.type === 'PERCENTAGE') {
@@ -718,23 +705,20 @@
                 } else if (appliedVoucher.type === 'FIXED') {
                     voucherDiscount = appliedVoucher.value;
                 }
+                discountValue = voucherDiscount;
+                chosenText = `Voucher (${appliedVoucher.code})`;
             }
 
-            // Apply exclusive rule: Pick the maximum discount amount
-            if (tierDiscount > 0 || voucherDiscount > 0) {
-                if (tierDiscount >= voucherDiscount) {
-                    discountValue = tierDiscount;
-                    chosenText = "Hạng thẻ";
-                } else {
-                    discountValue = voucherDiscount;
-                    chosenText = `Voucher (${appliedVoucher.code})`;
-                }
-            }
-
-            // 2. Stackable Point redemption: 10,000 VND off per 100 points
+            // 2. Stackable Point redemption: 100 VND off per point
             let pointDiscountValue = 0;
             if (pointsRedeemedInput > 0) {
-                pointDiscountValue = (pointsRedeemedInput / 100) * 10000;
+                pointDiscountValue = pointsRedeemedInput * 100; // LOYALTY_REDEMPTION_VALUE = 100
+                const discountedSubtotal = Math.max(0, subtotal - discountValue);
+                // Capped by max percentage of 50%
+                const maxRedeemPercent = Math.round(discountedSubtotal * 0.5);
+                pointDiscountValue = Math.min(pointDiscountValue, maxRedeemPercent);
+                // Capped by max absolute limit of 100,000 VND
+                pointDiscountValue = Math.min(pointDiscountValue, 100000);
             }
 
             // 3. Tax calculations (10% VAT inclusive math: subtotal * 10/110)
@@ -759,10 +743,6 @@
             }
 
             const subtotal = getCartSubtotal();
-            let tierDiscount = 0;
-            if (linkedCustomer && linkedCustomer.tierDiscountPercent > 0) {
-                tierDiscount = Math.round(subtotal * (linkedCustomer.tierDiscountPercent / 100));
-            }
             let voucherDiscount = 0;
             if (appliedVoucher) {
                 if (appliedVoucher.type === 'PERCENTAGE') {
@@ -771,8 +751,17 @@
                     voucherDiscount = appliedVoucher.value;
                 }
             }
-            const discount = Math.max(tierDiscount, voucherDiscount);
-            const pointDiscount = (pointsRedeemedInput / 100) * 10000;
+            const discount = voucherDiscount;
+            
+            let pointDiscount = 0;
+            if (pointsRedeemedInput > 0) {
+                pointDiscount = pointsRedeemedInput * 100;
+                const discountedSubtotal = Math.max(0, subtotal - discount);
+                const maxRedeemPercent = Math.round(discountedSubtotal * 0.5);
+                pointDiscount = Math.min(pointDiscount, maxRedeemPercent);
+                pointDiscount = Math.min(pointDiscount, 100000);
+            }
+            
             const total = Math.max(0, subtotal - discount - pointDiscount);
 
             // Redirect to payment screen

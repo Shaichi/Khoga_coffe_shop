@@ -49,9 +49,9 @@ graph LR
     AdminHome --> HQReports[23. HQ Business Reports Screen]
     
     AdminHome --> CentralConfig[24. Central System Settings Screen]
-    CentralConfig --> BranchMgmt[45. Branch Management List Screen]
-    BranchMgmt --> AddBranch[46. Add Branch Form]
-    BranchMgmt --> EditBranch[47. Edit / Deactivate Branch Screen]
+    CentralConfig --> BranchMgmt[44. Branch Management List Screen]
+    BranchMgmt --> AddBranch[45. Add Branch Form]
+    BranchMgmt --> EditBranch[46. Edit / Deactivate Branch Screen]
 ```
 
 ### 3. Store Manager Console Screen Flow
@@ -59,19 +59,26 @@ A tablet or desktop dashboard for local store management overseeing logistics, i
 
 ```mermaid
 graph LR
-    ManagerHome[25. Manager Dashboard Home] --> StockView[26. Stock List & History View Screen]
-    StockView --> StockImport[27. Stock Import Form Screen]
-    StockView --> StockExport[28. Stock Export Form Screen]
-    StockView --> StockAudit[29. Stock Audit Screen]
+    ManagerHome[25. Manager Dashboard Home] --> StockList[26. Stock List Screen]
+    StockList --> StockHistory[26a. Stock History Log Screen]
+    StockList --> StockImport[27. Stock Import Form Screen]
+    StockList --> StockExport[28. Stock Export Form Screen]
+    StockList --> StockAudit[29. Stock Audit Screen]
     
     ManagerHome --> ShiftSchedule[30. Staff Shift Scheduler Screen]
+    ShiftSchedule --> ScheduleAdd[30a. Add Shift Screen]
+    ShiftSchedule --> ScheduleEdit[30b. Edit Shift Screen]
     ShiftSchedule --> AttendanceReport[31. Staff Attendance Report Screen]
     
-    ManagerHome --> BranchReports[32. Store Revenue & Order Reports Screen]
+    ManagerHome --> BranchReports[32. Store Revenue Reports Screen]
+    BranchReports --> ReportsExport[32a. Reports Export Modal]
+    
+    ManagerHome --> OrderHistory[48. Manager Order History Screen]
+    OrderHistory --> OrderDetail[49. Order Detail Screen]
     
     ManagerHome --> BranchSettings[33. Branch Local Settings Screen]
     
-    ManagerHome --> ViewBranchStaff[48. View Branch Staff List Screen]
+    ManagerHome --> ViewBranchStaff[47. View Branch Staff List Screen]
 ```
 
 ### 4. Cashier POS Terminal Screen Flow
@@ -90,10 +97,9 @@ graph LR
     PayModal -->|failure/timeout| PayFail[39. Payment Retry & Cancel Modal]
     
     CashierSale --> OrderHistory[40. Order History & Refund Request Screen]
-    OrderHistory --> AuthOverride[41. Manager Auth Override Screen]
-    AuthOverride --> RefundConfirm[Process Refund & Update Stock]
+    OrderHistory --> RefundConfirm[Process Refund & Update Stock]
     
-    CashierSale --> ShiftClose[42. Shift Reconciliation Close Shift Screen]
+    CashierSale --> ShiftClose[41. Shift Reconciliation Close Shift Screen]
 ```
 
 ### 5. Barista Queue Monitor Screen Flow
@@ -101,10 +107,10 @@ An interactive tablet console in the preparation zone to manage product lines, c
 
 ```mermaid
 graph LR
-    BaristaHome[43. Barista Queue Monitor Screen] --> UpdatePrep[Update Prep Status]
+    BaristaHome[42. Barista Queue Monitor Screen] --> UpdatePrep[Update Prep Status]
     UpdatePrep --> PrintLabel[Print Drink Label Sticker]
     
-    BaristaHome --> ReportIssue[44. Report Issue & Hold Order Screen]
+    BaristaHome --> ReportIssue[43. Report Issue & Hold Order Screen]
 ```
 
 ---
@@ -138,18 +144,22 @@ The system comprises the following screens across its user portals:
 | | | Edit Voucher Form | Form to modify voucher dates or total usage limits. |
 | 5 | Customer Management | Customer List & Loyalty History Screen | Customer registry for searching and registering membership details. |
 | 6 | Reports & Analytics | HQ Business Reports Screen | HQ dashboard comparing revenue, best-sellers, and store metrics. |
-| | | Store Revenue & Order Reports Screen | Local branch dashboard showing sales, shift closures, and cash reports. |
+| | | Store Revenue Reports Screen | Local branch dashboard showing retail sales, shift closures, and payment metrics. |
+| | | Reports Export Modal | Modal to export branch sales and inventory reports to PDF/Excel. |
 | 7 | System Configuration | Central System Settings Screen | Central configuration screen for tax rates and brand settings. |
 | | | Branch Local Settings Screen | Local settings screen for branch hardware and POS registers. |
 | | | Branch Management List Screen | Lists all store branches with status indicators for Admin management. |
 | | | Add Branch Form | Form for Admin to register a new store branch with name, address, and phone. |
 | | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
 | 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
-| | | Stock List & History View Screen | Displays branch inventory quantities and historical ledger logs. |
+| | | Stock List Screen | Displays branch inventory quantities and alert flags. |
+| | | Stock History Log Screen | Displays historical ledger logs of all stock imports/exports. |
 | | | Stock Import Form Screen | Form to record supplier inventory imports. |
 | | | Stock Export Form Screen | Form to log physical stock exports, wastage, or damage. |
 | | | Stock Audit Screen | Grid to count physical stock and reconcile discrepancies. |
 | 9 | Staff & Shift Management | Staff Shift Scheduler Screen | Calendar to schedule cashiers and baristas into shift blocks. |
+| | | Add Shift Screen | Form to schedule a cashier or barista to a new shift. |
+| | | Edit Shift Screen | Form to modify or delete an existing staff shift. |
 | | | Staff Attendance Report Screen | Logs check-in/out times and attendance details. |
 | | | View Branch Staff List Screen | Roster directory showing assigned branch staff contact details and operational roles. |
 | 10 | POS Sales & Billing | Shift Initiation Open Shift Screen | Prompts cashier for register ID and starting cash float. |
@@ -160,8 +170,9 @@ The system comprises the following screens across its user portals:
 | | | Payment Checkout Modal | Modal to process card, cash, or dynamic QR code payments. |
 | | | Payment Retry & Cancel Modal | Modal to handle payment failures and gateway timeouts. |
 | | | Order History & Refund Request Screen | Logs local terminal transactions for refund requests. |
-| | | Manager Auth Override Screen | Gate for manager credential validation during overrides. |
 | | | Shift Reconciliation Close Shift Screen | Prompts cashier for counted closing cash drawer float input. |
+| | | Manager Order History Screen | Displays list of orders processed at the branch with filters. |
+| | | Order Detail Screen | Displays item details, payment transactions, and fulfillment logs for a specific order, allowing managers, cashiers, and baristas to view it, and managers to cancel/refund pending orders directly. |
 | 11 | Order Prep & Queue | Barista Queue Monitor Screen | Live prep queue for Baristas showing order status columns. |
 | | | Report Issue & Hold Order Screen | Modal to flag drink prep issues to cashiers and managers. |
 ---
@@ -197,13 +208,17 @@ The table below specifies access control policies across all 48 screens:
 | 23. HQ Business Reports | **Yes** | No | No | No |
 | 24. Central System Settings | **Yes** | No | No | No |
 | 25. Manager Dashboard Home | No | **Yes** | No | No |
-| 26. Stock List & History View | **Yes** | **Yes** | No | No |
+| 26. Stock List Screen | **Yes** | **Yes** | No | No |
+| 26a. Stock History Log Screen | **Yes** | **Yes** | No | No |
 | 27. Stock Import Form | No | **Yes** | No | No |
 | 28. Stock Export Form | No | **Yes** | No | No |
 | 29. Stock Audit Screen | No | **Yes** | No | No |
 | 30. Staff Shift Scheduler | No | **Yes** | No | No |
+| 30a. Add Shift Screen | No | **Yes** | No | No |
+| 30b. Edit Shift Screen | No | **Yes** | No | No |
 | 31. Staff Attendance Report | No | **Yes** | No | No |
-| 32. Store Revenue & Order Reports | No | **Yes** | No | No |
+| 32. Store Revenue Reports Screen | No | **Yes** | No | No |
+| 32a. Reports Export Modal | No | **Yes** | No | No |
 | 33. Branch Local Settings | No | **Yes** | No | No |
 | 34. Shift Initiation Open Shift | No | No | **Yes** | No |
 | 35. POS Checkout Grid & Cart | No | No | **Yes** | No |
@@ -213,14 +228,15 @@ The table below specifies access control policies across all 48 screens:
 | 38. Payment Checkout Modal | No | No | **Yes** | No |
 | 39. Payment Retry & Cancel Modal | No | No | **Yes** | No |
 | 40. Order History & Refund Request | No | No | **Yes** | No |
-| 41. Manager Auth Override | **Yes** | **Yes** | No | No |
-| 42. Shift Reconciliation Close Shift | No | No | **Yes** | No |
-| 43. Barista Queue Monitor | No | Yes | Yes | **Yes** |
-| 44. Report Issue & Hold Order | No | No | No | **Yes** |
-| 45. Branch Management List | **Yes** | No | No | No |
-| 46. Add Branch Form | **Yes** | No | No | No |
-| 47. Edit / Deactivate Branch | **Yes** | No | No | No |
-| 48. View Branch Staff List Screen | No | **Yes** | No | No |
+| 41. Shift Reconciliation Close Shift | No | No | **Yes** | No |
+| 42. Barista Queue Monitor | No | Yes | Yes | **Yes** |
+| 43. Report Issue & Hold Order | No | No | No | **Yes** |
+| 44. Branch Management List | **Yes** | No | No | No |
+| 45. Add Branch Form | **Yes** | No | No | No |
+| 46. Edit / Deactivate Branch | **Yes** | No | No | No |
+| 47. View Branch Staff List Screen | No | **Yes** | No | No |
+| 48. Manager Order History Screen | No | **Yes** | No | No |
+| 49. Order Detail Screen | No | **Yes** | **Yes** | **Yes** |
 
 ---
 
@@ -235,7 +251,7 @@ These automated backend processes do not require direct human interaction:
 | 4 | Inventory Management | Low Stock Notification Engine | Evaluates active stock levels against thresholds in real-time, displaying alert badges and sending nightly aggregated emails at 22:00. |
 | 5 | POS Transaction | Auto-Close Abandoned Shifts | Nightly scheduler runs at 11:59 PM to automatically close active cashier shifts left open, logging discrepancies. |
 | 6 | POS Transaction | Order Timeout Handler | Automatically cancels orders that are in a pending payment state for more than 15 minutes. |
-| 7 | Delivery Partner Integration | Revenue Report Fetcher | Automatically fetch daily consolidated revenue and sales figures from delivery partner APIs at 23:00 to populate dashboards and reports. |
+
 
 ---
 
@@ -250,14 +266,19 @@ erDiagram
     STORE ||--o{ STOCK_ITEM : holds
     STORE ||--o{ STAFF_SCHEDULE : schedules
     STORE ||--o{ ATTENDANCE : tracks
+    STORE ||--o{ BRANCH_MENU_STATUS : "manages availability in"
     USER ||--o{ SHIFT_SESSION : opens
     USER ||--o{ STOCK_TRANSACTION : performs
     USER ||--o{ STAFF_SCHEDULE : scheduled
     USER ||--o{ ATTENDANCE : logs
+    USER ||--o{ ORDER_CANCELLATION : "executes"
+    USER ||--o{ AUDIT_LOG : "triggers"
     CATEGORY ||--o{ MENU_ITEM : contains
     MENU_ITEM ||--o{ OPTION_TOPPING : contains
     MENU_ITEM ||--o{ ORDER_ITEM : ordered
+    MENU_ITEM ||--o{ BRANCH_MENU_STATUS : "has local status at"
     ORDER ||--o{ ORDER_ITEM : contains
+    ORDER ||--o| ORDER_CANCELLATION : "is cancelled by"
     ORDER_ITEM ||--o{ ORDER_ITEM_TOPPING : customized-with
     OPTION_TOPPING ||--o{ ORDER_ITEM_TOPPING : applied
     CUSTOMER ||--o{ ORDER : places
@@ -277,9 +298,10 @@ erDiagram
 |---|---|---|
 | 1 | users | Stores login credentials and role-based permissions for employees (Admin, Manager, Cashier, Barista) within the system. |
 | 2 | categories | Represents main food and beverage groups to organize the product catalog. |
-| 3 | menu_items | Holds individual beverage and food listings, including catalog pricing, barcodes, availability status, and image references. |
+| 3 | menu_items | Holds individual beverage and food listings, including catalog pricing, barcodes, chain-wide active status, and image references. |
+| 3a | branch_menu_status | Manages item availability status independently per branch store. |
 | 4 | option_toppings | Stores customizable add-ons that can be added to menu items. |
-| 5 | customers | Registry of all enrolled loyalty membership customers, tracking membership tiers and accrued points. |
+| 5 | customers | Registry of all enrolled loyalty membership customers, tracking points. |
 | 6 | shift_sessions | Tracks active work sessions of POS cashier registers, including opening/closing float values. |
 | 7 | orders | Represents sales transactions, linking customers, shifts, payment statuses, and fulfillment statuses. |
 | 8 | order_items | Line items detailing the specific menu products and quantities purchased in an order. |
@@ -290,7 +312,8 @@ erDiagram
 | 13 | recipe_items | Defines the raw stock ingredient quantity consumed to produce one unit of a menu item or topping. |
 | 14 | stores | Represents physical store branches and geographic coffee shop locations. |
 | 15 | staff_schedules | Stores assigned employee work shifts, scheduled date blocks, and register terminals allocations. |
-| 16 | attendances | Logs employee clock-in/out timestamps, date records, and lateness metadata. |
+| 16 | attendances | Logs employee clock-in/out timestamps, date records, snapshot photos, and lateness metadata. |
+| 17 | audit_logs | Central security audit logs for critical database updates. |
 
 ---
 
@@ -301,218 +324,254 @@ Represents employees and system administrators.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the user. |
-| 2 | username | | VARCHAR(50) | Yes | Account login name, unique. |
-| 3 | password_hash | | VARCHAR(255) | Yes | Securely hashed password. |
-| 4 | role | | Enum | Yes | User role: `ADMIN`, `STORE_MANAGER`, `CASHIER`, `BARISTA`. |
-| 5 | full_name | | VARCHAR(100) | Yes | Employee full name. |
-| 6 | is_active | | BOOLEAN | Yes | Current status of the account. |
-| 7 | email | | VARCHAR(100) | Yes | Employee contact email address, unique. |
-| 8 | phone | | VARCHAR(20) | Yes | Employee contact phone number. |
-| 9 | store_id | | UUID | No | Foreign Key (FK) - references store/branch. Null for HQ Admin. |
-| 10 | created_at | | TIMESTAMP | Yes | Account creation timestamp. |
-| 11 | last_login_at | | TIMESTAMP | No | Timestamp of the most recent successful login. |
-| 12 | must_change_password | | BOOLEAN | Yes | Flag indicating if the user must reset their password upon next login. Default: true. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the user. |
+| 2 | username | | Text (Max 50 characters) | Yes | Account login name, unique. |
+| 3 | password_hash | | Text (Max 255 characters) | Yes | Securely hashed password. |
+| 4 | role | | Selection (Role: ADMIN, STORE_MANAGER, CASHIER, BARISTA) | Yes | User role. |
+| 5 | full_name | | Text (Max 100 characters) | Yes | Employee full name. |
+| 6 | is_active | | Yes/No (Boolean) | Yes | Current status of the account. |
+| 7 | email | | Text (Max 100 characters) | Yes | Employee contact email address, unique. |
+| 8 | phone | | Text (Max 20 characters) | Yes | Employee contact phone number, unique. |
+| 9 | store_id | | Unique ID (UUID) | No | Foreign Key (FK) - references store/branch. Null for HQ Admin. |
+| 10 | created_at | | Date & Time | Yes | Account creation timestamp. |
+| 11 | last_login_at | | Date & Time | No | Timestamp of the most recent successful login. |
+| 12 | must_change_password | | Yes/No (Boolean) | Yes | Flag indicating if the user must reset their password upon next login. Default: true. |
 
 ### 2. `CATEGORY`
 Main food and beverage groups.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the category. |
-| 2 | name | | VARCHAR(100) | Yes | Category name (e.g., "Coffee", "Tea", "Pastry"). |
-| 3 | description | | TEXT | No | Details of the category. |
-| 4 | is_active | | BOOLEAN | Yes | Visibility flag. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the category. |
+| 2 | name | | Text (Max 100 characters) | Yes | Category name (e.g., "Coffee", "Tea", "Pastry"). |
+| 3 | description | | Long Text | No | Details of the category. |
+| 4 | is_active | | Yes/No (Boolean) | Yes | Visibility flag. |
 
 ### 3. `MENU_ITEM`
 Individual food/beverage listings.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the menu item. |
-| 2 | category_id | | UUID | Yes | Foreign Key (FK) - references CATEGORY(id). |
-| 3 | name | | VARCHAR(100) | Yes | Name of the food or beverage (e.g., "Espresso", "Peach Tea"). |
-| 4 | price | | DECIMAL(12,2) | Yes | Base price. |
-| 5 | description | | TEXT | No | Description of the item. |
-| 6 | is_available | | BOOLEAN | Yes | Availability status in stock. |
-| 7 | image_url | | VARCHAR(255) | No | URL path to the product image file. |
-| 8 | barcode | | VARCHAR(50) | No | Barcode or SKU for POS barcode scanner lookup (unique). |
-| 9 | abbreviation | | VARCHAR(50) | Yes | Auto-generated abbreviation (e.g. cfd). |
-| 10 | created_at | | TIMESTAMP | Yes | Date and time the item was added to the catalog. |
-| 11 | is_deleted | | BOOLEAN | Yes | Soft-delete status flag. Default: false. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the menu item. |
+| 2 | category_id | | Unique ID (UUID) | No | Foreign Key (FK) - references CATEGORY(id). Nullable to set NULL on category deletion. |
+| 3 | name | | Text (Max 100 characters) | Yes | Name of the food or beverage (e.g., "Espresso", "Peach Tea"). |
+| 4 | price | | Decimal (Currency/VND) | Yes | Base price. |
+| 5 | description | | Long Text | No | Description of the item. |
+| 6 | is_active | | Yes/No (Boolean) | Yes | Visibility flag for entire chain, decided by HQ Admin (default: true). |
+| 7 | image_url | | Text (Max 255 characters) | No | URL path to the product image file. |
+| 8 | barcode | | Text (Max 50 characters) | No | Barcode or SKU for POS barcode scanner lookup (unique). |
+| 9 | abbreviation | | Text (Max 50 characters) | Yes | Auto-generated abbreviation (e.g. cfd). |
+| 10 | created_at | | Date & Time | Yes | Date and time the item was added to the catalog. |
+| 11 | is_deleted | | Yes/No (Boolean) | Yes | Soft-delete status flag. Default: false. |
+
+### 3a. `BRANCH_MENU_STATUS`
+Manages item availability status independently per branch store.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | store_id | x | Unique ID (UUID) | Yes | Foreign Key (FK) - references STORE(id). |
+| 2 | menu_item_id | x | Unique ID (UUID) | Yes | Foreign Key (FK) - references MENU_ITEM(id). |
+| 3 | is_available | | Yes/No (Boolean) | Yes | Availability status of menu item in this specific branch store. |
 
 ### 4. `OPTION_TOPPING`
 Add-ons like extra espresso shots, milk options, or tapioca pearls.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the option/topping. |
-| 2 | menu_item_id | | UUID | No | Foreign Key (FK) - references MENU_ITEM(id). Optional link, null for global toppings. |
-| 3 | name | | VARCHAR(100) | Yes | Option or topping name (e.g., "Extra Espresso Shot", "Oat Milk"). |
-| 4 | price | | DECIMAL(12,2) | Yes | Add-on cost in VND. |
-| 5 | is_active | | BOOLEAN | Yes | Active/inactive visibility status. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the option/topping. |
+| 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Optional link, null for global toppings. |
+| 3 | name | | Text (Max 100 characters) | Yes | Option or topping name (e.g., "Extra Espresso Shot", "Oat Milk"). |
+| 4 | price | | Decimal (Currency/VND) | Yes | Add-on cost in VND. |
+| 5 | is_active | | Yes/No (Boolean) | Yes | Active/inactive visibility status. |
 
 ### 5. `CUSTOMER`
 Registered membership details.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the customer. |
-| 2 | phone | | VARCHAR(20) | Yes | Primary lookup identifier (phone number, unique). |
-| 3 | full_name | | VARCHAR(100) | Yes | Customer's full name. |
-| 4 | points | | INTEGER | Yes | Loyalty points accrued. |
-| 5 | membership_tier | | Enum | Yes | Loyalty tier: `BRONZE`, `SILVER`, `GOLD`, `DIAMOND`. |
-| 6 | email | | VARCHAR(100) | No | Customer contact email. |
-| 7 | created_at | | TIMESTAMP | Yes | Date and time of membership enrollment. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the customer. |
+| 2 | phone | | Text (Max 20 characters) | Yes | Primary lookup identifier (phone number, unique). |
+| 3 | full_name | | Text (Max 100 characters) | Yes | Customer's full name. |
+| 4 | points | | Whole Number | Yes | Loyalty points accrued. |
+| 5 | email | | Text (Max 100 characters) | No | Customer contact email. |
+| 6 | created_at | | Date & Time | Yes | Date and time of membership enrollment. |
 
 ### 6. `SHIFT_SESSION`
 Tracks cashier sessions at POS terminals.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the shift session. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references store branch. |
-| 3 | user_id | | UUID | Yes | Foreign Key (FK) - references USER(id). The cashier who opened the shift. |
-| 4 | start_time | | TIMESTAMP | Yes | Timestamp when the shift started. |
-| 5 | end_time | | TIMESTAMP | No | Timestamp when the shift was closed. |
-| 6 | starting_cash | | DECIMAL(12,2) | Yes | Float cash amount in cash drawer at start. |
-| 7 | ending_cash | | DECIMAL(12,2) | No | Actual cash counted in drawer at close. |
-| 8 | status | | Enum | Yes | Shift session status: `OPEN`, `CLOSED`. |
-| 9 | pos_register_id | | VARCHAR(50) | Yes | Identifier of the POS terminal/register (e.g., "POS-01"). |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the shift session. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
+| 3 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who opened the shift. |
+| 4 | start_time | | Date & Time | Yes | Timestamp when the shift started. |
+| 5 | end_time | | Date & Time | No | Timestamp when the shift was closed. |
+| 6 | starting_cash | | Decimal (Currency/VND) | Yes | Float cash amount in cash drawer at start. |
+| 7 | ending_cash | | Decimal (Currency/VND) | No | Actual cash counted in drawer at close. |
+| 8 | status | | Selection (Shift Status: OPEN, CLOSED) | Yes | Shift session status. |
+| 9 | pos_register_id | | Text (Max 50 characters) | Yes | Identifier of the POS terminal/register (e.g., "POS-01"). |
 
 ### 7. `ORDER`
 Sales transactions.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the order. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references store branch. |
-| 3 | order_number | | VARCHAR(50) | Yes | Short 3-digit order sequence (e.g., `#001`), reset daily per branch. If the count exceeds 999, it continues to 1000 without truncating. |
-| 4 | shift_session_id | | UUID | No | Foreign Key (FK) - references SHIFT_SESSION(id). Null for online delivery orders. |
-| 5 | customer_id | | UUID | No | Foreign Key (FK) - references CUSTOMER(id). Null for guest orders. |
-| 6 | voucher_id | | UUID | No | Foreign Key (FK) - references VOUCHER(id). Null if no discount applied. |
-| 7 | order_type | | Enum | Yes | Order type: `DINE_IN`, `TAKE_AWAY`, `DELIVERY`. |
-| 8 | subtotal | | DECIMAL(12,2) | Yes | Total price before discounts. |
-| 9 | discount | | DECIMAL(12,2) | Yes | Total discount amount subtracted. |
-| 10 | tax_amount | | DECIMAL(12,2) | Yes | The VAT amount calculated for this order based on global config. |
-| 11 | total | | DECIMAL(12,2) | Yes | Net payable amount. |
-| 12 | payment_method | | Enum | Yes | Payment method: `CASH`, `CARD`, `VIETQR`, `SHOPEEFOOD`. |
-| 13 | payment_status | | Enum | Yes | Payment status: `PENDING`, `COMPLETED`, `FAILED`, `REFUNDED`. |
-| 14 | order_status | | Enum | Yes | Fulfillment status: `PENDING`, `PREPARING`, `HOLD`, `READY`, `COMPLETED`, `CANCELLED`. |
-| 15 | created_at | | TIMESTAMP | Yes | Date and time the order was placed. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the order. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
+| 3 | order_number | | Text (Max 50 characters) | Yes | Short 3-digit order sequence (e.g., `#001`), reset daily per branch. If the count exceeds 999, it continues to 1000 without truncating. |
+| 4 | shift_session_id | | Unique ID (UUID) | No | Foreign Key (FK) - references SHIFT_SESSION(id). Null for online delivery orders. |
+| 5 | customer_id | | Unique ID (UUID) | No | Foreign Key (FK) - references CUSTOMER(id). Null for guest orders. |
+| 6 | voucher_id | | Unique ID (UUID) | No | Foreign Key (FK) - references VOUCHER(id). Null if no discount applied. |
+| 7 | order_type | | Selection (Order Type: DINE_IN, TAKE_AWAY, DELIVERY) | Yes | Order type. |
+| 8 | subtotal | | Decimal (Currency/VND) | Yes | Total price before discounts. |
+| 9 | discount | | Decimal (Currency/VND) | Yes | Total discount amount subtracted. |
+| 10 | tax_amount | | Decimal (Currency/VND) | Yes | The VAT amount calculated for this order based on global config. |
+| 11 | total | | Decimal (Currency/VND) | Yes | Net payable amount. |
+| 12 | payment_method | | Selection (Payment Method: CASH, CARD, VIETQR) | Yes | Payment method. |
+| 13 | payment_status | | Selection (Payment Status: PENDING, COMPLETED, FAILED, REFUNDED) | Yes | Payment status. |
+| 14 | order_status | | Selection (Fulfillment Status: PENDING, PREPARING, HOLD, READY, COMPLETED, CANCELLED) | Yes | Fulfillment status. |
+| 15 | created_at | | Date & Time | Yes | Date and time the order was placed. |
+
+### 7a. `ORDER_CANCELLATION`
+Fulfillment cancellation and refund audits logs.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the cancellation. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | cashier_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who cancelled. |
+| 4 | reason | | Text (Max 100 characters) | Yes | Reason string. |
+| 5 | notes | | Long Text | Yes | Detailed comments. |
+| 6 | created_at | | Date & Time | Yes | Timestamp of cancellation. |
 
 ### 8. `ORDER_ITEM`
 Line items in an order.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the order line item. |
-| 2 | order_id | | UUID | Yes | Foreign Key (FK) - references ORDER(id). |
-| 3 | menu_item_id | | UUID | Yes | Foreign Key (FK) - references MENU_ITEM(id). |
-| 4 | quantity | | INTEGER | Yes | Quantity purchased. |
-| 5 | unit_price | | DECIMAL(12,2) | Yes | Price of the item at the time of purchase. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the order line item. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | menu_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references MENU_ITEM(id). |
+| 4 | quantity | | Whole Number | Yes | Quantity purchased. |
+| 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the item at the time of purchase. |
 
 ### 9. `ORDER_ITEM_TOPPING`
 Toppings attached to a specific order line item.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the order item topping. |
-| 2 | order_item_id | | UUID | Yes | Foreign Key (FK) - references ORDER_ITEM(id). |
-| 3 | topping_id | | UUID | Yes | Foreign Key (FK) - references OPTION_TOPPING(id). |
-| 4 | quantity | | INTEGER | Yes | Quantity of the topping applied. |
-| 5 | unit_price | | DECIMAL(12,2) | Yes | Price of the topping at the time of purchase. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the order item topping. |
+| 2 | order_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER_ITEM(id). |
+| 3 | topping_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references OPTION_TOPPING(id). |
+| 4 | quantity | | Whole Number | Yes | Quantity of the topping applied. |
+| 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the topping at the time of purchase. |
 
 ### 10. `STOCK_ITEM`
 Raw inventory tracking (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the stock item. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references store branch. |
-| 3 | name | | VARCHAR(100) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
-| 4 | unit | | VARCHAR(20) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
-| 5 | current_quantity | | DECIMAL(12,4) | Yes | Remaining physical amount in stock. |
-| 6 | min_alert_threshold | | DECIMAL(12,4) | Yes | Threshold triggering low stock alert. |
-| 7 | category | | VARCHAR(50) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock item. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
+| 3 | name | | Text (Max 100 characters) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
+| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
+| 5 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
+| 6 | min_alert_threshold | | Decimal (Quantity) | Yes | Threshold triggering low stock alert. |
+| 7 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
 
 ### 11. `STOCK_TRANSACTION`
 Historical ledger of stock modifications.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the stock transaction. |
-| 2 | stock_item_id | | UUID | Yes | Foreign Key (FK) - references STOCK_ITEM(id). |
-| 3 | manager_id | | UUID | No | Foreign Key (FK) - references USER(id). The manager who logged it. Null for system-triggered automated recipe deductions. |
-| 4 | transaction_type | | Enum | Yes | Transaction type: `IMPORT`, `EXPORT`, `AUDIT_ADJUSTMENT`. |
-| 5 | quantity | | DECIMAL(12,4) | Yes | Volume of stock moved. |
-| 6 | reason | | TEXT | No | Reason details (e.g., "Weekly Restock", "Soured Milk Disposal"). |
-| 7 | created_at | | TIMESTAMP | Yes | Date and time of the transaction. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock transaction. |
+| 2 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id). |
+| 3 | manager_id | | Unique ID (UUID) | No | Foreign Key (FK) - references USER(id). The manager who logged it. Null for system-triggered automated recipe deductions. |
+| 4 | transaction_type | | Selection (Transaction Type: IMPORT, EXPORT, AUDIT_ADJUSTMENT) | Yes | Transaction type. |
+| 5 | quantity | | Decimal (Quantity) | Yes | Volume of stock moved. |
+| 6 | reason | | Long Text | No | Reason details (e.g., "Weekly Restock", "Soured Milk Disposal"). |
+| 7 | created_at | | Date & Time | Yes | Date and time of the transaction. |
 
 ### 12. `VOUCHER`
 Marketing and promotional discount codes.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the voucher. |
-| 2 | code | | VARCHAR(50) | Yes | Unique alphanumeric code (e.g., "COFFEE20"). |
-| 3 | discount_type | | Enum | Yes | Discount type: `PERCENTAGE`, `FIXED_AMOUNT`. |
-| 4 | discount_value | | DECIMAL(12,2) | Yes | Value of discount (percentage or flat amount). |
-| 5 | min_order_value | | DECIMAL(12,2) | Yes | Minimum subtotal value required to apply voucher. |
-| 6 | start_date | | TIMESTAMP | Yes | Voucher validity start date and time. |
-| 7 | end_date | | TIMESTAMP | Yes | Voucher expiration date and time. |
-| 8 | is_active | | BOOLEAN | Yes | Active status flag. |
-| 9 | usage_limit_per_customer | | INTEGER | No | Maximum usage count per customer (null for unlimited). |
-| 10 | total_usage_count | | INTEGER | Yes | Total redemptions count across all customers. Default: 0. |
-| 11 | max_total_uses | | INTEGER | No | Overall maximum total uses cap (null for unlimited). |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the voucher. |
+| 2 | code | | Text (Max 50 characters) | Yes | Unique alphanumeric code (e.g., "COFFEE20"). |
+| 3 | discount_type | | Selection (Discount Type: PERCENTAGE, FIXED_AMOUNT) | Yes | Discount type. |
+| 4 | discount_value | | Decimal (Currency/VND) | Yes | Value of discount (percentage or flat amount). |
+| 5 | min_order_value | | Decimal (Currency/VND) | Yes | Minimum subtotal value required to apply voucher. |
+| 6 | start_date | | Date & Time | Yes | Voucher validity start date and time. |
+| 7 | end_date | | Date & Time | Yes | Voucher expiration date and time. |
+| 8 | is_active | | Yes/No (Boolean) | Yes | Active status flag. |
+| 9 | usage_limit_per_customer | | Whole Number | No | Maximum usage count per customer (null for unlimited). |
+| 10 | total_usage_count | | Whole Number | Yes | Total redemptions count across all customers. Default: 0. |
+| 11 | max_total_uses | | Whole Number | No | Overall maximum total uses cap (null for unlimited). |
+| 12 | max_discount_amount | | Decimal (Currency/VND) | No | Maximum discount amount cap for percentage vouchers. |
 
 ### 13. `RECIPE_ITEM`
 Defines the ingredients/stock consumed to produce menu items and toppings.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the recipe item. |
-| 2 | menu_item_id | | UUID | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
-| 3 | option_topping_id | | UUID | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
-| 4 | stock_item_id | | UUID | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
-| 5 | quantity_required | | DECIMAL(12,4) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the recipe item. |
+| 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
+| 3 | option_topping_id | | Unique ID (UUID) | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
+| 4 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
+| 5 | quantity_required | | Decimal (Quantity) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
 
 ### 14. `STORE`
 Represents physical store branches and geographic coffee shop locations.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the store branch. |
-| 2 | name | | VARCHAR(100) | Yes | Store/Branch name (e.g. "Nguyen Du Branch"). |
-| 3 | address | | VARCHAR(255) | Yes | Physical address of the branch store. |
-| 4 | phone | | VARCHAR(20) | Yes | Branch contact phone number. |
-| 5 | is_active | | BOOLEAN | Yes | Flag indicating if store is active. Default: true. |
-| 6 | created_at | | TIMESTAMP | Yes | Timestamp of store registration. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the store branch. |
+| 2 | name | | Text (Max 100 characters) | Yes | Store/Branch name (e.g. "Nguyen Du Branch"). |
+| 3 | address | | Text (Max 255 characters) | Yes | Physical address of the branch store. |
+| 4 | phone | | Text (Max 20 characters) | Yes | Branch contact phone number. |
+| 5 | is_active | | Yes/No (Boolean) | Yes | Flag indicating if store is active. Default: true. |
+| 6 | created_at | | Date & Time | Yes | Timestamp of store registration. |
 
 ### 15. `STAFF_SCHEDULE`
 Stores assigned employee work shifts, scheduled date blocks, and register terminals allocations.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the schedule slot. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references STORE(id). Scopes schedule to branch. |
-| 3 | user_id | | UUID | Yes | Foreign Key (FK) - references USER(id). The scheduled employee. |
-| 4 | shift_date | | DATE | Yes | Date of the scheduled shift. |
-| 5 | shift_type | | Enum | Yes | Shift type block: `MORNING`, `AFTERNOON`, `FULL_DAY`. |
-| 6 | pos_register_id | | VARCHAR(50) | No | Reference to register terminal ID, if register allocated. |
-| 7 | created_at | | TIMESTAMP | Yes | Timestamp when schedule slot was created. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the schedule slot. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STORE(id). Scopes schedule to branch. |
+| 3 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The scheduled employee. |
+| 4 | shift_date | | Date | Yes | Date of the scheduled shift. |
+| 5 | shift_type | | Selection (Shift Block: MORNING, AFTERNOON, FULL_DAY) | Yes | Shift type block. |
+| 6 | pos_register_id | | Text (Max 50 characters) | No | Reference to register terminal ID, if register allocated. |
+| 7 | created_at | | Date & Time | Yes | Timestamp when schedule slot was created. |
 
 ### 16. `ATTENDANCE`
 Logs employee clock-in/out timestamps, date records, and lateness metadata.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
-| 1 | id | x | UUID | Yes | Unique identifier for the attendance slot. |
-| 2 | store_id | | UUID | Yes | Foreign Key (FK) - references STORE(id). Scopes attendance to branch. |
-| 3 | user_id | | UUID | Yes | Foreign Key (FK) - references USER(id). The employee user profile. |
-| 4 | shift_date | | DATE | Yes | Date of the recorded attendance. |
-| 5 | check_in_at | | TIMESTAMP | No | Actual clock-in timestamp (null if absent). |
-| 6 | check_out_at | | TIMESTAMP | No | Actual clock-out timestamp (null if absent or active shift). |
-| 7 | lateness_minutes | | INTEGER | Yes | Calculated late check-in minutes relative to shift. Default: 0. |
-| 8 | status | | Enum | Yes | Attendance status: `ON_TIME`, `LATE`, `ABSENT`. Default: `ABSENT`. |
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the attendance slot. |
+| 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STORE(id). Scopes attendance to branch. |
+| 3 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The employee user profile. |
+| 4 | shift_date | | Date | Yes | Date of the recorded attendance. |
+| 5 | check_in_at | | Date & Time | No | Actual clock-in timestamp (null if absent). |
+| 6 | check_out_at | | Date & Time | No | Actual clock-out timestamp (null if absent or active shift). |
+| 7 | lateness_minutes | | Whole Number | Yes | Calculated late check-in minutes relative to shift. Default: 0. |
+| 8 | status | | Selection (Attendance Status: ON_TIME, LATE, ABSENT) | Yes | Attendance status. |
+| 9 | photo_url | | Text (Max 255 characters) | No | URL to staff check-in camera snapshot photo. |
+
+### 17. `AUDIT_LOG`
+Central security audit logs for critical database updates.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the audit log. |
+| 2 | user_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). |
+| 3 | action_type | | Selection (Action Type: CREATE, UPDATE, DELETE) | Yes | Action type. |
+| 4 | entity_affected | | Text (Max 100 characters) | Yes | Affected database table name. |
+| 5 | old_value_json | | Long Text | No | Previous state of record in JSON format. |
+| 6 | new_value_json | | Long Text | No | Updated state of record in JSON format. |
+| 7 | created_at | | Date & Time | Yes | Timestamp of log event. |
+
 

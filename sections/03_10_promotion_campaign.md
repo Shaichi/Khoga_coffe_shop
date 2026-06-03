@@ -1,4 +1,4 @@
-﻿# 3.10 Promotion & Campaign Management
+# 3.10 Promotion & Campaign Management
 
 This section details specifications for managing discount codes and promotional campaigns.
 
@@ -61,8 +61,9 @@ This section details specifications for managing discount codes and promotional 
 | HQ Admin Portal > Promotions & Vouchers > Add Voucher                           |
 +---------------------------------------------------------------------------------+
 |  Voucher Code: [ COFFEE20       ]   Discount Type: [ Percentage     ] [v]       |
-|  Discount Val: [ 20             ]   Min Order Val: [ 50,000 VND       ]       |
-|  Start Date:   [ 2026-05-24     ]   End Date:      [ 2026-06-30       ]       |
+|  Discount Val: [ 20             ]   Max Disc Amount: [ 30,000 VND     ]         |
+|  Min Order Val: [ 50,000 VND       ]   Start Date:      [ 2026-05-24     ]      |
+|  End Date:     [ 2026-06-30       ]                                             |
 |  Usage Limit per Customer: [ 1  ]   Max Total Uses: [ 100             ]       |
 |                                                                                 |
 |  Description:                                                                   |
@@ -80,9 +81,10 @@ This section details specifications for managing discount codes and promotional 
 | 1 | Voucher Code | Text | Yes | 50 | Alphanumeric code (e.g. "COFFEE20"). |
 | 2 | Discount Type | Dropdown | Yes | | Discount type (`Percentage`, `Fixed Amount`). |
 | 3 | Discount Val | Text | Yes | 10 | Percentage discount or flat VND value. |
-| 4 | Min Order Val | Text | Yes | 15 | Minimum order subtotal threshold in VND. |
-| 5 | Start Date | Date | Yes | | Validity start timestamp. |
-| 6 | End Date | Date | Yes | | Validity expiration timestamp. |
+| 4 | Max Disc Amount | Text | No | 15 | Maximum discount amount cap in VND. Mandatory if Discount Type = Percentage. |
+| 5 | Min Order Val | Text | Yes | 15 | Minimum order subtotal threshold in VND. |
+| 6 | Start Date | Date | Yes | | Validity start timestamp. |
+| 7 | End Date | Date | Yes | | Validity expiration timestamp. |
 | 7 | Usage Limit | Text | No | 5 | Max usages per customer profile (guest checkout blocked if set). |
 | 8 | Max Total Uses | Text | No | 5 | Overall maximum total uses cap (null for unlimited). |
 | 9 | Description | Text | No | 250 | Promotion description text details. |
@@ -129,8 +131,9 @@ This section details specifications for managing discount codes and promotional 
 | HQ Admin Portal > Promotions & Vouchers > Edit Voucher                          |
 +---------------------------------------------------------------------------------+
 |  Voucher Code: COFFEE20 (Read-only) Discount Type: [ Percentage     ] [v]       |
-|  Discount Val: [ 20             ]   Min Order Val: [ 50,000 VND       ]       |
-|  Start Date:   [ 2026-05-24     ]   End Date:      [ 2026-06-30       ]       |
+|  Discount Val: [ 20             ]   Max Disc Amount: [ 30,000 VND     ]         |
+|  Min Order Val: [ 50,000 VND       ]   Start Date:      [ 2026-05-24     ]      |
+|  End Date:     [ 2026-06-30       ]                                             |
 |  Usage Limit per Customer: [ 1  ]   Max Total Uses: [ 100             ]       |
 |                                                                                 |
 |                                [ Save Changes ]   [ Deactivate ]   [ Cancel ]   |
@@ -143,9 +146,10 @@ This section details specifications for managing discount codes and promotional 
 | 1 | Voucher Code | Text | | | Read-only. Alphanumeric code — cannot be modified after creation (BR-40). |
 | 2 | Discount Type | Dropdown | Yes | | Discount type (`Percentage`, `Fixed Amount`). |
 | 3 | Discount Val | Text | Yes | 10 | Updated percentage discount or flat VND value. |
-| 4 | Min Order Val | Text | Yes | 15 | Updated minimum order subtotal threshold in VND. |
-| 5 | Start Date | Date | Yes | | Updated validity start date. |
-| 6 | End Date | Date | Yes | | Updated validity expiration date. Must be after Start Date. |
+| 4 | Max Disc Amount | Text | No | 15 | Updated maximum discount amount cap in VND. |
+| 5 | Min Order Val | Text | Yes | 15 | Updated minimum order subtotal threshold in VND. |
+| 6 | Start Date | Date | Yes | | Updated validity start date. |
+| 7 | End Date | Date | Yes | | Updated validity expiration date. Must be after Start Date. |
 | 7 | Usage Limit per Customer | Text | No | 5 | Updated max usages per customer. |
 | 8 | Max Total Uses | Text | No | 5 | Updated overall maximum total uses cap. |
 | 9 | Save Changes | Button | | | Saves updated voucher values. |
@@ -179,5 +183,17 @@ This section details specifications for managing discount codes and promotional 
 |---|---|
 | BR-40 | Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | Deactivating a voucher immediately stops all checkout redemptions. |
+| BR-42 | **Voucher Percentage Discount Cap**: When `discount_type = PERCENTAGE` and `max_discount_amount` is configured, the discount amount applied at checkout is capped at this limit: `applied_discount = min(subtotal * discount_value / 100, max_discount_amount)`. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed as follows: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive, and voucher is not deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
+
+---
+
+## 3.10.4 Loyalty Points Program Configuration
+
+The loyalty program parameters are managed globally by the HQ Admin via central configuration parameters:
+
+- **LOYALTY_ACCRUAL_PERCENTAGE**: The percentage of the Net Total Payable value of the invoice earned as points. E.g., `LOYALTY_ACCRUAL_PERCENTAGE = 1.0%` means a customer earns 1 point for every 10,000 VND spent (10,000 * 1% = 1 pt).
+- **LOYALTY_MAX_ACC_POINTS_PER_ORDER**: The maximum points limit that a customer can accrue in a single order transaction (e.g. capped at 100 points per invoice).
+- **LOYALTY_MAX_REDEMPTION_PERCENTAGE**: The maximum percentage of the order subtotal that can be paid using redeemed points (e.g. customer cannot pay more than 50% of the invoice using loyalty points).
+- **LOYALTY_MAX_REDEMPTION_AMOUNT_PER_ORDER**: The maximum absolute cash discount in VND that can be redeemed using points per order (e.g. capped at 100,000 VND discount).
 
