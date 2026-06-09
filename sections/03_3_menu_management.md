@@ -2,6 +2,8 @@
 
 This section details specifications for viewing, adding, updating, and deactivating menu items and optional toppings.
 
+> **Recipe ingredients source:** When a menu item's recipe (UC-18) is defined, its ingredients are selected from the chain-wide **Raw Material Master** maintained by the Business Admin (see §3.5.0 / UC-74). Recipes reference master materials by code; they do not define new materials.
+
 ---
 
 ## 3.3.1 F13 - View Menu Item List / UC-15 View Menu & Categories List

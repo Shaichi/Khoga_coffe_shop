@@ -41,7 +41,8 @@ graph TD
     *   **Tài khoản trên hệ thống:** Chỉ được cấp tài khoản **Xem báo cáo (Read-Only / Dashboard Viewer)**. Họ sử dụng tài khoản này để truy cập HQ Dashboard xem biểu đồ doanh số thực tế, tỷ suất lợi nhuận toàn chuỗi, so sánh hiệu quả giữa các chi nhánh, và xuất file báo cáo tổng hợp phục vụ cho các cuộc họp quản trị.
 *   **Bộ phận Vận hành & Cung ứng (Ops & Supply Chain - `businessadmin`):**
     *   Quản lý danh mục thực đơn toàn chuỗi, thiết lập giá bán cơ sở, xây dựng định lượng công thức món (Recipe).
-    *   Giám sát tồn kho tổng và điều phối nguồn nguyên vật liệu cung ứng cho các chi nhánh.
+    *   Khai báo và chuẩn hóa **danh mục nguyên liệu dùng chung toàn chuỗi** (master list: tên, đơn vị tính, hạn mức tối thiểu gợi ý) — là nguồn cho công thức món và cho dropdown nhập/xuất kho của chi nhánh.
+    *   **Lưu ý mô hình:** Hệ thống **không có kho tổng**. Mỗi chi nhánh nhập nguyên vật liệu **trực tiếp từ nhà cung cấp bên thứ ba** (`UC-32`) và tự quản lý số lượng tồn của mình; Bộ phận Cung ứng chỉ chuẩn hóa danh mục NVL và theo dõi gián tiếp qua báo cáo, không điều chuyển tồn kho HQ→chi nhánh trên hệ thống.
 *   **Bộ phận Marketing & CRM (`businessadmin`):**
     *   Thiết lập các chương trình khuyến mãi, quản lý và phát hành Vouchers toàn hệ thống.
     *   Quản lý danh sách thành viên thân thiết, cấu hình cơ chế tích điểm và khấu trừ điểm loyalty.

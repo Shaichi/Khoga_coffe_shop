@@ -178,7 +178,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 49 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
+The table below specifies access control policies across all 50 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
 
 | Screen Name | ceoviewer | businessadmin | ssadmin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -237,8 +237,9 @@ The table below specifies access control policies across all 49 screens. The sin
 | 47. View Branch Staff List Screen | No | No | No | **Yes** | No | No |
 | 48. Manager Order History Screen | No | No | No | **Yes** | No | No |
 | 49. Order Detail Screen | No | No | No | **Yes** | **Yes** | **Yes** |
+| 50. Raw Material Master | No | **Yes** | No | No | No | No |
 
-> **Note on HQ inventory access:** Under the §3.2.0 RBAC model, branch inventory (Stock List/History/Import/Export/Audit) is owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens. Chain-wide stock visibility is delivered to `ceoviewer` through consolidated HQ reports instead.
+> **Note on inventory access (two layers):** **Branch stock quantities** (Stock List/History/Import/Export/Audit, screens 26–29) are owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens; chain-wide stock visibility reaches `ceoviewer` only through consolidated HQ reports. Separately, the **Raw Material Master** (screen 50, UC-74) is a chain-wide *catalog* — defining which materials exist — owned by the `businessadmin`; it carries no per-branch quantities. There is no central warehouse.
 
 ---
 

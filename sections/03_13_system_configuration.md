@@ -294,7 +294,7 @@ This section specifies the branch lifecycle management functionality available e
 |---|---|
 | **Actor** | System Admin |
 | **Description** | Registers a new store branch in the system. |
-| **Precondition** | System Admin is logged in. Total active branches is less than the maximum capacity (5). |
+| **Precondition** | System Admin is logged in. Total active branches is less than the configured maximum capacity (`MAX_ACTIVE_BRANCHES`). |
 | **Trigger** | System Admin clicks "+ Add Branch" on Branch List screen. |
 | **Post-Condition** | New branch is created with `is_active = true` and appears in the branch list. |
 
@@ -307,11 +307,11 @@ This section specifies the branch lifecycle management functionality available e
 
 #### Alternative Flows
 ##### AT1: Maximum Branch Capacity Reached
-- **Trigger**: At step 2, the number of active branches already equals 5.
+- **Trigger**: At step 2, the number of active branches already equals the configured `MAX_ACTIVE_BRANCHES` limit.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one."` (MSG16) |
+| 2.1 | Portal | Displays error message: `"Maximum branch capacity reached. Please deactivate an existing branch or increase the limit before adding a new one."` (MSG16) |
 
 ##### AT2: Validation Errors
 - **Trigger**: At step 2, input validation fails.

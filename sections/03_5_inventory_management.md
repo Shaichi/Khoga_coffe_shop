@@ -1,6 +1,85 @@
 # 3.5 Inventory & Stock Management
 
-This section details specifications for viewing inventory, managing imports/exports, and reconciling discrepancies.
+This section details specifications for the chain-wide raw-material master catalog, viewing inventory, managing imports/exports, and reconciling discrepancies.
+
+> **Scope note (two layers):** The **Raw Material Master** (§3.5.0, UC-74) is a chain-wide catalog owned by the **Business Admin** at HQ — it defines *which* raw materials exist (name, unit, code). The **branch stock** screens (§3.5.1–§3.5.5) are owned by the **Store Manager** and track *quantities* of those materials per branch. There is **no central warehouse**: branches import directly from third-party suppliers (UC-32). Branches cannot create new material types — they only transact quantities of materials defined in the master.
+
+---
+
+## 3.5.0 F22.1 - Manage Raw Material Master / UC-74 Manage Raw Material Master
+
+### 3.5.0.1 Screen Mock-up (Desktop Landscape)
+```
++-------------------------------------------------------------+
+|   Raw Material Master (Chain-wide)      [ + Add Material ]   |
+|                                                             |
+|  Search: [ milk                                       ]     |
+|                                                             |
+|  +--------+----------------------+--------+--------+------+ |
+|  | Code   | Material Name        | Unit   | Min(*) | Stat | |
+|  +--------+----------------------+--------+--------+------+ |
+|  | STK-01 | Coffee Beans         | kg     | 5.0    | Active| |
+|  | STK-02 | Fresh Milk           | liter  | 6.0    | Active| |
+|  | STK-03 | Peach Syrup          | ml     | 500    | Active| |
+|  +--------+----------------------+--------+--------+------+ |
+|  (*) Suggested minimum threshold (default for new branches) |
++-------------------------------------------------------------+
+```
+
+#### Table 3-23a: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Search | Text | No | 50 | Filter the master list by material name or code. |
+| 2 | Add Material | Button | | | Opens the Add/Edit Material form. |
+| 3 | Material Code | Text | Yes | 20 | Unique chain-wide identifier (e.g. `STK-01`). Immutable after creation. |
+| 4 | Material Name | Text | Yes | 100 | Display name of the raw material / ingredient. |
+| 5 | Unit | Dropdown | Yes | | Unit of measure (`kg`, `liter`, `ml`, `gram`, `piece`, ...). Locked once any stock transaction references the material. |
+| 6 | Suggested Minimum | Text | No | 10 | Default low-stock threshold proposed to branches (each branch may override locally). |
+| 7 | Status | Toggle | | | `Active` / `Inactive` (soft delete). |
+
+### 3.5.0.2 Use Case Description
+
+| Use Case ID | UC-74 | Use Case Name | Manage Raw Material Master |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-09 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Business Admin |
+| **Description** | Maintains the chain-wide catalog of raw materials/ingredients (the canonical source for recipe formulations and for the item dropdowns on every branch's Import/Export Stock screens). Supports view, add, edit, and deactivate. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin opens the Raw Material Master screen. |
+| **Post-Condition** | The master catalog is updated; changes propagate to recipe selection and branch stock dropdowns. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Business Admin | Opens Raw Material Master and reviews the existing catalog. |
+| 2 | Business Admin | Clicks "+ Add Material" (or edits a row): enters Code, Name, Unit, and optional Suggested Minimum. |
+| 3 | Portal | Validates that the Material Code is unique chain-wide and the unit is selected. |
+| 4 | Portal | Saves the master record; it becomes selectable in recipes (§3.3) and branch Import/Export dropdowns (UC-32/33). |
+
+#### Alternative Flows
+##### AT1: Duplicate Material Code
+- **Trigger**: At step 3, the entered Material Code already exists.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 3.1 | Portal | Displays error message: `"A raw material with this code already exists."` |
+
+##### AT2: Deactivate a Referenced Material
+- **Trigger**: Business Admin sets a material to `Inactive` while it is still linked to active recipes or has branch stock on hand.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1 | Portal | Soft-deletes the material (sets `Inactive`): it is hidden from new recipe/import selections but retained for history. Displays an info notice listing the active recipes still referencing it, prompting the Business Admin to update those recipes. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-63 | **Raw Material Master Ownership**: The raw-material catalog is chain-wide and maintained exclusively by the `businessadmin`. Branch `STOCK_ITEM` records reference a master material by foreign key; Store Managers may transact quantities (UC-32/33/34) but cannot create, rename, or delete material types. |
+| BR-64 | **Raw Material Soft-Delete**: Raw materials are never hard-deleted — they are set `Inactive` to preserve recipe links and historical stock transactions. An inactive material is hidden from new recipe and import selections but remains visible in history and existing branch stock. |
 
 ---
 

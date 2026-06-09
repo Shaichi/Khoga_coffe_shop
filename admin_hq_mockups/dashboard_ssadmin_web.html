@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Admin Dashboard - HQ Portal</title>
+    <!-- Skeleton only (no functional code). Scope per SRS §3.1: ssadmin = users, central config (VietQR/OTP/MAX_ACTIVE_BRANCHES), branch lifecycle. -->
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #fcfaf7; color: #2c1a11; margin: 0; padding: 0; }
+        .wrapper { display: flex; min-height: 100vh; flex-direction: row; }
+        .sidebar { width: 240px; background: #3d2314; color: white; padding: 25px 15px; box-sizing: border-box; }
+        .sidebar h2 { font-size: 20px; margin-bottom: 8px; text-align: center; color: #c89d7c; }
+        .sidebar .role-tag { text-align:center; font-size:12px; color:#9c8579; margin-bottom: 25px; }
+        .sidebar a { display: block; color: #d1c4b9; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-bottom: 5px; }
+        .sidebar a.active, .sidebar a:hover { background: #5c3826; color: white; }
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 1px solid #eaddd3; padding-bottom: 15px; }
+        .header h1 { font-size: 24px; margin: 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 35px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #eaddd3; }
+        .stat-card h3 { font-size: 13px; color: #8c766c; text-transform: uppercase; margin: 0 0 10px 0; }
+        .stat-card p { font-size: 28px; font-weight: 700; margin: 0; color: #3d2314; }
+        .ok { color:#2e7d32; } .warn { color:#cf6679; }
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; padding: 15px; }
+            .sidebar-menu { display: flex; flex-wrap: wrap; gap: 5px; }
+            .sidebar a { padding: 8px 12px; font-size: 14px; }
+            .main-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h2>Khoga Café HQ</h2>
+            <div class="role-tag">System Admin (IT)</div>
+            <div class="sidebar-menu">
+                <a href="dashboard_ssadmin_web.html" class="active">Trang chủ</a>
+                <a href="users_web.html">Nhân sự &amp; Tài khoản</a>
+                <a href="branches_web.html">Chi nhánh</a>
+                <a href="settings_web.html">Cấu hình hệ thống</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1>Quản Trị Hệ Thống</h1>
+                <span style="font-weight: 600; color: #8c766c;">Xin chào, System Admin</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Tài khoản hoạt động</h3>
+                    <p>37 tài khoản</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Chi nhánh (active / giới hạn)</h3>
+                    <p>4 / <span title="MAX_ACTIVE_BRANCHES">8</span></p>
+                </div>
+                <div class="stat-card">
+                    <h3>Cổng VietQR</h3>
+                    <p class="ok">● Kết nối</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Dịch vụ Email/SMS OTP</h3>
+                    <p class="ok">● Hoạt động</p>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #eaddd3;">
+                <h3 style="margin-top: 0; color: #3d2314; margin-bottom: 16px;">Tác vụ quản trị</h3>
+                <ul style="padding-left: 0; list-style: none; margin: 0;">
+                    <li style="padding: 10px 0; border-bottom: 1px solid #f5ece1;"><a href="user_add_web.html" style="color:#5c3826;font-weight:600;text-decoration:none;">+ Tạo tài khoản nhân sự (tự sinh username)</a></li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid #f5ece1;"><a href="branch_add_web.html" style="color:#5c3826;font-weight:600;text-decoration:none;">+ Thêm chi nhánh mới (theo MAX_ACTIVE_BRANCHES)</a></li>
+                    <li style="padding: 10px 0;"><a href="settings_web.html" style="color:#5c3826;font-weight:600;text-decoration:none;">→ Cấu hình VAT, loyalty, VietQR/OTP, giới hạn chi nhánh</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

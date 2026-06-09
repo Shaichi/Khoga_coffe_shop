@@ -63,42 +63,41 @@
 7. **Tách User Session khỏi Shift Session (BR-60)** — cho phép đổi ca/đổi người mà không đóng ca, hợp với vận hành quầy nhiều nhân viên.
 8. **Loyalty bỏ hạng thành viên** — đơn giản hóa, giảm phức tạp không cần thiết cho mô hình chuỗi nhỏ.
 
-### 4.2 Điểm CẦN THAY ĐỔI / CẢI THIỆN (ưu tiên giảm dần)
+### 4.2 Quyết định đã chốt (product owner) & hành động
 
-> Đây là các điểm cần team thảo luận & product owner quyết định.
+> Các điểm dưới đây đã được product owner quyết và phản ánh vào tài liệu trong đợt cập nhật 2026-06-09.
 
-**🔴 P1 — Thiếu phân hệ Kho tổng / Điều phối cung ứng (lệch giữa tổ chức và hệ thống).**
-Org doc ghi Bộ phận Vận hành & Cung ứng "giám sát **tồn kho tổng** và **điều phối nguồn NVL cung ứng** cho các chi nhánh". Nhưng SRS §3.5 **chỉ có tồn kho cấp branch** (Store Manager), và đã **bỏ toàn bộ quyền xem kho của HQ**. ⇒ Không có module kho tổng / phiếu điều chuyển HQ→branch. **Quyết định cần ra:** (a) bổ sung module Kho tổng cho `businessadmin`, hoặc (b) thu hẹp mô tả vai trò Ops trong org doc cho khớp phạm vi hệ thống.
+**✅ P1 — Không có Kho tổng. `businessadmin` sở hữu danh mục nguyên liệu master.**
+Quyết định: hệ thống **không** có kho tổng nhập từ bên thứ 3 ở cấp HQ. Bộ phận Cung ứng (`businessadmin`) **khai báo danh mục nguyên liệu dùng chung toàn chuỗi** (master list: tên, đơn vị, hạn mức gợi ý) — là nguồn cho công thức món và dropdown nhập/xuất kho. Chi nhánh nhập **trực tiếp từ NCC** (UC-32) và tự quản số lượng. _Đã làm:_ cập nhật org doc; tạo skeleton `admin_hq_mockups/materials_web.html`; **thêm UC-74 "Manage Raw Material Master" vào §3.5.0** + cross-ref ở §3.3; thêm **màn hình 50** vào bảng phân quyền §3.1 (owner `businessadmin`); đăng ký **BR-63/BR-64** và một dòng trong ma trận §5.4.
 
-**🔴 P2 — Audit mockup chưa làm, portal HQ vẫn gộp.**
-`admin_hq_mockups/` hiện là một portal "HQ Admin" chung. Cần xác minh từng màn hình **chỉ hiện module đúng vai trò**: `ceoviewer` không thấy CRUD menu/voucher/user; `businessadmin` không thấy user/config/branch; `ssadmin` không thấy báo cáo ngoài quyền. Nếu mockup không phản ánh, đặc tả và UI sẽ lệch nhau.
+**✅ P2 — Tách portal HQ thành 3 dashboard theo vai trò (skeleton).**
+_Đã làm (chỉ tạo file, chưa code logic):_ `dashboard_ceoviewer_web.html` (chỉ Báo cáo), `dashboard_businessadmin_web.html` (Thực đơn / Nguyên liệu / Voucher / CRM), `dashboard_ssadmin_web.html` (Nhân sự / Chi nhánh / Cấu hình) — mỗi dashboard chỉ hiện nav đúng vai trò theo §3.1. _Còn lại:_ điều hướng login → đúng dashboard; gỡ/deprecate `dashboard_web.html` gộp cũ; rà soát các màn module còn lại.
 
-**🟠 P3 — `businessadmin` gộp 2 phòng khác nhau.**
-Org doc tách rõ **Vận hành & Cung ứng** vs **Marketing & CRM**, nhưng hệ thống gộp cả hai vào một role `businessadmin`. ⇒ Một nhân viên Marketing có thể sửa **giá menu/công thức** (vi phạm separation of duties). **Đề xuất:** cân nhắc tách thành 2 role (catalog/recipe vs voucher/CRM) hoặc dùng permission con nếu hai phòng là hai người khác nhau.
+**✅ P3 — GIỮ một role `businessadmin` duy nhất.**
+Quyết định: gộp Ops & Supply + Marketing & CRM trong một role. Chấp nhận đánh đổi (người Marketing có thể sửa giá menu); việc phân tách xử lý ở cấp tổ chức/quy trình, không bằng RBAC. _Không thay đổi hệ thống._
 
-**🟠 P4 — Số chi nhánh: tham số động vs số cứng "5".**
-BR-54 nói số chi nhánh là động qua `MAX_ACTIVE_BRANCHES`, nhưng UC-64 (03_13) còn ghi precondition "less than the maximum capacity (**5**)". ⇒ Thống nhất một nguồn (xóa số cứng 5, chỉ tham chiếu tham số).
+**✅ P4 — Xóa số cứng "5", chỉ tham chiếu `MAX_ACTIVE_BRANCHES`.**
+_Đã làm:_ sửa UC-64 (precondition, AT1 trigger, message MSG16) trong `03_13` — bỏ "(5)", dùng tham số.
 
-**🟡 P5 — Thiếu tầng quản lý Vùng/Khu vực (Regional/Area Manager).**
-Mô hình hiện nhảy thẳng HQ → branch, không có vai trò trung gian giám sát vận hành nhiều branch. Với chuỗi mở rộng, cảnh báo lệch quỹ / sự cố branch không có ai ở tầng vùng tiếp nhận (hiện fallback về chính Store Manager). Cần cân nhắc khi scale.
+**✅ P5 — 1 Store Manager phụ trách 1 quán. (Đánh giá: phù hợp.)**
+Mô hình 1-1 khớp data model hiện tại (`USER.store_id` là FK đơn) và quy mô chuỗi hiện tại; **không cần** tầng Regional/Area Manager lúc này — HQ giám sát mọi chi nhánh qua báo cáo tổng hợp (`ceoviewer`). Lưu ý vận hành: (a) nếu một người thực tế quản 2 quán → cấp 2 tài khoản; (b) khi SM vắng, `ssadmin` đổi phân công tạm thời; (c) cân nhắc lại tầng vùng khi số branch vượt khả năng giám sát trực tiếp của HQ. _Kết luận: giữ mô hình 1-1, gỡ khuyến nghị "Regional Manager"._
 
-**🟡 P6 — Edge case nghiệp vụ cần làm rõ:**
-- **Refund vs ca:** hoàn tiền mặt trong 7 ngày (BR-09) lấy từ két ca nào nếu đã đóng ca/đổi người?
-- **Chấm công cross-branch:** chấm công ghi theo `store_id` của terminal vật lý (BR-53/38) — cần đảm bảo báo cáo công/lương xử lý đúng khi nhân viên làm khác chi nhánh nhà.
+**✅ P6 — Giải pháp cho 2 edge case (đã codify):**
+- **Refund vs ca (BR-09 cập nhật):** hoàn tiền mặt ghi vào **ca đang mở tại terminal lúc hoàn** (két thực chi), giảm expected cash của ca đó, **bất kể đơn gốc thuộc ca nào**; nếu không có ca mở thì hoãn tới khi mở ca; card/VietQR hoàn qua gateway, không đụng két nên độc lập với ca.
+- **Chấm công cross-branch (thêm BR-53a):** mỗi log lưu cả `employee_id` + `store_id` của terminal nơi chấm. **Lương/tổng giờ** tính theo `employee_id` (cộng mọi chi nhánh); **chi phí nhân công chi nhánh** tính theo `store_id` terminal (nơi thực sự làm việc).
 
-**🟢 P7 — Vệ sinh tài liệu:** khôi phục/cập nhật `mockup_mapping.md` (cần cho bước audit mockup) và 2 file kế hoạch đã bị xóa, hoặc gỡ tham chiếu trong CLAUDE.md.
+**🟢 P7 — (còn mở) Vệ sinh tài liệu.** Khôi phục `mockup_mapping.md` (cần cho audit và để map 3 dashboard mới + `materials_web.html`); xử lý 2 file kế hoạch đã xóa.
 
 ---
 
 ## 5. Khuyến nghị bước tiếp theo
 
-1. **Chốt P1 (kho tổng) và P3 (tách businessadmin)** ở cấp product owner — đây là quyết định kiến trúc, ảnh hưởng cả SRS lẫn mockup.
-2. **Audit toàn bộ mockup HTML** theo bảng §3.1 (49 màn hình × 6 vai trò); khôi phục `mockup_mapping.md` trước để đối chiếu.
-3. **Dọn các điểm nhỏ:** số "5" cứng (P4), edge case refund/chấm công (P6).
-4. **Recompile** SRS sau mỗi đợt sửa.
+1. ~~Downstream của P1: thêm UC Nguyên liệu Master.~~ ✅ Đã làm (UC-74 / §3.5.0, màn hình 50 §3.1, BR-63/64, §5.4). _Còn lại (tùy chọn):_ bổ sung UC-74 vào danh sách use case tổng ở §2.3 và `00_record_of_changes.md`; cân nhắc thêm thực thể `RAW_MATERIAL` vào ERD §3.1.
+2. **Hoàn thiện P2:** khôi phục `mockup_mapping.md`, map 3 dashboard vai trò + `materials_web.html`; điều hướng login → đúng dashboard; rà soát các màn module còn lại theo §3.1.
+3. **Dọn P7** và recompile SRS sau mỗi đợt sửa section.
 
 ---
 
 ## 6. Tóm tắt một dòng
 
-> Lõi nghiệp vụ (trừ kho theo công thức, đối soát ca, KDS, menu 2 cấp, VietQR) **vững và khớp mô hình tự phục vụ**. Khoảng trống chính: **(1)** thiếu phân hệ kho tổng/cung ứng mà org doc mô tả, **(2)** mockup chưa migrate sang 6 vai trò, **(3)** `businessadmin` đang gộp 2 phòng có xung đột quyền. Ba điểm này nên được team quyết trước khi đóng băng đặc tả.
+> Lõi nghiệp vụ (trừ kho theo công thức, đối soát ca, KDS, menu 2 cấp, VietQR) **vững và khớp mô hình tự phục vụ**. Sau đợt 2026-06-09: đã chốt **không có kho tổng** (businessadmin sở hữu danh mục NVL master), **tách portal HQ thành 3 dashboard vai trò** (skeleton), **giữ 1 role businessadmin**, xóa số chi nhánh cứng, và giải quyết edge case refund/chấm công. Việc lớn còn lại: bổ sung UC Nguyên liệu Master và hoàn thiện tầng UI theo vai trò.

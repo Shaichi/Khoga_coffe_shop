@@ -878,7 +878,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 49 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
+The table below specifies access control policies across all 50 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
 
 | Screen Name | ceoviewer | businessadmin | ssadmin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -937,8 +937,9 @@ The table below specifies access control policies across all 49 screens. The sin
 | 47. View Branch Staff List Screen | No | No | No | **Yes** | No | No |
 | 48. Manager Order History Screen | No | No | No | **Yes** | No | No |
 | 49. Order Detail Screen | No | No | No | **Yes** | **Yes** | **Yes** |
+| 50. Raw Material Master | No | **Yes** | No | No | No | No |
 
-> **Note on HQ inventory access:** Under the §3.2.0 RBAC model, branch inventory (Stock List/History/Import/Export/Audit) is owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens. Chain-wide stock visibility is delivered to `ceoviewer` through consolidated HQ reports instead.
+> **Note on inventory access (two layers):** **Branch stock quantities** (Stock List/History/Import/Export/Audit, screens 26–29) are owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens; chain-wide stock visibility reaches `ceoviewer` only through consolidated HQ reports. Separately, the **Raw Material Master** (screen 50, UC-74) is a chain-wide *catalog* — defining which materials exist — owned by the `businessadmin`; it carries no per-branch quantities. There is no central warehouse.
 
 ---
 
@@ -2201,6 +2202,8 @@ The system defines six user roles with strictly separated permissions. The table
 
 This section details specifications for viewing, adding, updating, and deactivating menu items and optional toppings.
 
+> **Recipe ingredients source:** When a menu item's recipe (UC-18) is defined, its ingredients are selected from the chain-wide **Raw Material Master** maintained by the Business Admin (see §3.5.0 / UC-74). Recipes reference master materials by code; they do not define new materials.
+
 ---
 
 ## 3.3.1 F13 - View Menu Item List / UC-15 View Menu & Categories List
@@ -2847,7 +2850,86 @@ This section details specifications for managing product categories.
 
 # 3.5 Inventory & Stock Management
 
-This section details specifications for viewing inventory, managing imports/exports, and reconciling discrepancies.
+This section details specifications for the chain-wide raw-material master catalog, viewing inventory, managing imports/exports, and reconciling discrepancies.
+
+> **Scope note (two layers):** The **Raw Material Master** (§3.5.0, UC-74) is a chain-wide catalog owned by the **Business Admin** at HQ — it defines *which* raw materials exist (name, unit, code). The **branch stock** screens (§3.5.1–§3.5.5) are owned by the **Store Manager** and track *quantities* of those materials per branch. There is **no central warehouse**: branches import directly from third-party suppliers (UC-32). Branches cannot create new material types — they only transact quantities of materials defined in the master.
+
+---
+
+## 3.5.0 F22.1 - Manage Raw Material Master / UC-74 Manage Raw Material Master
+
+### 3.5.0.1 Screen Mock-up (Desktop Landscape)
+```
++-------------------------------------------------------------+
+|   Raw Material Master (Chain-wide)      [ + Add Material ]   |
+|                                                             |
+|  Search: [ milk                                       ]     |
+|                                                             |
+|  +--------+----------------------+--------+--------+------+ |
+|  | Code   | Material Name        | Unit   | Min(*) | Stat | |
+|  +--------+----------------------+--------+--------+------+ |
+|  | STK-01 | Coffee Beans         | kg     | 5.0    | Active| |
+|  | STK-02 | Fresh Milk           | liter  | 6.0    | Active| |
+|  | STK-03 | Peach Syrup          | ml     | 500    | Active| |
+|  +--------+----------------------+--------+--------+------+ |
+|  (*) Suggested minimum threshold (default for new branches) |
++-------------------------------------------------------------+
+```
+
+#### Table 3-23a: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Search | Text | No | 50 | Filter the master list by material name or code. |
+| 2 | Add Material | Button | | | Opens the Add/Edit Material form. |
+| 3 | Material Code | Text | Yes | 20 | Unique chain-wide identifier (e.g. `STK-01`). Immutable after creation. |
+| 4 | Material Name | Text | Yes | 100 | Display name of the raw material / ingredient. |
+| 5 | Unit | Dropdown | Yes | | Unit of measure (`kg`, `liter`, `ml`, `gram`, `piece`, ...). Locked once any stock transaction references the material. |
+| 6 | Suggested Minimum | Text | No | 10 | Default low-stock threshold proposed to branches (each branch may override locally). |
+| 7 | Status | Toggle | | | `Active` / `Inactive` (soft delete). |
+
+### 3.5.0.2 Use Case Description
+
+| Use Case ID | UC-74 | Use Case Name | Manage Raw Material Master |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-09 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Business Admin |
+| **Description** | Maintains the chain-wide catalog of raw materials/ingredients (the canonical source for recipe formulations and for the item dropdowns on every branch's Import/Export Stock screens). Supports view, add, edit, and deactivate. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin opens the Raw Material Master screen. |
+| **Post-Condition** | The master catalog is updated; changes propagate to recipe selection and branch stock dropdowns. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Business Admin | Opens Raw Material Master and reviews the existing catalog. |
+| 2 | Business Admin | Clicks "+ Add Material" (or edits a row): enters Code, Name, Unit, and optional Suggested Minimum. |
+| 3 | Portal | Validates that the Material Code is unique chain-wide and the unit is selected. |
+| 4 | Portal | Saves the master record; it becomes selectable in recipes (§3.3) and branch Import/Export dropdowns (UC-32/33). |
+
+#### Alternative Flows
+##### AT1: Duplicate Material Code
+- **Trigger**: At step 3, the entered Material Code already exists.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 3.1 | Portal | Displays error message: `"A raw material with this code already exists."` |
+
+##### AT2: Deactivate a Referenced Material
+- **Trigger**: Business Admin sets a material to `Inactive` while it is still linked to active recipes or has branch stock on hand.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1 | Portal | Soft-deletes the material (sets `Inactive`): it is hidden from new recipe/import selections but retained for history. Displays an info notice listing the active recipes still referencing it, prompting the Business Admin to update those recipes. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-63 | **Raw Material Master Ownership**: The raw-material catalog is chain-wide and maintained exclusively by the `businessadmin`. Branch `STOCK_ITEM` records reference a master material by foreign key; Store Managers may transact quantities (UC-32/33/34) but cannot create, rename, or delete material types. |
+| BR-64 | **Raw Material Soft-Delete**: Raw materials are never hard-deleted — they are set `Inactive` to preserve recipe links and historical stock transactions. An inactive material is hidden from new recipe and import selections but remains visible in history and existing branch stock. |
 
 ---
 
@@ -5359,7 +5441,7 @@ This section specifies the branch lifecycle management functionality available e
 |---|---|
 | **Actor** | System Admin |
 | **Description** | Registers a new store branch in the system. |
-| **Precondition** | System Admin is logged in. Total active branches is less than the maximum capacity (5). |
+| **Precondition** | System Admin is logged in. Total active branches is less than the configured maximum capacity (`MAX_ACTIVE_BRANCHES`). |
 | **Trigger** | System Admin clicks "+ Add Branch" on Branch List screen. |
 | **Post-Condition** | New branch is created with `is_active = true` and appears in the branch list. |
 
@@ -5372,11 +5454,11 @@ This section specifies the branch lifecycle management functionality available e
 
 #### Alternative Flows
 ##### AT1: Maximum Branch Capacity Reached
-- **Trigger**: At step 2, the number of active branches already equals 5.
+- **Trigger**: At step 2, the number of active branches already equals the configured `MAX_ACTIVE_BRANCHES` limit.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one."` (MSG16) |
+| 2.1 | Portal | Displays error message: `"Maximum branch capacity reached. Please deactivate an existing branch or increase the limit before adding a new one."` (MSG16) |
 
 ##### AT2: Validation Errors
 - **Trigger**: At step 2, input validation fails.
@@ -5641,7 +5723,7 @@ This section contains business rules, global requirements, common application me
 | BR-06 | [RESERVED / DELETED] |
 | BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
-| BR-09 | **Refund Authorization & Execution**: Refunds for orders in the `PENDING` status can be performed directly by the Cashier without manager approval. Cash refunds are paid directly from the cash drawer. Card/VietQR payments invoke the payment gateway's refund API. All refunds must occur within **7 days** of the original purchase. |
+| BR-09 | **Refund Authorization & Execution**: Refunds for orders in the `PENDING` status can be performed directly by the Cashier without manager approval. All refunds must occur within **7 days** of the original purchase. **Cash refunds** are paid from, and recorded against, the **currently open Shift Session** on the terminal at the moment of refund (the drawer that physically pays out) — regardless of which shift the original order belonged to — reducing that shift's expected cash for reconciliation (BR-03). If **no** shift is open at the time, a cash refund cannot be processed until a shift is opened. **Card/VietQR refunds** invoke the payment gateway's refund API and have no cash-drawer impact, so they are independent of the shift session. |
 | BR-10 | **Inactive Accounts Block**: Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | **Account Suspension**: Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | **Force Password Change Block**: Mandatory password change flag blocks navigation to any other module. User cannot bypass the Force Password Change screen. |
@@ -5686,6 +5768,7 @@ This section contains business rules, global requirements, common application me
 | BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` log. No manager PIN or override code verification is required. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
 | BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
+| BR-53a | **Cross-Branch Attendance Attribution**: Each `attendance_logs` row stores both the `employee_id` and the **terminal `store_id`** where the check-in/out physically occurred (which may differ from the employee's home `store_id`). Reports aggregate on two axes: **payroll / total worked hours** are summed by `employee_id` across **all** branches (so an employee is paid for every shift worked, anywhere); **branch labour-cost reports** are summed by the **terminal `store_id`** (so each branch's cost reflects whoever actually worked there). |
 | BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches (`is_active = false`) do not count toward this limit. The "Add Branch" button is disabled when the limit is reached. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
@@ -5695,6 +5778,8 @@ This section contains business rules, global requirements, common application me
 | BR-60 | **User Session / Shift Session Independence**: Terminating a cashier's User Session does not close the active Shift Session on the POS terminal. The Shift Session persists until explicitly closed by a cashier (UC-53) and approved by the Store Manager. |
 | BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (average preparation time, orders completed per shift) are calculated at the `store_id + shift_session_id` level. No per-barista per-drink metric is recorded. |
 | BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it have their `category_id` set to `NULL` (nullable FK) to prevent FK constraint violations. Items with `category_id = NULL` appear as uncategorized. |
+| BR-63 | **Raw Material Master Ownership**: The raw-material catalog is chain-wide and maintained exclusively by the `businessadmin` (UC-74). Branch `STOCK_ITEM` records reference a master material by foreign key; Store Managers may transact quantities (UC-32/33/34) but cannot create, rename, or delete material types. There is no central warehouse — branches import directly from third-party suppliers. |
+| BR-64 | **Raw Material Soft-Delete**: Raw materials are never hard-deleted — they are set `Inactive` to preserve recipe links and historical stock transactions. An inactive material is hidden from new recipe and import selections but remains visible in history and existing branch stock. |
 
 
 
@@ -5757,6 +5842,7 @@ The matrix below maps operational modules and system features to employee roles,
 | **User Account Management (CRUD)** | — | — | C / R / U / D | — | — | — |
 | **Branch Staff Profile List** | — | — | — | R (Read-Only) | — | — |
 | **Catalog Menu & Category (CRUD)** | — | C / R / U / D | — | R (Read-Only) | R (Read-Only) | R (Read-Only) |
+| **Raw Material Master (chain-wide)** | — | C / R / U / D | — | R (via stock dropdowns) | — | — |
 | **Menu Availability Status toggle** | — | C / R / U | — | C / R / U | — | — |
 | **Voucher & Campaign (CRUD)** | — | C / R / U / D | — | — | — | — |
 | **Customer Loyalty Registry** | — | C / R / U / D | — | C / R / U | C / R / U | — |
