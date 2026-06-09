@@ -36,7 +36,7 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Displays the register of all enrolled loyalty members. |
 | **Precondition** | User is logged in. |
 | **Trigger** | User navigates to Customers module. |
@@ -87,7 +87,7 @@ This section details specifications for loyalty membership profiles search, enro
 | **Date** | 2026-05-24 | | |
 
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Registers a new customer into the membership loyalty program. |
 | **Precondition** | Customer is not enrolled. |
 | **Trigger** | User clicks "+ Add Customer". |
@@ -131,7 +131,7 @@ This section details specifications for loyalty membership profiles search, enro
 |  Contact Email                     |
 |  [ nva@example.com               ] |
 |                                    |
-|  Adjust Points (Admin only):       |
+|  Adjust Points (Business Admin):   |
 |  Points: [ 340      ]              |
 |  Reason: [ Dispute Resolution    ] |
 |                                    |
@@ -145,8 +145,8 @@ This section details specifications for loyalty membership profiles search, enro
 | 1 | Full Name | Text | Yes | 100 | Customer's full name (editable). |
 | 2 | Phone | Label | | | Customer phone number lookup key (read-only/locked). |
 | 3 | Contact Email | Text | Yes | 100 | Customer email address. |
-| 4 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
-| 5 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
+| 4 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Business Admin.** Hidden/read-only for Cashier and Store Manager roles. |
+| 5 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Business Admin only).** Explanation comment for manual points adjustment. |
 | 6 | Save | Button | | | Saves customer details changes. |
 | 7 | Cancel | Button | | | Returns to list page. |
 
@@ -159,7 +159,7 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Modifies membership contact details or adjusts points logs. |
 | **Precondition** | Customer profile exists. |
 | **Trigger** | User clicks edit row icon on list view. |
@@ -168,12 +168,12 @@ This section details specifications for loyalty membership profiles search, enro
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | User | Modifies Full Name or Contact Email (or Admin inputs point changes) and clicks "Save". |
+| 1 | User | Modifies Full Name or Contact Email (or Business Admin inputs point changes) and clicks "Save". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, logs adjust audit notes (if point changes occur), and returns. |
 
 #### Alternative Flows
-##### AT1: Non-Admin Actor — Points Fields Hidden
+##### AT1: Non-Business-Admin Actor — Points Fields Hidden
 - **Trigger**: Cashier or Store Manager opens the Edit Customer screen.
 
 | Sub-step | Actor | Action |
@@ -181,7 +181,7 @@ This section details specifications for loyalty membership profiles search, enro
 | 1 | Portal | The "Points" and "Reason" fields are hidden from the form. Only "Contact Email" is editable. |
 
 ##### AT2: Points Changed Without Reason
-- **Trigger**: Admin modifies the Points value but leaves Reason blank.
+- **Trigger**: Business Admin modifies the Points value but leaves Reason blank.
 
 | Sub-step | Actor | Action |
 |---|---|---|
@@ -190,7 +190,7 @@ This section details specifications for loyalty membership profiles search, enro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-49 | Manual points adjustments require a recorded reason and are locked to Admin role. |
+| BR-49 | Manual points adjustments require a recorded reason and are locked to Business Admin role. |
 
 ## 3.8.4 F43 - View Customer History / UC-27 View Customer History
 
@@ -227,7 +227,7 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Lists all historical orders completed by the customer. |
 | **Precondition** | Customer is selected. |
 | **Trigger** | User navigates to Transaction History view in profile card. |

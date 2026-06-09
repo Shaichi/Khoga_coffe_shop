@@ -38,16 +38,16 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Displays all product categories. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Category Management section. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin opens the Category Management section. |
 | **Post-Condition** | Product categories list is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Opens Category Management. |
+| 1 | Business Admin | Opens Category Management. |
 | 2 | Portal | Displays current categories and associated item count metrics. |
 
 ---
@@ -87,16 +87,16 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Creates a new product category node. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Category". |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks "+ Add Category". |
 | **Post-Condition** | Category is registered. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name and Description, and clicks "Save Category". |
+| 1 | Business Admin | Enters Name and Description, and clicks "Save Category". |
 | 2 | Portal | Validates uniqueness and non-empty name. |
 | 3 | Portal | Saves the category and returns to list view. |
 
@@ -145,16 +145,16 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Edits category name or description details. |
 | **Precondition** | Category exists. |
-| **Trigger** | Admin clicks edit icon on list page. |
+| **Trigger** | Business Admin clicks edit icon on list page. |
 | **Post-Condition** | Category details are updated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Edits Name or Description, and clicks "Save Changes". |
+| 1 | Business Admin | Edits Name or Description, and clicks "Save Changes". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, syncs with active sales screens, and returns to list. |
 
@@ -194,18 +194,18 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Deactivates/deletes an empty category. |
 | **Precondition** | Category contains no active items. |
-| **Trigger** | Admin clicks delete icon on list page. |
+| **Trigger** | Business Admin clicks delete icon on list page. |
 | **Post-Condition** | Category is removed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Clicks delete on a row. |
+| 1 | Business Admin | Clicks delete on a row. |
 | 2 | Portal | Displays Delete Category Confirmation modal. |
-| 3 | Admin | Clicks "Confirm Delete". |
+| 3 | Business Admin | Clicks "Confirm Delete". |
 | 4 | Portal | Deletes category and returns to list view. |
 
 #### Alternative Flows

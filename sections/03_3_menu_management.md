@@ -40,7 +40,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Cashier (POS View) |
+| **Actor** | Business Admin, Cashier (POS View) |
 | **Description** | Allows users to view the complete catalog of beverages and food items. |
 | **Precondition** | User is logged in. |
 | **Trigger** | User opens the product catalog list view. |
@@ -57,7 +57,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | ID | Rule Description |
 |---|---|
 | BR-24 | Items list shows search autocomplete results and real-time category filtering. |
-| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on active quantities or flags. |
+| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on the two-level model: `menu_items.is_active` (chain-wide) AND `branch_menu_status.is_available` (branch-level). An item appears as `Out of Stock` at a branch if either flag is false. See §3.3.7 for schema details. |
 
 ---
 
@@ -96,16 +96,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Displays the detailed card of a specific menu item, including its ingredients recipe and options. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks on a specific product listing row. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks on a specific product listing row. |
 | **Post-Condition** | Product recipe details, unit cost, and toppings mappings are displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Selects an item from the menu grid. |
+| 1 | Business Admin | Selects an item from the menu grid. |
 | 2 | Portal | Displays detailed properties: pricing, description, abbreviation, custom toppings list, and recipe mappings. |
 
 ---
@@ -160,16 +160,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Adds a new product to the central sales catalog. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Menu Item". |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks "+ Add Menu Item". |
 | **Post-Condition** | New menu item registers in the system. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name, configures variants/sizes and prices, enters Category, and checks associated toppings. Clicks "Save Item". |
+| 1 | Business Admin | Enters Name, configures variants/sizes and prices, enters Category, and checks associated toppings. Clicks "Save Item". |
 | 2 | Portal | Validates uniqueness of product name and positive prices. |
 | 3 | Portal | Saves new item and variants, auto-generates search abbreviation, and returns to menu list. |
 
@@ -223,7 +223,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | 3 | Prices/Variants | Grid | Yes | | Multiple variants/sizes and prices. |
 | 4 | Barcode | Text | No | 50 | Barcode/SKU value. |
 | 5 | Description | Text | No | 500 | Description. |
-| 6 | Active | Checkbox | Yes | | Active status globally (Admin only). Branch availability status toggle (Store Manager only - updates `branch_menu_status` mapping). |
+| 6 | Active | Checkbox | Yes | | Active status globally (Business Admin only). Branch availability status toggle (Store Manager only - updates `branch_menu_status` mapping). |
 | 7 | Image Upload | File | No | | Upload/replace image. |
 | 8 | Linked Toppings | Checkboxes | No | | Modifier selections. |
 | 9 | Save Changes | Button | | | Saves modified properties. |
@@ -238,16 +238,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager |
-| **Description** | Modifies properties of an existing item (Admin) or toggles local branch availability (Store Manager). |
+| **Actor** | Business Admin, Store Manager |
+| **Description** | Modifies properties of an existing item (Business Admin) or toggles local branch availability (Store Manager). |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager accesses the item to toggle its branch availability (`branch_menu_status.is_available`). |
+| **Trigger** | Business Admin clicks "Edit Item" on detail panel. Store Manager accesses the item to toggle its branch availability (`branch_menu_status.is_available`). |
 | **Post-Condition** | Product listings or availability mapping are modified. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Actor | Admin edits product fields and clicks "Save Changes". Alternatively, Store Manager toggles branch-level item availability and clicks "Save Changes". |
+| 1 | Actor | Business Admin edits product fields and clicks "Save Changes". Alternatively, Store Manager toggles branch-level item availability and clicks "Save Changes". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates parameters (or `branch_menu_status` record), re-generates abbreviation if name changed, and returns to detail card. |
 
@@ -297,18 +297,18 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Performs a soft delete (sets availability and visibility flag to false) on a menu item. |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Delete Menu Item" button. |
+| **Trigger** | Business Admin clicks "Delete Menu Item" button. |
 | **Post-Condition** | Product is removed from catalogs but retained in audit tables. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Clicks "Delete" button. |
+| 1 | Business Admin | Clicks "Delete" button. |
 | 2 | Portal | Displays Delete Menu Item Confirmation modal. |
-| 3 | Admin | Clicks "Confirm Delete". |
+| 3 | Business Admin | Clicks "Confirm Delete". |
 | 4 | Portal | Deactivates visibility, removes from active POS/web registers, and redirects to list. |
 
 #### Business Rules
@@ -352,16 +352,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Configures modifiers that customers can add to their drinks. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin navigates to Toppings and Options management page. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin navigates to Toppings and Options management page. |
 | **Post-Condition** | Toppings options list is updated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name and Price, and clicks "Add Topping". |
+| 1 | Business Admin | Enters Name and Price, and clicks "Add Topping". |
 | 2 | Portal | Validates inputs (non-negative price, non-empty name). |
 | 3 | Portal | Saves new topping and updates grid list. |
 
@@ -370,6 +370,41 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
 
+---
 
+## 3.3.7 Two-Level Item Availability Model
 
+Menu item availability is controlled at two independent levels to separate HQ chain decisions from branch-level operational reality.
 
+### Availability Levels
+
+| Level | Field | Owner | Scope | Meaning when `false` |
+|---|---|---|---|---|
+| Chain-wide visibility | `menu_items.is_active` | Business Admin | All branches | Item is hidden from every POS in the chain. Use for permanent removal or seasonal deactivation. |
+| Branch-level availability | `branch_menu_status.is_available` | Store Manager | Single branch | Item is temporarily unavailable at that branch (e.g. out of stock, equipment issue). Other branches are unaffected. |
+
+> **Rule**: The `menu_items` table does **not** have an `is_available` column. Per-branch availability is managed exclusively through the `branch_menu_status` join table.
+
+### Database Schema
+
+```sql
+-- Per-branch item availability (replaces is_available on menu_items)
+CREATE TABLE branch_menu_status (
+    store_id       UUID NOT NULL REFERENCES stores(id),
+    menu_item_id   UUID NOT NULL REFERENCES menu_items(id),
+    is_available   BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_by     UUID REFERENCES users(id),     -- Store Manager who last changed it
+    updated_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (store_id, menu_item_id)
+);
+
+-- menu_items uses is_active for chain-wide control; no is_available column
+-- Example: is_active = true  → item exists in the global catalog
+--          is_active = false → item soft-deleted or chain-wide deactivated (BR-28)
+```
+
+### Category Deletion Cascade Rule
+
+| ID | Rule Description |
+|---|---|
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it must have their `category_id` set to `NULL` (the column is `NULLABLE`). This prevents foreign key violations while preserving the items in the catalog. Items with `category_id = NULL` appear as uncategorized in the HQ menu grid. |

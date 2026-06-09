@@ -6,7 +6,7 @@ The Coffee Shop Management System is an integrated software solution designed to
 The primary purpose of the Coffee Shop Management System is to automate, coordinate, and optimize daily coffee shop operations. The system aims to achieve the following key objectives:
 - **Operational Efficiency**: Accelerate order taking, processing, and checkout workflows at the Point of Sale (POS).
 - **Inventory Control**: Real-time tracking of ingredients, automated low-stock alerts, and structured audit procedures to minimize wastage and stockouts.
-- **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for admins, managers, cashiers, and baristas.
+- **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for HQ roles (executive viewer, business admin, system admin), store managers, cashiers, and baristas.
 - **Data-Driven Insights**: Deliver comprehensive financial, inventory, and staff performance reports to enable management to make informed business decisions.
 
 ## 1.2 Product Scope
@@ -34,24 +34,34 @@ graph LR
     linkStyle default interpolate linear
 
     SYS((COFFEE SHOP MANAGEMENT SYSTEM))
-    ADMIN[Admin / HQ Management]
+    CEOVIEWER[CEO / Executive Viewer]
+    BIZADMIN[Business Admin - Ops & Marketing]
+    SSADMIN[System Admin - IT]
     MANAGER[Store Manager]
     CASHIER[Cashier]
     BARISTA[Barista]
 
     style SYS fill:#fff,stroke:#000,stroke-width:2px
-    style ADMIN fill:#fff,stroke:#000,stroke-width:1px
+    style CEOVIEWER fill:#fff,stroke:#000,stroke-width:1px
+    style BIZADMIN fill:#fff,stroke:#000,stroke-width:1px
+    style SSADMIN fill:#fff,stroke:#000,stroke-width:1px
     style MANAGER fill:#fff,stroke:#000,stroke-width:1px
     style CASHIER fill:#fff,stroke:#000,stroke-width:1px
     style BARISTA fill:#fff,stroke:#000,stroke-width:1px
 
-    %% 1. Admin Data Flows
-    ADMIN --> |"Central Menu Data"| SYS
-    ADMIN --> |"Campaign & Promotion Data"| SYS
-    ADMIN --> |"User Management Data"| SYS
-    ADMIN --> |"System Configurations"| SYS
-    SYS --> |"Consolidated Business Reports"| ADMIN
-    SYS --> |"Authentication Status"| ADMIN
+    %% 1a. CEO / Executive Viewer Data Flows (read-only)
+    SYS --> |"Consolidated Business Reports"| CEOVIEWER
+    SYS --> |"Authentication Status"| CEOVIEWER
+
+    %% 1b. Business Admin Data Flows (Ops & Marketing)
+    BIZADMIN --> |"Central Menu & Recipe Data"| SYS
+    BIZADMIN --> |"Campaign & Promotion Data"| SYS
+    BIZADMIN --> |"Customer / CRM Data"| SYS
+
+    %% 1c. System Admin Data Flows (IT)
+    SSADMIN --> |"User Management Data"| SYS
+    SSADMIN --> |"System Configurations"| SYS
+    SSADMIN --> |"Branch Lifecycle Data"| SYS
 
     %% 2. Store Manager Data Flows
     MANAGER --> |"Local Stock Import/Export Data"| SYS

@@ -236,7 +236,29 @@ This section details specifications for staff shifts assignment, schedules views
 |---|---|
 | BR-38 | **Attendance Log Recording**: The system records check-in and check-out entries under the local branch's `store_id` where the attendance action was taken, calculating lateness against the scheduled shift. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
+| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login — the shared POS session on the terminal is not interrupted. |
+
+### 3.9.4.3 Database Schema (Attendance Logs)
+
+```sql
+CREATE TABLE attendance_logs (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id),
+    store_id        UUID NOT NULL REFERENCES stores(id),   -- branch where action was taken
+    shift_id        UUID REFERENCES staff_shifts(id),      -- scheduled shift (nullable: cross-branch walk-ins)
+    action          VARCHAR(10) NOT NULL,                  -- 'CHECK_IN' | 'CHECK_OUT'
+    photo_url       VARCHAR(500),                          -- camera snapshot URL (taken at action time)
+    recorded_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lateness_minutes INTEGER GENERATED ALWAYS AS (
+        EXTRACT(EPOCH FROM (recorded_at - scheduled_start)) / 60
+    ) STORED                                               -- null if shift_id is null
+);
+
+CREATE INDEX idx_attendance_store_date ON attendance_logs(store_id, recorded_at);
+CREATE INDEX idx_attendance_user       ON attendance_logs(user_id);
+```
+
+> **photo_url**: Stores the URL/path of the camera snapshot taken during the attendance popup. Required for fraud prevention (verifying the correct employee is clocking in). Nullable only when the attendance action is performed in an offline/no-camera mode.
 
 ---
 

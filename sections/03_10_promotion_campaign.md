@@ -39,16 +39,16 @@ This section details specifications for managing discount codes and promotional 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Lists all promotional campaigns, active codes, and loyalty discount rules. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Promotions module. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin opens the Promotions module. |
 | **Post-Condition** | Grid list of vouchers is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Opens Promotions list. |
+| 1 | Business Admin | Opens Promotions list. |
 | 2 | Portal | Retrieves active campaigns list and displays codes, types, and stats. |
 
 ---
@@ -100,16 +100,16 @@ This section details specifications for managing discount codes and promotional 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Creates a new promotional campaign or discount code. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Voucher" button. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks "+ Add Voucher" button. |
 | **Post-Condition** | New voucher configuration is saved. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters code, value, date limits, and customer usage limits. Clicks "Save Voucher". |
+| 1 | Business Admin | Enters code, value, date limits, and customer usage limits. Clicks "Save Voucher". |
 | 2 | Portal | Validates code uniqueness, positive values, and date ranges. |
 | 3 | Portal | Saves new voucher configurations. |
 
@@ -165,16 +165,16 @@ This section details specifications for managing discount codes and promotional 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Modifies code parameters or deactivates campaigns. |
 | **Precondition** | Voucher exists. |
-| **Trigger** | Admin clicks edit icon on voucher row. |
+| **Trigger** | Business Admin clicks edit icon on voucher row. |
 | **Post-Condition** | Voucher updates are stored. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Adjusts validity dates, usage limit, or values. Clicks "Save Changes" (or "Deactivate"). |
+| 1 | Business Admin | Adjusts validity dates, usage limit, or values. Clicks "Save Changes" (or "Deactivate"). |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates configuration settings (or sets active status to inactive). |
 
@@ -190,7 +190,7 @@ This section details specifications for managing discount codes and promotional 
 
 ## 3.10.4 Loyalty Points Program Configuration
 
-The loyalty program parameters are managed globally by the HQ Admin via central configuration parameters:
+The loyalty program parameters are managed globally by the System Admin via central configuration parameters:
 
 - **LOYALTY_ACCRUAL_PERCENTAGE**: The percentage of the Net Total Payable value of the invoice earned as points. E.g., `LOYALTY_ACCRUAL_PERCENTAGE = 1.0%` means a customer earns 1 point for every 10,000 VND spent (10,000 * 1% = 1 pt).
 - **LOYALTY_MAX_ACC_POINTS_PER_ORDER**: The maximum points limit that a customer can accrue in a single order transaction (e.g. capped at 100 points per invoice).

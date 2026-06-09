@@ -42,16 +42,16 @@ This section details specifications for business reports views, sales analytics 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | CEO Viewer |
 | **Description** | Accesses centralized reports aggregating data from all store branches. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Business Reports & Analytics dashboard. |
+| **Precondition** | CEO Viewer is logged in. |
+| **Trigger** | CEO Viewer opens the Business Reports & Analytics dashboard. |
 | **Post-Condition** | Consolidated metrics charts and grids are displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Selects date range filter boundaries. |
+| 1 | CEO Viewer | Selects date range filter boundaries. |
 | 2 | Portal | Retrieves sales data, computes totals, calculates averages, and displays dashboard. |
 
 ---
@@ -92,7 +92,7 @@ This section details specifications for business reports views, sales analytics 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager |
+| **Actor** | CEO Viewer, Store Manager |
 | **Description** | Generates and downloads data report files. |
 | **Precondition** | User has reporting privileges. |
 | **Trigger** | User clicks "Export Report" button on dashboard. |
@@ -107,7 +107,7 @@ This section details specifications for business reports views, sales analytics 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
 
 ---
 
@@ -170,7 +170,7 @@ This section details specifications for business reports views, sales analytics 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
 
 
 

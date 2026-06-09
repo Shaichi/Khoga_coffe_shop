@@ -160,7 +160,9 @@ This section tracks the revision history and modifications made to the Software 
 
 
 
+
 ---
+
 
 # 1. Product Overview
 
@@ -170,7 +172,7 @@ The Coffee Shop Management System is an integrated software solution designed to
 The primary purpose of the Coffee Shop Management System is to automate, coordinate, and optimize daily coffee shop operations. The system aims to achieve the following key objectives:
 - **Operational Efficiency**: Accelerate order taking, processing, and checkout workflows at the Point of Sale (POS).
 - **Inventory Control**: Real-time tracking of ingredients, automated low-stock alerts, and structured audit procedures to minimize wastage and stockouts.
-- **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for admins, managers, cashiers, and baristas.
+- **Role-based Access & Security**: Establish clear operational boundaries and authorization levels for HQ roles (executive viewer, business admin, system admin), store managers, cashiers, and baristas.
 - **Data-Driven Insights**: Deliver comprehensive financial, inventory, and staff performance reports to enable management to make informed business decisions.
 
 ## 1.2 Product Scope
@@ -198,24 +200,34 @@ graph LR
     linkStyle default interpolate linear
 
     SYS((COFFEE SHOP MANAGEMENT SYSTEM))
-    ADMIN[Admin / HQ Management]
+    CEOVIEWER[CEO / Executive Viewer]
+    BIZADMIN[Business Admin - Ops & Marketing]
+    SSADMIN[System Admin - IT]
     MANAGER[Store Manager]
     CASHIER[Cashier]
     BARISTA[Barista]
 
     style SYS fill:#fff,stroke:#000,stroke-width:2px
-    style ADMIN fill:#fff,stroke:#000,stroke-width:1px
+    style CEOVIEWER fill:#fff,stroke:#000,stroke-width:1px
+    style BIZADMIN fill:#fff,stroke:#000,stroke-width:1px
+    style SSADMIN fill:#fff,stroke:#000,stroke-width:1px
     style MANAGER fill:#fff,stroke:#000,stroke-width:1px
     style CASHIER fill:#fff,stroke:#000,stroke-width:1px
     style BARISTA fill:#fff,stroke:#000,stroke-width:1px
 
-    %% 1. Admin Data Flows
-    ADMIN --> |"Central Menu Data"| SYS
-    ADMIN --> |"Campaign & Promotion Data"| SYS
-    ADMIN --> |"User Management Data"| SYS
-    ADMIN --> |"System Configurations"| SYS
-    SYS --> |"Consolidated Business Reports"| ADMIN
-    SYS --> |"Authentication Status"| ADMIN
+    %% 1a. CEO / Executive Viewer Data Flows (read-only)
+    SYS --> |"Consolidated Business Reports"| CEOVIEWER
+    SYS --> |"Authentication Status"| CEOVIEWER
+
+    %% 1b. Business Admin Data Flows (Ops & Marketing)
+    BIZADMIN --> |"Central Menu & Recipe Data"| SYS
+    BIZADMIN --> |"Campaign & Promotion Data"| SYS
+    BIZADMIN --> |"Customer / CRM Data"| SYS
+
+    %% 1c. System Admin Data Flows (IT)
+    SSADMIN --> |"User Management Data"| SYS
+    SSADMIN --> |"System Configurations"| SYS
+    SSADMIN --> |"Branch Lifecycle Data"| SYS
 
     %% 2. Store Manager Data Flows
     MANAGER --> |"Local Stock Import/Export Data"| SYS
@@ -240,7 +252,9 @@ graph LR
 ```
 
 
+
 ---
+
 
 # 2. User Requirements
 
@@ -253,13 +267,17 @@ The system defines the following roles (actors), structured under a generalizati
 
 1. **User (Base Actor)**:
    - The generalization of all employee roles. Contains basic access control, profile viewing, and password management.
-2. **Admin (HQ Management)**:
-   - Inherits from `User`. Manages master data (users, vouchers, menu) and views brand-level business reports.
-3. **Store Manager**:
+2. **CEO / Executive Viewer (`ceoviewer`)**:
+   - Inherits from `User`. HQ role with **read-only** access to the HQ Dashboard and consolidated chain-wide business reports. Cannot create, edit, or delete any operational data.
+3. **Business Admin (`businessadmin`)**:
+   - Inherits from `User`. HQ Ops & Marketing role managing chain-wide master data: menu items, recipes, categories, vouchers, and customer/CRM records.
+4. **System Admin (`ssadmin`)**:
+   - Inherits from `User`. HQ IT role managing user account provisioning, central system configuration (VietQR/OTP, `MAX_ACTIVE_BRANCHES`), and the branch lifecycle.
+5. **Store Manager (`storemanager`)**:
    - Inherits from `User`. Manages local inventory logistics, shift scheduling, and views local store revenue audits.
-4. **Cashier**:
+6. **Cashier (`cashier`)**:
    - Inherits from `User`. Operates the POS terminal for order-taking, member lookups, checkout, and receipt printing.
-5. **Barista**:
+7. **Barista (`barista`)**:
    - Inherits from `User`. Coordinates drink preparation using the queue monitor and prints label stickers.
 
 
@@ -267,12 +285,16 @@ The system defines the following roles (actors), structured under a generalizati
 graph TD
     %% Actor Generalization Diagram
     User[User - Base Staff]
-    Admin[Admin]
+    CEOViewer[CEO / Executive Viewer]
+    BizAdmin[Business Admin]
+    SysAdmin[System Admin]
     Manager[Store Manager]
     Cashier[Cashier]
     Barista[Barista]
 
-    Admin --> |"inherits from"| User
+    CEOViewer --> |"inherits from"| User
+    BizAdmin --> |"inherits from"| User
+    SysAdmin --> |"inherits from"| User
     Manager --> |"inherits from"| User
     Cashier --> |"inherits from"| User
     Barista --> |"inherits from"| User
@@ -321,22 +343,39 @@ graph LR
 
 ---
 
-### 2.2.2 Admin Use Cases
-The Admin actor manages central catalog assets, customer accounts, vouchers, and reviews consolidated brand reports.
+### 2.2.2 CEO / Executive Viewer Use Cases
+The CEO / Executive Viewer (`ceoviewer`) has read-only access to consolidated chain-wide reports for management review. No data mutation is permitted.
 
 ```mermaid
 graph LR
     %% Actors
-    Actor_Admin((Admin))
+    Actor_CEO((CEO / Executive Viewer))
 
     %% Use Cases
-    subgraph HQ Administration
-        UC_ListUsers([View User Account List])
-        UC_AddUser([Add User Account])
-        UC_UpdateUser([Update User Account])
-        UC_ViewUser([View User Account Detail])
-        UC_DeactivateUser([Deactivate User Account])
+    subgraph HQ Reporting Read-Only
+        UC_ViewReports([View Consolidated Business Reports])
+        UC_ExportReports([Export HQ Reports])
+    end
 
+    %% Links
+    Actor_CEO --> UC_ViewReports
+
+    %% Reports extends
+    UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
+```
+
+---
+
+### 2.2.3 Business Admin Use Cases
+The Business Admin (`businessadmin`) manages chain-wide catalog assets (menu, categories, recipes, toppings), promotional vouchers, and customer/CRM records.
+
+```mermaid
+graph LR
+    %% Actors
+    Actor_BizAdmin((Business Admin))
+
+    %% Use Cases
+    subgraph Catalog Promotion & CRM
         UC_ListVouchers([View Vouchers List])
         UC_AddVoucher([Add Voucher])
         UC_UpdateVoucher([Update Voucher])
@@ -357,31 +396,12 @@ graph LR
         UC_UpdateMenu([Update Menu Item & Recipe])
         UC_DeleteMenu([Delete Menu Item])
         UC_ManageToppings([Manage Toppings & Options])
-
-        UC_ViewReports([View Consolidated Business Reports])
-        UC_ExportReports([Export HQ Reports])
-        
-        UC_ConfigCentral([Configure Central System Settings])
-
-        UC_ListBranches([View Branch List])
-        UC_AddBranch([Add Branch])
-        UC_UpdateBranch([Update / Deactivate Branch])
     end
 
-    %% Admin Links
-    Actor_Admin --> UC_ListUsers
-    Actor_Admin --> UC_ListVouchers
-    Actor_Admin --> UC_ListCustomers
-    Actor_Admin --> UC_ListMenu
-    Actor_Admin --> UC_ViewReports
-    Actor_Admin --> UC_ConfigCentral
-    Actor_Admin --> UC_ListBranches
-
-    %% User extends
-    UC_AddUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-    UC_UpdateUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-    UC_ViewUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-    UC_DeactivateUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
+    %% Business Admin Links
+    Actor_BizAdmin --> UC_ListVouchers
+    Actor_BizAdmin --> UC_ListCustomers
+    Actor_BizAdmin --> UC_ListMenu
 
     %% Voucher extends
     UC_AddVoucher -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListVouchers
@@ -403,9 +423,43 @@ graph LR
     UC_UpdateMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
     UC_DeleteMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
     UC_ManageToppings -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewMenuDetail
+```
 
-    %% Reports extends
-    UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
+---
+
+### 2.2.4 System Admin Use Cases
+The System Admin (`ssadmin`) provisions user accounts, configures central system settings, and manages the branch lifecycle.
+
+```mermaid
+graph LR
+    %% Actors
+    Actor_SysAdmin((System Admin))
+
+    %% Use Cases
+    subgraph System & Account Administration
+        UC_ListUsers([View User Account List])
+        UC_AddUser([Add User Account])
+        UC_UpdateUser([Update User Account])
+        UC_ViewUser([View User Account Detail])
+        UC_DeactivateUser([Deactivate User Account])
+
+        UC_ConfigCentral([Configure Central System Settings])
+
+        UC_ListBranches([View Branch List])
+        UC_AddBranch([Add Branch])
+        UC_UpdateBranch([Update / Deactivate Branch])
+    end
+
+    %% System Admin Links
+    Actor_SysAdmin --> UC_ListUsers
+    Actor_SysAdmin --> UC_ConfigCentral
+    Actor_SysAdmin --> UC_ListBranches
+
+    %% User extends
+    UC_AddUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
+    UC_UpdateUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
+    UC_ViewUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
+    UC_DeactivateUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
 
     %% Branch extends
     UC_AddBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
@@ -415,7 +469,7 @@ graph LR
 
 ---
 
-### 2.2.3 Store Manager Use Cases
+### 2.2.5 Store Manager Use Cases
 The Store Manager oversees local inventory adjustments, scheduling staff shifts, and local store financial reports.
 
 ```mermaid
@@ -479,7 +533,7 @@ graph LR
 
 ---
 
-### 2.2.4 Cashier Use Cases
+### 2.2.6 Cashier Use Cases
 The Cashier uses the POS terminal to process orders, apply vouchers, lookup customer memberships, register/update customers, and print receipts.
 
 ```mermaid
@@ -531,7 +585,7 @@ graph LR
 
 ---
 
-### 2.2.5 Barista Use Cases
+### 2.2.7 Barista Use Cases
 The Barista tracks drink prep status, prints cup labels, and escalates preparation issues in the beverage preparation area.
 
 ```mermaid
@@ -574,32 +628,32 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-07** | Authentication & Profile | View Profile | User (Base Staff) | **Description**: Accesses employee details.<br>**Main Flow**:<br>1. User opens their profile details.<br>2. User views their contact details, assigned branch, and operational role. |
 | **UC-08** | Authentication & Profile | Update Profile | User (Base Staff) | **Description**: Edits employee contact information.<br>**Main Flow**:<br>1. User updates contact details (e.g., phone or email) and saves.<br>2. The profile displays the updated information. |
 | **UC-09** | Authentication & Profile | Change Password | User (Base Staff) | **Description**: Modifies active password.<br>**Main Flow**:<br>1. User enters current password and a new secure password.<br>2. User receives a password change confirmation. |
-| **UC-10** | User Management | View User Account List | Admin | **Description**: Lists employee user accounts.<br>**Main Flow**:<br>1. Admin opens the employee list.<br>2. Admin views active, suspended, and role-categorized profiles. |
-| **UC-11** | User Management | Add User Account | Admin | **Description**: Registers a new employee profile.<br>**Main Flow**:<br>1. Admin submits new employee info, role, and branch assignment.<br>2. A new staff profile is created, enabling them to log in. |
-| **UC-12** | User Management | Update User Account | Admin | **Description**: Modifies employee details.<br>**Main Flow**:<br>1. Admin edits employee details and saves.<br>2. The employee profile is updated. |
-| **UC-13** | User Management | View User Account Detail | Admin | **Description**: Audits employee history.<br>**Main Flow**:<br>1. Admin selects a user profile.<br>2. Admin reviews profile metadata and activity records. |
-| **UC-14** | User Management | Deactivate User Account | Admin | **Description**: Revokes employee system access.<br>**Main Flow**:<br>1. Admin suspends employee profile.<br>2. Active access is revoked, preventing further login. |
-| **UC-15** | Menu & Categories | View Menu & Categories List | Admin | **Description**: Reviews catalog items.<br>**Main Flow**:<br>1. Admin opens the product catalog.<br>2. Admin reviews categories, active dishes/beverages, and prices. |
-| **UC-68** | Menu & Categories | View Menu Item Detail | Admin | **Description**: Displays the detailed card of a specific menu item, including its ingredients recipe and options.<br>**Main Flow**:<br>1. Admin selects an item from the menu grid.<br>2. Portal displays detailed properties: pricing, description, abbreviation, custom toppings list, and recipe mappings. |
-| **UC-69** | Menu & Categories | View Categories List | Admin | **Description**: Displays all product categories.<br>**Main Flow**:<br>1. Admin opens Category Management.<br>2. Portal displays current categories and associated item count metrics. |
-| **UC-16** | Menu & Categories | Add Category | Admin | **Description**: Creates a new product category.<br>**Main Flow**:<br>1. Admin inputs category details and saves.<br>2. New category is added to the menu configuration. |
-| **UC-17** | Menu & Categories | Update Category | Admin | **Description**: Modifies category settings.<br>**Main Flow**:<br>1. Admin updates category details or visibility.<br>2. The category parameters are updated. |
-| **UC-70** | Menu & Categories | Delete Category | Admin | **Description**: Deactivates/deletes an empty category.<br>**Main Flow**:<br>1. Admin clicks delete on a row.<br>2. Portal displays Delete Category Confirmation modal.<br>3. Admin clicks "Confirm Delete".<br>4. Portal deletes category and returns to list view. |
-| **UC-18** | Menu & Categories | Add Menu Item & Recipe | Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
-| **UC-71** | Menu & Categories | Manage Toppings & Options | Admin | **Description**: Configures modifiers that customers can add to their drinks.<br>**Main Flow**:<br>1. Admin enters Name and Price, and clicks "Add Topping".<br>2. Portal validates inputs and saves new topping. |
-| **UC-19** | Menu & Categories | Update Menu Item & Recipe | Admin, Store Manager | **Description**: Edits product details or recipes, or toggles store availability.<br>**Main Flow**:<br>1. Actor alters item pricing, details, or store availability.<br>2. Adjustments are saved, updating local POS catalogs. |
-| **UC-72** | Menu & Categories | Delete Menu Item | Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
-| **UC-20** | Voucher Management | View Vouchers List | Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
-| **UC-21** | Voucher Management | Add Voucher | Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
-| **UC-22** | Voucher Management | Update Voucher | Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
-| **UC-23** | Voucher Management | Delete Voucher | Admin | **Description**: Deactivates or removes a voucher code.<br>**Main Flow**:<br>1. Admin selects voucher and deactivates it.<br>2. The voucher code is disabled, preventing further usage at checkout. |
-| **UC-24** | Customer Management | View Customer List | Admin, Store Manager, Cashier | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Admin views customer directory.<br>2. Admin reviews list of active members and membership levels. |
-| **UC-25** | Customer Management | Add Customer | Admin, Store Manager, Cashier | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Actor enters member details (name, phone, email) and saves.<br>2. Customer is registered as a loyalty member. |
-| **UC-26** | Customer Management | Update Customer | Admin, Store Manager, Cashier | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Admin or Cashier edits member details and saves.<br>2. The membership profile is updated. |
-| **UC-27** | Customer Management | View Customer History | Admin, Store Manager, Cashier | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Admin opens member profile.<br>2. Admin reviews historical orders, point accumulation ledger, and milestones. |
-| **UC-28** | Reports & Analytics | View Consolidated Business Reports | Admin | **Description**: Accesses centralized reports.<br>**Main Flow**:<br>1. Admin opens consolidation dashboard.<br>2. Admin reviews global brand revenue, compares branch performance, and views best-seller charts. |
-| **UC-29** | Reports & Analytics | Export HQ Reports | Admin | **Description**: Downloads brand report sheets.<br>**Main Flow**:<br>1. Admin triggers export.<br>2. The report files are generated and downloaded. |
-| **UC-30** | System Configuration | Configure Central System Settings | Admin | **Description**: Configures central parameters.<br>**Main Flow**:<br>1. Admin modifies tax rates, loyalty points rates, or API credentials.<br>2. Changes to central configurations are saved. |
+| **UC-10** | User Management | View User Account List | System Admin | **Description**: Lists employee user accounts.<br>**Main Flow**:<br>1. Admin opens the employee list.<br>2. Admin views active, suspended, and role-categorized profiles. |
+| **UC-11** | User Management | Add User Account | System Admin | **Description**: Registers a new employee profile.<br>**Main Flow**:<br>1. Admin submits new employee info, role, and branch assignment.<br>2. A new staff profile is created, enabling them to log in. |
+| **UC-12** | User Management | Update User Account | System Admin | **Description**: Modifies employee details.<br>**Main Flow**:<br>1. Admin edits employee details and saves.<br>2. The employee profile is updated. |
+| **UC-13** | User Management | View User Account Detail | System Admin | **Description**: Audits employee history.<br>**Main Flow**:<br>1. Admin selects a user profile.<br>2. Admin reviews profile metadata and activity records. |
+| **UC-14** | User Management | Deactivate User Account | System Admin | **Description**: Revokes employee system access.<br>**Main Flow**:<br>1. Admin suspends employee profile.<br>2. Active access is revoked, preventing further login. |
+| **UC-15** | Menu & Categories | View Menu & Categories List | Business Admin | **Description**: Reviews catalog items.<br>**Main Flow**:<br>1. Admin opens the product catalog.<br>2. Admin reviews categories, active dishes/beverages, and prices. |
+| **UC-68** | Menu & Categories | View Menu Item Detail | Business Admin | **Description**: Displays the detailed card of a specific menu item, including its ingredients recipe and options.<br>**Main Flow**:<br>1. Admin selects an item from the menu grid.<br>2. Portal displays detailed properties: pricing, description, abbreviation, custom toppings list, and recipe mappings. |
+| **UC-69** | Menu & Categories | View Categories List | Business Admin | **Description**: Displays all product categories.<br>**Main Flow**:<br>1. Admin opens Category Management.<br>2. Portal displays current categories and associated item count metrics. |
+| **UC-16** | Menu & Categories | Add Category | Business Admin | **Description**: Creates a new product category.<br>**Main Flow**:<br>1. Admin inputs category details and saves.<br>2. New category is added to the menu configuration. |
+| **UC-17** | Menu & Categories | Update Category | Business Admin | **Description**: Modifies category settings.<br>**Main Flow**:<br>1. Admin updates category details or visibility.<br>2. The category parameters are updated. |
+| **UC-70** | Menu & Categories | Delete Category | Business Admin | **Description**: Deactivates/deletes an empty category.<br>**Main Flow**:<br>1. Admin clicks delete on a row.<br>2. Portal displays Delete Category Confirmation modal.<br>3. Admin clicks "Confirm Delete".<br>4. Portal deletes category and returns to list view. |
+| **UC-18** | Menu & Categories | Add Menu Item & Recipe | Business Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
+| **UC-71** | Menu & Categories | Manage Toppings & Options | Business Admin | **Description**: Configures modifiers that customers can add to their drinks.<br>**Main Flow**:<br>1. Admin enters Name and Price, and clicks "Add Topping".<br>2. Portal validates inputs and saves new topping. |
+| **UC-19** | Menu & Categories | Update Menu Item & Recipe | Business Admin, Store Manager | **Description**: Edits product details or recipes, or toggles store availability.<br>**Main Flow**:<br>1. Actor alters item pricing, details, or store availability.<br>2. Adjustments are saved, updating local POS catalogs. |
+| **UC-72** | Menu & Categories | Delete Menu Item | Business Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
+| **UC-20** | Voucher Management | View Vouchers List | Business Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
+| **UC-21** | Voucher Management | Add Voucher | Business Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
+| **UC-22** | Voucher Management | Update Voucher | Business Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
+| **UC-23** | Voucher Management | Delete Voucher | Business Admin | **Description**: Deactivates or removes a voucher code.<br>**Main Flow**:<br>1. Admin selects voucher and deactivates it.<br>2. The voucher code is disabled, preventing further usage at checkout. |
+| **UC-24** | Customer Management | View Customer List | Business Admin | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Admin views customer directory.<br>2. Admin reviews list of active members and membership levels. |
+| **UC-25** | Customer Management | Add Customer | Business Admin, Cashier | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Business Admin or Cashier enters member details (name, phone, email) and saves.<br>2. Customer is registered as a loyalty member. |
+| **UC-26** | Customer Management | Update Customer | Business Admin, Cashier | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Business Admin or Cashier edits member details and saves.<br>2. The membership profile is updated. |
+| **UC-27** | Customer Management | View Customer History | Business Admin | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Admin opens member profile.<br>2. Admin reviews historical orders, point accumulation ledger, and milestones. |
+| **UC-28** | Reports & Analytics | View Consolidated Business Reports | CEO Viewer | **Description**: Accesses centralized reports.<br>**Main Flow**:<br>1. Admin opens consolidation dashboard.<br>2. Admin reviews global brand revenue, compares branch performance, and views best-seller charts. |
+| **UC-29** | Reports & Analytics | Export HQ Reports | CEO Viewer | **Description**: Downloads brand report sheets.<br>**Main Flow**:<br>1. Admin triggers export.<br>2. The report files are generated and downloaded. |
+| **UC-30** | System Configuration | Configure Central System Settings | System Admin | **Description**: Configures central parameters.<br>**Main Flow**:<br>1. Admin modifies tax rates, loyalty points rates, or API credentials.<br>2. Changes to central configurations are saved. |
 | **UC-31** | Inventory Management | View Stock List | Store Manager | **Description**: Reviews store stock levels.<br>**Main Flow**:<br>1. Manager opens branch inventory list.<br>2. Manager reviews raw materials quantities and low stock indicators. |
 | **UC-32** | Inventory Management | Import Stock | Store Manager | **Description**: Logs raw material receipt from suppliers.<br>**Main Flow**:<br>1. Manager inputs invoice detail, items, and quantities received.<br>2. Stock counts are updated and import actions are recorded. |
 | **UC-33** | Inventory Management | Export Stock | Store Manager | **Description**: Logs physical material withdrawal.<br>**Main Flow**:<br>1. Manager selects items, inputs quantities, and reasons (e.g., wastage/damage).<br>2. Stock counts are updated and export actions are recorded. |
@@ -632,15 +686,17 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-60** | Order Prep & Queue | Report Issue / Escalate Order | Barista | **Description**: Flags order preparation errors.<br>**Main Flow**:<br>1. Barista reports machine/ingredient issue.<br>2. The order is marked with an issue flag, notifying POS cashiers. |
 | **UC-61** | Inventory Management | View Import/Export History | Store Manager | **Description**: Reviews past stock movements.<br>**Main Flow**:<br>1. Manager opens history logs.<br>2. Details of stock imports and exports are displayed. |
 | **UC-62** | Inventory Management | Auto-Deduct Inventory on Order Completion | System (automated) | **Description**: Automatically deducts ingredient quantities from stock based on the recipe formulation when an order transitions to the PREPARING state.<br>**Main Flow**:<br>1. Barista taps "START PREP" on an order.<br>2. System retrieves recipes for each menu item.<br>3. System deducts corresponding ingredient quantities and logs transactions. |
-| **UC-63** | Branch Management | View Branch List | Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
-| **UC-64** | Branch Management | Add Branch | Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
-| **UC-65** | Branch Management | Update / Deactivate Branch | Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
+| **UC-63** | Branch Management | View Branch List | System Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
+| **UC-64** | Branch Management | Add Branch | System Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
+| **UC-65** | Branch Management | Update / Deactivate Branch | System Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
+
 
 
 
 
 
 ---
+
 
 # 3.1 Functional Overview
 
@@ -669,7 +725,7 @@ graph LR
 ```
 
 ### 2. HQ Admin Portal Screen Flow
-A desktop portal enabling administrative personnel to manage employees, global menus, vouchers, customer records, global settings, and view brand-wide reports.
+A desktop portal enabling administrative personnel to manage employees, global menus, vouchers, customer records, global settings, and view brand-wide reports. The portal is shared by the three HQ roles, each seeing only its permitted modules: `ceoviewer` (read-only HQ reports), `businessadmin` (menu, category, voucher, and CRM management), and `ssadmin` (user provisioning, central system settings, and branch lifecycle).
 
 ```mermaid
 graph LR
@@ -773,10 +829,10 @@ The system comprises the following screens across its user portals:
 | | | View Profile Screen | Allow users to view personal information. |
 | | | Edit Profile Screen | Allow users to update personal information. |
 | | | Change Password Screen | Allows users to change their password. |
-| 2 | User Account Management | Admin Dashboard Home | HQ Admin portal home screen with navigation to all administrative modules. |
-| | | Account Management List Screen | Allows Admin to view all employee accounts. |
-| | | Add User Account Form | Enables Admin to create and register new employee profiles. |
-| | | Edit User Account Form | Allows Admin to edit employee details and roles. |
+| 2 | User Account Management | Admin Dashboard Home | Shared HQ portal home screen; each HQ role (ceoviewer, businessadmin, ssadmin) sees navigation to only its permitted modules. |
+| | | Account Management List Screen | Allows System Admin to view all employee accounts. |
+| | | Add User Account Form | Enables System Admin to create and register new employee profiles. |
+| | | Edit User Account Form | Allows System Admin to edit employee details and roles. |
 | | | User Detail & Audit Logs Screen | Displays profile details and historical activity records. |
 | 3 | Menu & Category Management | Menu & Categories Management Screen | Main catalog panel to review product categories and menu listings. |
 | | | Add Category Screen | Form to add a new category to the menu structure. |
@@ -792,8 +848,8 @@ The system comprises the following screens across its user portals:
 | | | Reports Export Modal | Modal to export branch sales and inventory reports to PDF/Excel. |
 | 7 | System Configuration | Central System Settings Screen | Central configuration screen for tax rates and brand settings. |
 | | | Branch Local Settings Screen | Local settings screen for branch hardware and POS registers. |
-| | | Branch Management List Screen | Lists all store branches with status indicators for Admin management. |
-| | | Add Branch Form | Form for Admin to register a new store branch with name, address, and phone. |
+| | | Branch Management List Screen | Lists all store branches with status indicators for System Admin management. |
+| | | Add Branch Form | Form for System Admin to register a new store branch with name, address, and phone. |
 | | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
 | 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
 | | | Stock List Screen | Displays branch inventory quantities and alert flags. |
@@ -822,65 +878,67 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 48 screens:
+The table below specifies access control policies across all 49 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
 
-| Screen Name | Admin | Store Manager | Cashier | Barista |
-|---|:---:|:---:|:---:|:---:|
-| 1. Login Screen | Yes | Yes | Yes | Yes |
-| 2. Forgot Password Screen | Yes | Yes | Yes | Yes |
-| 3. OTP Verification Screen | Yes | Yes | Yes | Yes |
-| 4. Set New Password Screen | Yes | Yes | Yes | Yes |
-| 5. Force Password Change Screen | Yes | Yes | Yes | Yes |
-| 6. View Profile Screen | Yes | Yes | Yes | Yes |
-| 7. Edit Profile Screen | Yes | Yes | Yes | Yes |
-| 8. Change Password Screen | Yes | Yes | Yes | Yes |
-| Logout Screen/Action | Yes | Yes | Yes | Yes |
-| 9. Admin Dashboard Home | **Yes** | No | No | No |
-| 10. Account Management List | **Yes** | No | No | No |
-| 11. Add User Account Form | **Yes** | No | No | No |
-| 12. Edit User Account Form | **Yes** | No | No | No |
-| 13. User Detail & Audit Logs | **Yes** | No | No | No |
-| 14. Menu & Categories Management | **Yes** | No | No | No |
-| 15. Add Category Screen | **Yes** | No | No | No |
-| 16. Edit Category Screen | **Yes** | No | No | No |
-| 17. Add Menu Item Form | **Yes** | No | No | No |
-| 18. Edit Menu Item Form | **Yes** | No | No | No |
-| 19. Vouchers & Promotions List | **Yes** | No | No | No |
-| 20. Add Voucher Form | **Yes** | No | No | No |
-| 21. Edit Voucher Form | **Yes** | No | No | No |
-| 22. Customer List & Loyalty History | **Yes** | **Yes** | **Yes** | No |
-| 23. HQ Business Reports | **Yes** | No | No | No |
-| 24. Central System Settings | **Yes** | No | No | No |
-| 25. Manager Dashboard Home | No | **Yes** | No | No |
-| 26. Stock List Screen | **Yes** | **Yes** | No | No |
-| 26a. Stock History Log Screen | **Yes** | **Yes** | No | No |
-| 27. Stock Import Form | No | **Yes** | No | No |
-| 28. Stock Export Form | No | **Yes** | No | No |
-| 29. Stock Audit Screen | No | **Yes** | No | No |
-| 30. Staff Shift Scheduler | No | **Yes** | No | No |
-| 30a. Add Shift Screen | No | **Yes** | No | No |
-| 30b. Edit Shift Screen | No | **Yes** | No | No |
-| 31. Staff Attendance Report | No | **Yes** | No | No |
-| 32. Store Revenue Reports Screen | No | **Yes** | No | No |
-| 32a. Reports Export Modal | No | **Yes** | No | No |
-| 33. Branch Local Settings | No | **Yes** | No | No |
-| 34. Shift Initiation Open Shift | No | No | **Yes** | No |
-| 35. POS Checkout Grid & Cart | No | No | **Yes** | No |
-| 36. Membership Search & Add | No | No | **Yes** | No |
-| 37. Apply Voucher Modal | No | No | **Yes** | No |
-| 37a. Redeem Loyalty Points Modal | No | No | **Yes** | No |
-| 38. Payment Checkout Modal | No | No | **Yes** | No |
-| 39. Payment Retry & Cancel Modal | No | No | **Yes** | No |
-| 40. Order History & Refund Request | No | No | **Yes** | No |
-| 41. Shift Reconciliation Close Shift | No | No | **Yes** | No |
-| 42. Barista Queue Monitor | No | Yes | Yes | **Yes** |
-| 43. Report Issue & Hold Order | No | No | No | **Yes** |
-| 44. Branch Management List | **Yes** | No | No | No |
-| 45. Add Branch Form | **Yes** | No | No | No |
-| 46. Edit / Deactivate Branch | **Yes** | No | No | No |
-| 47. View Branch Staff List Screen | No | **Yes** | No | No |
-| 48. Manager Order History Screen | No | **Yes** | No | No |
-| 49. Order Detail Screen | No | **Yes** | **Yes** | **Yes** |
+| Screen Name | ceoviewer | businessadmin | ssadmin | Store Manager | Cashier | Barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1. Login Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 2. Forgot Password Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 3. OTP Verification Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 4. Set New Password Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 5. Force Password Change Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 6. View Profile Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 7. Edit Profile Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 8. Change Password Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| Logout Screen/Action | Yes | Yes | Yes | Yes | Yes | Yes |
+| 9. Admin Dashboard Home | **Yes** | **Yes** | **Yes** | No | No | No |
+| 10. Account Management List | No | No | **Yes** | No | No | No |
+| 11. Add User Account Form | No | No | **Yes** | No | No | No |
+| 12. Edit User Account Form | No | No | **Yes** | No | No | No |
+| 13. User Detail & Audit Logs | No | No | **Yes** | No | No | No |
+| 14. Menu & Categories Management | No | **Yes** | No | No | No | No |
+| 15. Add Category Screen | No | **Yes** | No | No | No | No |
+| 16. Edit Category Screen | No | **Yes** | No | No | No | No |
+| 17. Add Menu Item Form | No | **Yes** | No | No | No | No |
+| 18. Edit Menu Item Form | No | **Yes** | No | No | No | No |
+| 19. Vouchers & Promotions List | No | **Yes** | No | No | No | No |
+| 20. Add Voucher Form | No | **Yes** | No | No | No | No |
+| 21. Edit Voucher Form | No | **Yes** | No | No | No | No |
+| 22. Customer List & Loyalty History | No | **Yes** | No | **Yes** | **Yes** | No |
+| 23. HQ Business Reports | **Yes** | No | No | No | No | No |
+| 24. Central System Settings | No | No | **Yes** | No | No | No |
+| 25. Manager Dashboard Home | No | No | No | **Yes** | No | No |
+| 26. Stock List Screen | No | No | No | **Yes** | No | No |
+| 26a. Stock History Log Screen | No | No | No | **Yes** | No | No |
+| 27. Stock Import Form | No | No | No | **Yes** | No | No |
+| 28. Stock Export Form | No | No | No | **Yes** | No | No |
+| 29. Stock Audit Screen | No | No | No | **Yes** | No | No |
+| 30. Staff Shift Scheduler | No | No | No | **Yes** | No | No |
+| 30a. Add Shift Screen | No | No | No | **Yes** | No | No |
+| 30b. Edit Shift Screen | No | No | No | **Yes** | No | No |
+| 31. Staff Attendance Report | No | No | No | **Yes** | No | No |
+| 32. Store Revenue Reports Screen | No | No | No | **Yes** | No | No |
+| 32a. Reports Export Modal | No | No | No | **Yes** | No | No |
+| 33. Branch Local Settings | No | No | No | **Yes** | No | No |
+| 34. Shift Initiation Open Shift | No | No | No | No | **Yes** | No |
+| 35. POS Checkout Grid & Cart | No | No | No | No | **Yes** | No |
+| 36. Membership Search & Add | No | No | No | No | **Yes** | No |
+| 37. Apply Voucher Modal | No | No | No | No | **Yes** | No |
+| 37a. Redeem Loyalty Points Modal | No | No | No | No | **Yes** | No |
+| 38. Payment Checkout Modal | No | No | No | No | **Yes** | No |
+| 39. Payment Retry & Cancel Modal | No | No | No | No | **Yes** | No |
+| 40. Order History & Refund Request | No | No | No | No | **Yes** | No |
+| 41. Shift Reconciliation Close Shift | No | No | No | No | **Yes** | No |
+| 42. Barista Queue Monitor | No | No | No | Yes | Yes | **Yes** |
+| 43. Report Issue & Hold Order | No | No | No | No | No | **Yes** |
+| 44. Branch Management List | No | No | **Yes** | No | No | No |
+| 45. Add Branch Form | No | No | **Yes** | No | No | No |
+| 46. Edit / Deactivate Branch | No | No | **Yes** | No | No | No |
+| 47. View Branch Staff List Screen | No | No | No | **Yes** | No | No |
+| 48. Manager Order History Screen | No | No | No | **Yes** | No | No |
+| 49. Order Detail Screen | No | No | No | **Yes** | **Yes** | **Yes** |
+
+> **Note on HQ inventory access:** Under the §3.2.0 RBAC model, branch inventory (Stock List/History/Import/Export/Audit) is owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens. Chain-wide stock visibility is delivered to `ceoviewer` through consolidated HQ reports instead.
 
 ---
 
@@ -940,7 +998,7 @@ erDiagram
 
 | # | Entity | Description |
 |---|---|---|
-| 1 | users | Stores login credentials and role-based permissions for employees (Admin, Manager, Cashier, Barista) within the system. |
+| 1 | users | Stores login credentials and role-based permissions for employees (CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista) within the system. |
 | 2 | categories | Represents main food and beverage groups to organize the product catalog. |
 | 3 | menu_items | Holds individual beverage and food listings, including catalog pricing, barcodes, chain-wide active status, and image references. |
 | 3a | branch_menu_status | Manages item availability status independently per branch store. |
@@ -971,12 +1029,12 @@ Represents employees and system administrators.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the user. |
 | 2 | username | | Text (Max 50 characters) | Yes | Account login name, unique. |
 | 3 | password_hash | | Text (Max 255 characters) | Yes | Securely hashed password. |
-| 4 | role | | Selection (Role: ADMIN, STORE_MANAGER, CASHIER, BARISTA) | Yes | User role. |
+| 4 | role | | Selection (Role: CEOVIEWER, BUSINESSADMIN, SSADMIN, STOREMANAGER, CASHIER, BARISTA) | Yes | User role. |
 | 5 | full_name | | Text (Max 100 characters) | Yes | Employee full name. |
 | 6 | is_active | | Yes/No (Boolean) | Yes | Current status of the account. |
 | 7 | email | | Text (Max 100 characters) | Yes | Employee contact email address, unique. |
 | 8 | phone | | Text (Max 20 characters) | Yes | Employee contact phone number, unique. |
-| 9 | store_id | | Unique ID (UUID) | No | Foreign Key (FK) - references store/branch. Null for HQ Admin. |
+| 9 | store_id | | Unique ID (UUID) | No | Foreign Key (FK) - references store/branch. Null for HQ roles (ceoviewer / businessadmin / ssadmin). |
 | 10 | created_at | | Date & Time | Yes | Account creation timestamp. |
 | 11 | last_login_at | | Date & Time | No | Timestamp of the most recent successful login. |
 | 12 | must_change_password | | Yes/No (Boolean) | Yes | Flag indicating if the user must reset their password upon next login. Default: true. |
@@ -1001,7 +1059,7 @@ Individual food/beverage listings.
 | 3 | name | | Text (Max 100 characters) | Yes | Name of the food or beverage (e.g., "Espresso", "Peach Tea"). |
 | 4 | price | | Decimal (Currency/VND) | Yes | Base price. |
 | 5 | description | | Long Text | No | Description of the item. |
-| 6 | is_active | | Yes/No (Boolean) | Yes | Visibility flag for entire chain, decided by HQ Admin (default: true). |
+| 6 | is_active | | Yes/No (Boolean) | Yes | Visibility flag for entire chain, decided by Business Admin at HQ (default: true). |
 | 7 | image_url | | Text (Max 255 characters) | No | URL path to the product image file. |
 | 8 | barcode | | Text (Max 50 characters) | No | Barcode or SKU for POS barcode scanner lookup (unique). |
 | 9 | abbreviation | | Text (Max 50 characters) | Yes | Auto-generated abbreviation (e.g. cfd). |
@@ -1075,9 +1133,6 @@ Sales transactions.
 | 13 | payment_status | | Selection (Payment Status: PENDING, COMPLETED, FAILED, REFUNDED) | Yes | Payment status. |
 | 14 | order_status | | Selection (Fulfillment Status: PENDING, PREPARING, HOLD, READY, COMPLETED, CANCELLED) | Yes | Fulfillment status. |
 | 15 | created_at | | Date & Time | Yes | Date and time the order was placed. |
-| 16 | points_redeemed | | Whole Number | Yes | Loyalty points redeemed for discount on this order. Default: 0. |
-| 17 | points_earned | | Whole Number | Yes | Loyalty points earned from this transaction. Default: 0. |
-| 18 | loyalty_discount | | Decimal (Currency/VND) | Yes | Cash discount amount from loyalty points redemption. Default: 0. |
 
 ### 7a. `ORDER_CANCELLATION`
 Fulfillment cancellation and refund audits logs.
@@ -1134,7 +1189,7 @@ Historical ledger of stock modifications.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock transaction. |
 | 2 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id). |
 | 3 | manager_id | | Unique ID (UUID) | No | Foreign Key (FK) - references USER(id). The manager who logged it. Null for system-triggered automated recipe deductions. |
-| 4 | transaction_type | | Selection (Transaction Type: IMPORT, EXPORT, AUDIT_ADJUSTMENT, AUTO) | Yes | Transaction type. |
+| 4 | transaction_type | | Selection (Transaction Type: IMPORT, EXPORT, AUDIT_ADJUSTMENT) | Yes | Transaction type. |
 | 5 | quantity | | Decimal (Quantity) | Yes | Volume of stock moved. |
 | 6 | reason | | Long Text | No | Reason details (e.g., "Weekly Restock", "Soured Milk Disposal"). |
 | 7 | created_at | | Date & Time | Yes | Date and time of the transaction. |
@@ -1224,11 +1279,46 @@ Central security audit logs for critical database updates.
 
 
 
+
 ---
+
 
 # 3.2 System Access & Security
 
 This section details the functional requirements for authentication, user profiles, and employee account administration.
+
+---
+
+## 3.2.0 Role-Based Access Control (RBAC) Overview
+
+The system defines six user roles with strictly separated permissions. The table below is the authoritative reference for all access decisions.
+
+| Role Identifier | Display Name | Scope | Permitted Actions |
+|---|---|---|---|
+| `ceoviewer` | CEO / Executive Viewer | HQ | **Read-only** access to HQ Dashboard and all chain-wide reports. Cannot create, edit, or delete any data (menu items, vouchers, user accounts, etc.). |
+| `businessadmin` | Ops & Marketing Admin | HQ | Full CRUD on chain-wide menu, recipe formulas, categories, vouchers, and CRM customer data. Cannot access system configuration or user account provisioning. |
+| `ssadmin` | IT System Admin | HQ | System configuration (hardware, VietQR/OTP integration, license, `MAX_ACTIVE_BRANCHES`). Cannot access sales or CRM data. |
+| `storemanager` | Store Manager | Branch | Inventory import/export/audit for own branch, staff schedule management, shift close approval, temporary item deactivation via `branch_menu_status`. |
+| `cashier` | POS Cashier | Branch | POS checkout, open/close shift (own user session only), customer lookup, order history for own branch. |
+| `barista` | Barista | Branch | Barista KDS queue view, START PREP, READY (one-touch), REPORT ISSUE, print cup stickers. |
+
+### Permission Matrix Summary
+
+| Feature | ceoviewer | businessadmin | ssadmin | storemanager | cashier | barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| HQ Dashboard / Chain Reports | Read | — | — | — | — | — |
+| Menu & Recipe Management | — | CRUD | — | — | — | — |
+| Voucher & CRM Management | — | CRUD | — | — | — | — |
+| System Configuration | — | — | CRUD | — | — | — |
+| User Account Provisioning | — | — | — | — | — | — |
+| Branch Inventory | — | — | — | CRUD | — | — |
+| Branch Menu Status (temp. disable) | — | — | — | Write | — | — |
+| Staff Scheduling | — | — | — | CRUD | — | — |
+| Shift Close Approval | — | — | — | Approve | — | — |
+| POS Checkout / Shift Open | — | — | — | — | Write | — |
+| Barista KDS / Cup Stickers | — | — | — | — | — | Write |
+
+> **Note**: User account provisioning (create/edit employee accounts, assign roles) is restricted to `ssadmin` for HQ-level accounts and to `ssadmin` + `storemanager` (read-only view) for branch accounts. `businessadmin` does **not** have user management access.
 
 ---
 
@@ -1362,18 +1452,21 @@ This section details the functional requirements for authentication, user profil
 | 4 | Portal | Terminates active session, records timestamp, and redirects to Login screen. |
 
 #### Alternative Flows
-##### AT1: Active Shift Check
-- **Trigger**: At step 2, Cashier has an active POS shift session open.
+##### AT1: Logout With Active Shift Session
+- **Trigger**: At step 2, Cashier has an active POS shift session open on the terminal.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"You have an active shift session open. You must close your shift (UC-53) before logging out."` (MSG17) |
-| 2.2 | Cashier | Acknowledges the error, and the logout flow is aborted. The cashier is redirected to the active shift page. |
+| 2.1 | Portal | Displays confirmation: `"Your personal session will be closed. The POS shift session on this terminal will remain open so another cashier can continue."` |
+| 2.2 | Cashier | Confirms logout. Portal terminates the **User Session** token only. The **Shift Session** on the POS register remains active and unaffected. |
+
+> **Design Note**: User Session and Shift Session are independent lifecycle objects. A cashier may log out of their personal account (e.g. short break, mid-shift role change) without triggering cash-drawer reconciliation. The shift remains open on the terminal register under its assigned POS register ID until explicitly closed via UC-53.
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-13 | Logout time must be logged upon termination of user session. |
+| BR-60 | **User Session / Shift Session Independence**: Terminating a cashier's User Session does not close the active Shift Session on the POS terminal. The Shift Session persists until explicitly closed by a cashier (UC-53) and approved by the Store Manager. |
 
 ---
 
@@ -1976,8 +2069,8 @@ This section details the functional requirements for authentication, user profil
 | 2 | Full Name | Text | Yes | 100 | Employee's full name. |
 | 3 | Email | Text | Yes | 100 | Contact work email address (unique). |
 | 4 | Phone | Text | Yes | 20 | Contact phone number. |
-| 5 | Role | Dropdown | Yes | | Selects role (`ADMIN`, `STORE_MANAGER`, `CASHIER`, `BARISTA`). |
-| 6 | Branch Store | Dropdown | No | | Scopes cashier/barista/manager to branch (Null for HQ Admins). |
+| 5 | Role | Dropdown | Yes | | Selects role: `ceoviewer` (CEO / Executive Viewer), `businessadmin` (Ops & Marketing), `ssadmin` (IT System Admin), `storemanager` (Store Manager), `cashier` (POS Cashier), `barista`. |
+| 6 | Branch Store | Dropdown | Conditional | | Scopes storemanager / cashier / barista to a branch. **Leave blank (NULL) for HQ roles** (`ceoviewer`, `businessadmin`, `ssadmin`). |
 | 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by Admin). |
 | 8 | Save Account | Button | | | Submits details to create account. |
 | 9 | Cancel | Button | | | Discards details and returns to Employee list. |
@@ -2100,7 +2193,9 @@ This section details the functional requirements for authentication, user profil
 
 
 
+
 ---
+
 
 # 3.3 Menu Management
 
@@ -2144,7 +2239,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Cashier (POS View) |
+| **Actor** | Business Admin, Cashier (POS View) |
 | **Description** | Allows users to view the complete catalog of beverages and food items. |
 | **Precondition** | User is logged in. |
 | **Trigger** | User opens the product catalog list view. |
@@ -2161,7 +2256,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | ID | Rule Description |
 |---|---|
 | BR-24 | Items list shows search autocomplete results and real-time category filtering. |
-| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on active quantities or flags. |
+| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on the two-level model: `menu_items.is_active` (chain-wide) AND `branch_menu_status.is_available` (branch-level). An item appears as `Out of Stock` at a branch if either flag is false. See §3.3.7 for schema details. |
 
 ---
 
@@ -2200,16 +2295,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Displays the detailed card of a specific menu item, including its ingredients recipe and options. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks on a specific product listing row. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks on a specific product listing row. |
 | **Post-Condition** | Product recipe details, unit cost, and toppings mappings are displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Selects an item from the menu grid. |
+| 1 | Business Admin | Selects an item from the menu grid. |
 | 2 | Portal | Displays detailed properties: pricing, description, abbreviation, custom toppings list, and recipe mappings. |
 
 ---
@@ -2264,16 +2359,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Adds a new product to the central sales catalog. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Menu Item". |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks "+ Add Menu Item". |
 | **Post-Condition** | New menu item registers in the system. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name, configures variants/sizes and prices, enters Category, and checks associated toppings. Clicks "Save Item". |
+| 1 | Business Admin | Enters Name, configures variants/sizes and prices, enters Category, and checks associated toppings. Clicks "Save Item". |
 | 2 | Portal | Validates uniqueness of product name and positive prices. |
 | 3 | Portal | Saves new item and variants, auto-generates search abbreviation, and returns to menu list. |
 
@@ -2327,7 +2422,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | 3 | Prices/Variants | Grid | Yes | | Multiple variants/sizes and prices. |
 | 4 | Barcode | Text | No | 50 | Barcode/SKU value. |
 | 5 | Description | Text | No | 500 | Description. |
-| 6 | Active | Checkbox | Yes | | Active status globally (Admin only). Branch availability status toggle (Store Manager only - updates `branch_menu_status` mapping). |
+| 6 | Active | Checkbox | Yes | | Active status globally (Business Admin only). Branch availability status toggle (Store Manager only - updates `branch_menu_status` mapping). |
 | 7 | Image Upload | File | No | | Upload/replace image. |
 | 8 | Linked Toppings | Checkboxes | No | | Modifier selections. |
 | 9 | Save Changes | Button | | | Saves modified properties. |
@@ -2342,16 +2437,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager |
-| **Description** | Modifies properties of an existing item (Admin) or toggles local branch availability (Store Manager). |
+| **Actor** | Business Admin, Store Manager |
+| **Description** | Modifies properties of an existing item (Business Admin) or toggles local branch availability (Store Manager). |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Edit Item" on detail panel. Store Manager accesses the item to toggle its branch availability (`branch_menu_status.is_available`). |
+| **Trigger** | Business Admin clicks "Edit Item" on detail panel. Store Manager accesses the item to toggle its branch availability (`branch_menu_status.is_available`). |
 | **Post-Condition** | Product listings or availability mapping are modified. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Actor | Admin edits product fields and clicks "Save Changes". Alternatively, Store Manager toggles branch-level item availability and clicks "Save Changes". |
+| 1 | Actor | Business Admin edits product fields and clicks "Save Changes". Alternatively, Store Manager toggles branch-level item availability and clicks "Save Changes". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates parameters (or `branch_menu_status` record), re-generates abbreviation if name changed, and returns to detail card. |
 
@@ -2401,18 +2496,18 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Performs a soft delete (sets availability and visibility flag to false) on a menu item. |
 | **Precondition** | Menu item exists. |
-| **Trigger** | Admin clicks "Delete Menu Item" button. |
+| **Trigger** | Business Admin clicks "Delete Menu Item" button. |
 | **Post-Condition** | Product is removed from catalogs but retained in audit tables. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Clicks "Delete" button. |
+| 1 | Business Admin | Clicks "Delete" button. |
 | 2 | Portal | Displays Delete Menu Item Confirmation modal. |
-| 3 | Admin | Clicks "Confirm Delete". |
+| 3 | Business Admin | Clicks "Confirm Delete". |
 | 4 | Portal | Deactivates visibility, removes from active POS/web registers, and redirects to list. |
 
 #### Business Rules
@@ -2456,16 +2551,16 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Configures modifiers that customers can add to their drinks. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin navigates to Toppings and Options management page. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin navigates to Toppings and Options management page. |
 | **Post-Condition** | Toppings options list is updated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name and Price, and clicks "Add Topping". |
+| 1 | Business Admin | Enters Name and Price, and clicks "Add Topping". |
 | 2 | Portal | Validates inputs (non-negative price, non-empty name). |
 | 3 | Portal | Saves new topping and updates grid list. |
 
@@ -2474,12 +2569,49 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
 
+---
 
+## 3.3.7 Two-Level Item Availability Model
 
+Menu item availability is controlled at two independent levels to separate HQ chain decisions from branch-level operational reality.
+
+### Availability Levels
+
+| Level | Field | Owner | Scope | Meaning when `false` |
+|---|---|---|---|---|
+| Chain-wide visibility | `menu_items.is_active` | Business Admin | All branches | Item is hidden from every POS in the chain. Use for permanent removal or seasonal deactivation. |
+| Branch-level availability | `branch_menu_status.is_available` | Store Manager | Single branch | Item is temporarily unavailable at that branch (e.g. out of stock, equipment issue). Other branches are unaffected. |
+
+> **Rule**: The `menu_items` table does **not** have an `is_available` column. Per-branch availability is managed exclusively through the `branch_menu_status` join table.
+
+### Database Schema
+
+```sql
+-- Per-branch item availability (replaces is_available on menu_items)
+CREATE TABLE branch_menu_status (
+    store_id       UUID NOT NULL REFERENCES stores(id),
+    menu_item_id   UUID NOT NULL REFERENCES menu_items(id),
+    is_available   BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_by     UUID REFERENCES users(id),     -- Store Manager who last changed it
+    updated_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (store_id, menu_item_id)
+);
+
+-- menu_items uses is_active for chain-wide control; no is_available column
+-- Example: is_active = true  → item exists in the global catalog
+--          is_active = false → item soft-deleted or chain-wide deactivated (BR-28)
+```
+
+### Category Deletion Cascade Rule
+
+| ID | Rule Description |
+|---|---|
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it must have their `category_id` set to `NULL` (the column is `NULLABLE`). This prevents foreign key violations while preserving the items in the catalog. Items with `category_id = NULL` appear as uncategorized in the HQ menu grid. |
 
 
 
 ---
+
 
 # 3.4 Category Management
 
@@ -2521,16 +2653,16 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Displays all product categories. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Category Management section. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin opens the Category Management section. |
 | **Post-Condition** | Product categories list is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Opens Category Management. |
+| 1 | Business Admin | Opens Category Management. |
 | 2 | Portal | Displays current categories and associated item count metrics. |
 
 ---
@@ -2570,16 +2702,16 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Creates a new product category node. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Category". |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks "+ Add Category". |
 | **Post-Condition** | Category is registered. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Name and Description, and clicks "Save Category". |
+| 1 | Business Admin | Enters Name and Description, and clicks "Save Category". |
 | 2 | Portal | Validates uniqueness and non-empty name. |
 | 3 | Portal | Saves the category and returns to list view. |
 
@@ -2628,16 +2760,16 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Edits category name or description details. |
 | **Precondition** | Category exists. |
-| **Trigger** | Admin clicks edit icon on list page. |
+| **Trigger** | Business Admin clicks edit icon on list page. |
 | **Post-Condition** | Category details are updated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Edits Name or Description, and clicks "Save Changes". |
+| 1 | Business Admin | Edits Name or Description, and clicks "Save Changes". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, syncs with active sales screens, and returns to list. |
 
@@ -2677,18 +2809,18 @@ This section details specifications for managing product categories.
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Deactivates/deletes an empty category. |
 | **Precondition** | Category contains no active items. |
-| **Trigger** | Admin clicks delete icon on list page. |
+| **Trigger** | Business Admin clicks delete icon on list page. |
 | **Post-Condition** | Category is removed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Clicks delete on a row. |
+| 1 | Business Admin | Clicks delete on a row. |
 | 2 | Portal | Displays Delete Category Confirmation modal. |
-| 3 | Admin | Clicks "Confirm Delete". |
+| 3 | Business Admin | Clicks "Confirm Delete". |
 | 4 | Portal | Deletes category and returns to list view. |
 
 #### Alternative Flows
@@ -2709,7 +2841,9 @@ This section details specifications for managing product categories.
 
 
 
+
 ---
+
 
 # 3.5 Inventory & Stock Management
 
@@ -3066,7 +3200,9 @@ This section details specifications for viewing inventory, managing imports/expo
 
 
 
+
 ---
+
 
 # 3.6 POS Transaction
 
@@ -3616,7 +3752,9 @@ This section outlines the business logic for calculating and applying discounts 
 
 
 
+
 ---
+
 
 # 3.7 Order Management
 
@@ -3898,6 +4036,18 @@ All orders follow the state transitions below:
 
 ---
 
+## 3.7.5.1 KDS Barista Performance KPI
+
+Preparation throughput metrics are aggregated at the **shift and branch level**, not attributed to individual baristas or individual drink preparations. This reflects the shared-station model where multiple baristas may contribute to the same order queue within a single shift.
+
+### Business Rule
+
+| ID | Rule Description |
+|---|---|
+| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the `store_id + shift_session_id` level. No performance metric is recorded per individual `user_id` for each beverage item. Reports expose aggregate throughput only. |
+
+---
+
 ## 3.7.6 Void & Cancellation Audit Logging
 
 All order cancellation actions are recorded in the central database to prevent fraud, track waste, and support financial bookkeeping.
@@ -3936,7 +4086,9 @@ This section specifies operational guidelines for cash register shifts, session 
 
 
 
+
 ---
+
 
 # 3.8 Customer & Membership Management
 
@@ -3976,7 +4128,7 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Displays the register of all enrolled loyalty members. |
 | **Precondition** | User is logged in. |
 | **Trigger** | User navigates to Customers module. |
@@ -4027,7 +4179,7 @@ This section details specifications for loyalty membership profiles search, enro
 | **Date** | 2026-05-24 | | |
 
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Registers a new customer into the membership loyalty program. |
 | **Precondition** | Customer is not enrolled. |
 | **Trigger** | User clicks "+ Add Customer". |
@@ -4071,7 +4223,7 @@ This section details specifications for loyalty membership profiles search, enro
 |  Contact Email                     |
 |  [ nva@example.com               ] |
 |                                    |
-|  Adjust Points (Admin only):       |
+|  Adjust Points (Business Admin):   |
 |  Points: [ 340      ]              |
 |  Reason: [ Dispute Resolution    ] |
 |                                    |
@@ -4085,8 +4237,8 @@ This section details specifications for loyalty membership profiles search, enro
 | 1 | Full Name | Text | Yes | 100 | Customer's full name (editable). |
 | 2 | Phone | Label | | | Customer phone number lookup key (read-only/locked). |
 | 3 | Contact Email | Text | Yes | 100 | Customer email address. |
-| 4 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Admin.** Hidden/read-only for Cashier and Store Manager roles. |
-| 5 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Admin only).** Explanation comment for manual points adjustment. |
+| 4 | Points | Text | Conditional | 6 | **Visible and editable only when Actor = Business Admin.** Hidden/read-only for Cashier and Store Manager roles. |
+| 5 | Reason | Text | Conditional | 250 | **Mandatory when Points value is changed (Business Admin only).** Explanation comment for manual points adjustment. |
 | 6 | Save | Button | | | Saves customer details changes. |
 | 7 | Cancel | Button | | | Returns to list page. |
 
@@ -4099,7 +4251,7 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Modifies membership contact details or adjusts points logs. |
 | **Precondition** | Customer profile exists. |
 | **Trigger** | User clicks edit row icon on list view. |
@@ -4108,12 +4260,12 @@ This section details specifications for loyalty membership profiles search, enro
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | User | Modifies Full Name or Contact Email (or Admin inputs point changes) and clicks "Save". |
+| 1 | User | Modifies Full Name or Contact Email (or Business Admin inputs point changes) and clicks "Save". |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates details, logs adjust audit notes (if point changes occur), and returns. |
 
 #### Alternative Flows
-##### AT1: Non-Admin Actor — Points Fields Hidden
+##### AT1: Non-Business-Admin Actor — Points Fields Hidden
 - **Trigger**: Cashier or Store Manager opens the Edit Customer screen.
 
 | Sub-step | Actor | Action |
@@ -4121,7 +4273,7 @@ This section details specifications for loyalty membership profiles search, enro
 | 1 | Portal | The "Points" and "Reason" fields are hidden from the form. Only "Contact Email" is editable. |
 
 ##### AT2: Points Changed Without Reason
-- **Trigger**: Admin modifies the Points value but leaves Reason blank.
+- **Trigger**: Business Admin modifies the Points value but leaves Reason blank.
 
 | Sub-step | Actor | Action |
 |---|---|---|
@@ -4130,7 +4282,7 @@ This section details specifications for loyalty membership profiles search, enro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-49 | Manual points adjustments require a recorded reason and are locked to Admin role. |
+| BR-49 | Manual points adjustments require a recorded reason and are locked to Business Admin role. |
 
 ## 3.8.4 F43 - View Customer History / UC-27 View Customer History
 
@@ -4167,7 +4319,7 @@ This section details specifications for loyalty membership profiles search, enro
 
 | Field | Description |
 |---|---|
-| **Actor** | Cashier, Store Manager, Admin |
+| **Actor** | Cashier, Store Manager, Business Admin |
 | **Description** | Lists all historical orders completed by the customer. |
 | **Precondition** | Customer is selected. |
 | **Trigger** | User navigates to Transaction History view in profile card. |
@@ -4186,7 +4338,9 @@ This section details specifications for loyalty membership profiles search, enro
 | BR-35 | **Loyalty Points Expiry**: Loyalty points expire after 12 months of customer inactivity (no new transactions made by the customer). |
 
 
+
 ---
+
 
 # 3.9 Staff Management
 
@@ -4426,7 +4580,29 @@ This section details specifications for staff shifts assignment, schedules views
 |---|---|
 | BR-38 | **Attendance Log Recording**: The system records check-in and check-out entries under the local branch's `store_id` where the attendance action was taken, calculating lateness against the scheduled shift. |
 | BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
-| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login. |
+| BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login — the shared POS session on the terminal is not interrupted. |
+
+### 3.9.4.3 Database Schema (Attendance Logs)
+
+```sql
+CREATE TABLE attendance_logs (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id),
+    store_id        UUID NOT NULL REFERENCES stores(id),   -- branch where action was taken
+    shift_id        UUID REFERENCES staff_shifts(id),      -- scheduled shift (nullable: cross-branch walk-ins)
+    action          VARCHAR(10) NOT NULL,                  -- 'CHECK_IN' | 'CHECK_OUT'
+    photo_url       VARCHAR(500),                          -- camera snapshot URL (taken at action time)
+    recorded_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lateness_minutes INTEGER GENERATED ALWAYS AS (
+        EXTRACT(EPOCH FROM (recorded_at - scheduled_start)) / 60
+    ) STORED                                               -- null if shift_id is null
+);
+
+CREATE INDEX idx_attendance_store_date ON attendance_logs(store_id, recorded_at);
+CREATE INDEX idx_attendance_user       ON attendance_logs(user_id);
+```
+
+> **photo_url**: Stores the URL/path of the camera snapshot taken during the attendance popup. Required for fraud prevention (verifying the correct employee is clocking in). Nullable only when the attendance action is performed in an offline/no-camera mode.
 
 ---
 
@@ -4496,7 +4672,9 @@ This section details specifications for staff shifts assignment, schedules views
 
 
 
+
 ---
+
 
 # 3.10 Promotion & Campaign Management
 
@@ -4539,16 +4717,16 @@ This section details specifications for managing discount codes and promotional 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Lists all promotional campaigns, active codes, and loyalty discount rules. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Promotions module. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin opens the Promotions module. |
 | **Post-Condition** | Grid list of vouchers is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Opens Promotions list. |
+| 1 | Business Admin | Opens Promotions list. |
 | 2 | Portal | Retrieves active campaigns list and displays codes, types, and stats. |
 
 ---
@@ -4600,16 +4778,16 @@ This section details specifications for managing discount codes and promotional 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Creates a new promotional campaign or discount code. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Voucher" button. |
+| **Precondition** | Business Admin is logged in. |
+| **Trigger** | Business Admin clicks "+ Add Voucher" button. |
 | **Post-Condition** | New voucher configuration is saved. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters code, value, date limits, and customer usage limits. Clicks "Save Voucher". |
+| 1 | Business Admin | Enters code, value, date limits, and customer usage limits. Clicks "Save Voucher". |
 | 2 | Portal | Validates code uniqueness, positive values, and date ranges. |
 | 3 | Portal | Saves new voucher configurations. |
 
@@ -4665,16 +4843,16 @@ This section details specifications for managing discount codes and promotional 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | Business Admin |
 | **Description** | Modifies code parameters or deactivates campaigns. |
 | **Precondition** | Voucher exists. |
-| **Trigger** | Admin clicks edit icon on voucher row. |
+| **Trigger** | Business Admin clicks edit icon on voucher row. |
 | **Post-Condition** | Voucher updates are stored. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Adjusts validity dates, usage limit, or values. Clicks "Save Changes" (or "Deactivate"). |
+| 1 | Business Admin | Adjusts validity dates, usage limit, or values. Clicks "Save Changes" (or "Deactivate"). |
 | 2 | Portal | Validates inputs. |
 | 3 | Portal | Updates configuration settings (or sets active status to inactive). |
 
@@ -4690,7 +4868,7 @@ This section details specifications for managing discount codes and promotional 
 
 ## 3.10.4 Loyalty Points Program Configuration
 
-The loyalty program parameters are managed globally by the HQ Admin via central configuration parameters:
+The loyalty program parameters are managed globally by the System Admin via central configuration parameters:
 
 - **LOYALTY_ACCRUAL_PERCENTAGE**: The percentage of the Net Total Payable value of the invoice earned as points. E.g., `LOYALTY_ACCRUAL_PERCENTAGE = 1.0%` means a customer earns 1 point for every 10,000 VND spent (10,000 * 1% = 1 pt).
 - **LOYALTY_MAX_ACC_POINTS_PER_ORDER**: The maximum points limit that a customer can accrue in a single order transaction (e.g. capped at 100 points per invoice).
@@ -4699,9 +4877,11 @@ The loyalty program parameters are managed globally by the HQ Admin via central 
 
 
 
+
 ---
 
-# 3.12 Dashboard & Reporting
+
+﻿# 3.12 Dashboard & Reporting
 
 This section details specifications for business reports views, sales analytics dashboards, and export spreadsheets.
 
@@ -4745,16 +4925,16 @@ This section details specifications for business reports views, sales analytics 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | CEO Viewer |
 | **Description** | Accesses centralized reports aggregating data from all store branches. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Business Reports & Analytics dashboard. |
+| **Precondition** | CEO Viewer is logged in. |
+| **Trigger** | CEO Viewer opens the Business Reports & Analytics dashboard. |
 | **Post-Condition** | Consolidated metrics charts and grids are displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Selects date range filter boundaries. |
+| 1 | CEO Viewer | Selects date range filter boundaries. |
 | 2 | Portal | Retrieves sales data, computes totals, calculates averages, and displays dashboard. |
 
 ---
@@ -4795,7 +4975,7 @@ This section details specifications for business reports views, sales analytics 
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager |
+| **Actor** | CEO Viewer, Store Manager |
 | **Description** | Generates and downloads data report files. |
 | **Precondition** | User has reporting privileges. |
 | **Trigger** | User clicks "Export Report" button on dashboard. |
@@ -4810,7 +4990,7 @@ This section details specifications for business reports views, sales analytics 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
 
 ---
 
@@ -4873,13 +5053,15 @@ This section details specifications for business reports views, sales analytics 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+| BR-44 | Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
+
 
 
 
 
 
 ---
+
 
 # 3.13 System Configuration
 
@@ -4938,23 +5120,23 @@ This section details specifications for system settings, store branding profiles
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Configures global parameters including brand name, tax rate, receipt templates, and loyalty points configuration settings. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin navigates to Central System Settings. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin navigates to Central System Settings. |
 | **Post-Condition** | Central configuration parameters are updated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
-| 2 | Admin | Clicks "Save Settings". |
+| 1 | System Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
+| 2 | System Admin | Clicks "Save Settings". |
 | 3 | Portal | Validates the input values. |
 | 4 | Portal | Saves the updated configurations. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
-- **Trigger**: Admin inputs invalid values.
+- **Trigger**: System Admin inputs invalid values.
 
 | Sub-step | Actor | Action |
 |---|---|---|
@@ -4970,7 +5152,7 @@ This section details specifications for system settings, store branding profiles
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
 | BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes and loyalty config changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the parameters that were active when they were created.** |
-| BR-62 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
+| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
 
 ---
 
@@ -5075,17 +5257,17 @@ This section details specifications for system settings, store branding profiles
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-47 | Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
+| BR-47 | Store Managers have access to configure branch settings. System Admins also have permissions to view and update branch configurations. |
 | BR-48 | Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 
 ---
 
 ## 3.13.3 Branch Management
 
-This section specifies the branch lifecycle management functionality available exclusively to the HQ Admin. It covers viewing, adding, and updating/deactivating store branches.
+This section specifies the branch lifecycle management functionality available exclusively to the System Admin. It covers viewing, adding, and updating/deactivating store branches.
 
 > [!IMPORTANT]
-> Branch Management is an Admin-only function for managing the store lifecycle (create, view, deactivate). It is distinct from **UC-42 Branch Local Settings**, which allows Store Managers to configure operational parameters (timezone, hardware, logo) for their assigned branch.
+> Branch Management is a System Admin-only function for managing the store lifecycle (create, view, deactivate). It is distinct from **UC-42 Branch Local Settings**, which allows Store Managers to configure operational parameters (timezone, hardware, logo) for their assigned branch.
 
 ---
 
@@ -5127,18 +5309,18 @@ This section specifies the branch lifecycle management functionality available e
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Displays all registered store branches and their operational statuses. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Central System Settings Screen and clicks the "Quản lý Chi nhánh" button. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin opens the Central System Settings Screen and clicks the "Quản lý Chi nhánh" button. |
 | **Post-Condition** | Complete list of branches with statuses is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Navigates to Branch Management. |
+| 1 | System Admin | Navigates to Branch Management. |
 | 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. maximum capacity (5). |
-| 3 | Admin | Optionally filters by status or searches by keyword. |
+| 3 | System Admin | Optionally filters by status or searches by keyword. |
 
 ---
 
@@ -5175,16 +5357,16 @@ This section specifies the branch lifecycle management functionality available e
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Registers a new store branch in the system. |
-| **Precondition** | Admin is logged in. Total active branches is less than the maximum capacity (5). |
-| **Trigger** | Admin clicks "+ Add Branch" on Branch List screen. |
+| **Precondition** | System Admin is logged in. Total active branches is less than the maximum capacity (5). |
+| **Trigger** | System Admin clicks "+ Add Branch" on Branch List screen. |
 | **Post-Condition** | New branch is created with `is_active = true` and appears in the branch list. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Branch Name, Address, and Phone, then clicks "Save Branch". |
+| 1 | System Admin | Enters Branch Name, Address, and Phone, then clicks "Save Branch". |
 | 2 | Portal | Validates inputs: name is not empty, address is not empty, phone is 10-12 digits, and branch name is unique. |
 | 3 | Portal | Creates new STORE record with `is_active = true`, records `created_at` timestamp, and returns to Branch List view. Displays confirmation: `"Branch successfully created."` (MSG15). |
 
@@ -5252,43 +5434,43 @@ This section specifies the branch lifecycle management functionality available e
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Modifies branch information or deactivates (closes) a branch, triggering cascading effects on associated staff and schedules. |
-| **Precondition** | Admin is logged in. Branch record exists. |
-| **Trigger** | Admin clicks on a branch row in the Branch List to open the edit form. |
+| **Precondition** | System Admin is logged in. Branch record exists. |
+| **Trigger** | System Admin clicks on a branch row in the Branch List to open the edit form. |
 | **Post-Condition** | Branch details are updated. If deactivated: staff accounts are disabled, future schedules are cancelled. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Modifies branch name, address, phone, or sets Status to `Inactive`. Clicks "Save Changes". |
+| 1 | System Admin | Modifies branch name, address, phone, or sets Status to `Inactive`. Clicks "Save Changes". |
 | 2 | Portal | Validates inputs (same rules as Add Branch form). |
 | 3 | Portal | If only contact details were changed (no status change), saves updates and returns to Branch List. |
 
 #### Alternative Flows
 ##### AT1: Deactivation Cascade — Branch Closure
-- **Trigger**: At step 1, Admin sets Status from `Active` to `Inactive`.
+- **Trigger**: At step 1, System Admin sets Status from `Active` to `Inactive`.
 
 | Sub-step | Actor | Action |
 |---|---|---|
 | 1.1 | Portal | Checks preconditions: verifies no `SHIFT_SESSION` with `status = OPEN` exists for this branch, and no `ORDER` in non-terminal state (`PENDING`, `PREPARING`, `HOLD`, `READY`) exists for this branch. |
 | 1.2 | Portal | If preconditions fail, displays error: `"Cannot deactivate branch. Please close all active shifts and complete or cancel all pending orders first."` |
 | 1.3 | Portal | If preconditions pass, displays confirmation dialog: `"Deactivating this branch will disable all staff accounts assigned to it and cancel all future scheduled shifts. This action can be reversed by reactivating the branch. Proceed?"` |
-| 1.4 | Admin | Clicks "Confirm Deactivate". |
+| 1.4 | System Admin | Clicks "Confirm Deactivate". |
 | 1.5 | Portal | Sets `STORE.is_active = false`. |
 | 1.6 | Portal | Sets `USER.is_active = false` for all users where `store_id` matches the deactivated branch. Terminates their active session tokens (BR-18). |
 | 1.7 | Portal | Deletes all `STAFF_SCHEDULE` entries with `shift_date > current_date` for this branch. Sends notification alerts to affected employees (BR-37). |
 | 1.8 | Portal | Returns to Branch List with confirmation message: `"Branch has been deactivated."` |
 
 ##### AT2: Reactivation
-- **Trigger**: At step 1, Admin sets Status from `Inactive` to `Active`.
+- **Trigger**: At step 1, System Admin sets Status from `Inactive` to `Active`.
 
 | Sub-step | Actor | Action |
 |---|---|---|
 | 1.1 | Portal | Checks that total active branches after reactivation does not exceed 5 (BR-54). |
 | 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (5) reached. Please deactivate another branch first."` (MSG16) |
 | 1.3 | Portal | If within capacity, sets `STORE.is_active = true`. |
-| 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the Admin."` |
+| 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the System Admin."` |
 
 ##### AT3: Validation Errors
 - **Trigger**: At step 2, input validation fails (same validation as AT2 in UC-64).
@@ -5309,7 +5491,9 @@ This section specifies the branch lifecycle management functionality available e
 
 
 
+
 ---
+
 
 # 4. Non-Functional Requirements
 
@@ -5435,7 +5619,9 @@ The system's performance characteristics, transaction response times, and capaci
   - Desktop Terminal: 1366×768px.
 
 
+
 ---
+
 
 # 5. Requirement Appendix & Mapping
 
@@ -5450,7 +5636,7 @@ This section contains business rules, global requirements, common application me
 | BR-01 | **Membership Point Accrual**: Customers accumulate loyalty points as a percentage of the **Net Total Payable** value of their invoice, up to a maximum points accrual limit per order (configurable via system parameters). Points are not accrued for the portion of the order covered by loyalty points redemption. |
 | BR-02 | **Membership Point Redemption**: Points can be redeemed for discounts at checkout, subject to point balance validation, with a limit on the maximum percentage of the invoice value that can be paid using points, and a maximum discount amount per order (configurable via central system parameters). |
 | BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
-| BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
+| BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Store Manager's dashboard as a fallback. |
 | BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
 | BR-06 | [RESERVED / DELETED] |
 | BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
@@ -5465,11 +5651,11 @@ This section contains business rules, global requirements, common application me
 | BR-16 | **OTP Validity Duration**: OTP validity duration is exactly 10 minutes. |
 | BR-17 | **OTP Attempt Limit**: Maximum of 3 OTP attempts before recovery session is locked. |
 | BR-18 | **Session Token Invalidation**: Password change or setting status to Inactive terminates active session tokens on all other devices immediately. |
-| BR-19 | **Profile Field Scopes**: Cashiers and Baristas can only change their contact email and phone. Admins and Managers can update administrative parameters (e.g. roles) via admin tools. |
+| BR-19 | **Profile Field Scopes**: Cashiers and Baristas can only change their contact email and phone. Only the System Admin (`ssadmin`) can update administrative parameters (e.g. role, branch assignment, account status) via the User Account Management tools. |
 | BR-20 | **User List Pagination**: User accounts list supports pagination (default: 20 records per page). |
 | BR-21 | **Activity History Scope**: Activity history displays the last 50 logins, shift history, and changes made by the user. |
 | BR-22 | **Default Active Status**: Created accounts default status to active, and force a password change on next login. |
-| BR-23 | **Last Admin Account Protection**: System must block any attempt to deactivate or change the role of the last active Admin account. |
+| BR-23 | **Last System Admin Account Protection**: System must block any attempt to deactivate or change the role of the last active System Admin (`ssadmin`) account, since `ssadmin` is the only role able to provision users and manage system access. |
 | BR-24 | **Menu Items Autocomplete & Filters**: Items list shows search autocomplete results and real-time category filtering. |
 | BR-25 | **Menu Item Availability Status**: Availability states must indicate `Available` or `Out of Stock` based on active quantities or flags. |
 | BR-26 | **Menu Item Abbreviation Generation**: Abbreviation is automatically created based on first letters of words in the unsignified name (e.g. "Cà phê đá" -> "cfd") and updates if name is modified. |
@@ -5488,14 +5674,14 @@ This section contains business rules, global requirements, common application me
 | BR-39 | **Lateness Calculation Rule**: Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
 | BR-40 | **Read-Only Voucher Code**: Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | **Deactivation Redemption Block**: Deactivating a voucher immediately stops all checkout redemptions. |
-| BR-42 | **Voucher Percentage Discount Cap**: When `discount_type = PERCENTAGE` and `max_discount_amount` is configured, the discount amount applied at checkout is capped at this limit: `applied_discount = min(subtotal * discount_value / 100, max_discount_amount)`. |
+| BR-42 | [RESERVED / DELETED] |
 | BR-43 | [RESERVED / DELETED] |
-| BR-44 | **Reports & Metrics Scope**: Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+| BR-44 | **Reports & Metrics Scope**: Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
 | BR-45 | **VAT Configuration Limits**: Default VAT rate must be between 0% and 20%. |
 | BR-46 | **Config Sync propagation**: Saving changes updates the receipt calculation engine and template layouts immediately. |
-| BR-47 | **Manager Config scope**: Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
+| BR-47 | **Branch Config Scope**: Store Managers configure their own branch's local operational settings (timezone, hardware, logo) via UC-42 Branch Local Settings. The System Admin (`ssadmin`) does not edit branch local settings; the System Admin's branch authority is limited to the Branch Management lifecycle — create, view, and deactivate branches (UC-63 to UC-65). |
 | BR-48 | **IP/COM Printer Port Validation**: Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
-| BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Admin role. |
+| BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Business Admin role. |
 | BR-50 | **Discount Cap**: The Net Total Payable after all discounts (voucher discount and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
 | BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` log. No manager PIN or override code verification is required. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
@@ -5504,11 +5690,11 @@ This section contains business rules, global requirements, common application me
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
-| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
-| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
-| BR-60 | [RESERVED / DELETED] |
-| BR-61 | [RESERVED / DELETED] |
-| BR-62 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the System Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
+| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to the System Admin (`ssadmin`). A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+| BR-60 | **User Session / Shift Session Independence**: Terminating a cashier's User Session does not close the active Shift Session on the POS terminal. The Shift Session persists until explicitly closed by a cashier (UC-53) and approved by the Store Manager. |
+| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (average preparation time, orders completed per shift) are calculated at the `store_id + shift_session_id` level. No per-barista per-drink metric is recorded. |
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it have their `category_id` set to `NULL` (nullable FK) to prevent FK constraint violations. Items with `category_id = NULL` appear as uncategorized. |
 
 
 
@@ -5564,25 +5750,28 @@ The matrix below maps operational modules and system features to employee roles,
 - **D**: Delete
 - **—**: No Access (Unauthorized)
 
-| Feature / Functional Module | HQ Admin | Store Manager | POS Cashier | Barista |
-|---|:---:|:---:|:---:|:---:|
-| **User Account Management (CRUD)** | C / R / U / D | — | — | — |
-| **Branch Staff Profile List** | — | R (Read-Only) | — | — |
-| **Catalog Menu & Category (CRUD)** | C / R / U / D | R (Read-Only) | R (Read-Only) | R (Read-Only) |
-| **Menu Availability Status toggle** | C / R / U | C / R / U | — | — |
-| **Voucher & Campaign (CRUD)** | C / R / U / D | — | — | — |
-| **Customer Loyalty Registry** | C / R / U / D | C / R / U | C / R / U | — |
-| **Staff Scheduling & Shift planner** | — | C / R / U / D | R (Read-Only) | R (Read-Only) |
-| **Staff Attendance Logs & Reports** | — | C / R / U | — | — |
-| **Inventory Stock Management** | R (Auditing) | C / R / U | — | — |
-| **POS Shift Session Control** | — | U (Override) | C / R / U | — |
-| **POS Checkout & Invoicing** | — | U (Override) | C / R / U | — |
-| **Order Prep & Kitchen Queue** | — | R (Read-Only) | R (Read-Only) | C / R / U |
-| **HQ Consolidated Business Reports** | C / R / U / D | — | — | — |
-| **Branch Revenue & Sales Reports** | R (Consolidated) | C / R / U | — | — |
-| **Central System Configurations** | C / R / U / D | — | — | — |
-| **Branch Local Settings** | C / R / U | C / R / U | — | — |
-| **Branch Management (Lifecycle)** | C / R / U | — | — | — |
+> **HQ role split**: The former single "HQ Admin" column is now three columns per the §3.2.0 RBAC model — **CEO Viewer** (`ceoviewer`, read-only HQ reports), **Business Admin** (`businessadmin`, catalog/category/voucher/CRM), and **System Admin** (`ssadmin`, users/config/branches). Branch inventory is owned solely by the Store Manager — no HQ role has stock access (per the §3.1 Screen Authorization note).
+
+| Feature / Functional Module | CEO Viewer | Business Admin | System Admin | Store Manager | POS Cashier | Barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **User Account Management (CRUD)** | — | — | C / R / U / D | — | — | — |
+| **Branch Staff Profile List** | — | — | — | R (Read-Only) | — | — |
+| **Catalog Menu & Category (CRUD)** | — | C / R / U / D | — | R (Read-Only) | R (Read-Only) | R (Read-Only) |
+| **Menu Availability Status toggle** | — | C / R / U | — | C / R / U | — | — |
+| **Voucher & Campaign (CRUD)** | — | C / R / U / D | — | — | — | — |
+| **Customer Loyalty Registry** | — | C / R / U / D | — | C / R / U | C / R / U | — |
+| **Staff Scheduling & Shift planner** | — | — | — | C / R / U / D | R (Read-Only) | R (Read-Only) |
+| **Staff Attendance Logs & Reports** | — | — | — | C / R / U | — | — |
+| **Inventory Stock Management** | — | — | — | C / R / U | — | — |
+| **POS Shift Session Control** | — | — | — | U (Override) | C / R / U | — |
+| **POS Checkout & Invoicing** | — | — | — | U (Override) | C / R / U | — |
+| **Order Prep & Kitchen Queue** | — | — | — | R (Read-Only) | R (Read-Only) | C / R / U |
+| **HQ Consolidated Business Reports** | R (Read-Only) | — | — | — | — | — |
+| **Branch Revenue & Sales Reports** | R (Consolidated) | — | — | C / R / U | — | — |
+| **Central System Configurations** | — | — | C / R / U / D | — | — | — |
+| **Branch Local Settings** | — | — | — | C / R / U | — | — |
+| **Branch Management (Lifecycle)** | — | — | C / R / U | — | — | — |
+
 
 
 
@@ -5591,5 +5780,4 @@ The matrix below maps operational modules and system features to employee roles,
 
 
 ---
-
 

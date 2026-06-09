@@ -1,45 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add User - HQ Portal</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #fcfaf7; color: #2c1a11; margin: 0; padding: 0; }
-        .wrapper { display: flex; min-height: 100vh; flex-direction: row; }
-        .sidebar { width: 240px; background: #3d2314; color: white; padding: 25px 15px; box-sizing: border-box; }
-        .sidebar h2 { font-size: 20px; margin-bottom: 30px; text-align: center; color: #c89d7c; }
-        .sidebar a { display: block; color: #d1c4b9; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-bottom: 5px; }
-        .sidebar a.active, .sidebar a:hover { background: #5c3826; color: white; }
-        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 1px solid #eaddd3; padding-bottom: 15px; }
-        .header h1 { font-size: 24px; margin: 0; }
-        .form-container { background: white; padding: 30px; border-radius: 12px; border: 1px solid #eaddd3; max-width: 600px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: #5c3826; }
-        input, select { width: 100%; height: 42px; padding: 10px; border: 1px solid #e5dbcf; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
-        input:focus, select:focus { outline: none; border-color: #c89d7c; }
-        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
-        .btn { padding: 12px 24px; background: #3d2314; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .btn:hover { background: #5c3826; }
-        .btn-secondary { background: transparent; color: #8c766c; border: 1px solid #e5dbcf; }
-        .btn-secondary:hover { background: #fdfaf7; color: #3d2314; }
-        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #fcfaf7;
+            color: #2c1a11;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: row;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: #3d2314;
+            color: white;
+            padding: 25px 15px;
+            box-sizing: border-box;
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #c89d7c;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #d1c4b9;
+            padding: 12px 15px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar a.active,
+        .sidebar a:hover {
+            background: #5c3826;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+            border-bottom: 1px solid #eaddd3;
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #eaddd3;
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #5c3826;
+        }
+
+        input,
+        select {
+            width: 100%;
+            height: 42px;
+            padding: 10px;
+            border: 1px solid #e5dbcf;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #c89d7c;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #3d2314;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #5c3826;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #8c766c;
+            border: 1px solid #e5dbcf;
+        }
+
+        .btn-secondary:hover {
+            background: #fdfaf7;
+            color: #3d2314;
+        }
+
         @media (max-width: 768px) {
-            .wrapper { flex-direction: column; }
-            .sidebar { width: 100%; padding: 15px; }
-            .sidebar h2 { margin-bottom: 15px; }
-            .sidebar-menu { display: flex; flex-wrap: wrap; gap: 5px; }
-            .sidebar a { padding: 8px 12px; font-size: 14px; }
-            .main-content { padding: 20px; }
+            .wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .sidebar h2 {
+                margin-bottom: 15px;
+            }
+
+            .sidebar-menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .sidebar a {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="wrapper">
         <div class="sidebar">
             <h2>Khoga Café Admin</h2>
-                                                <div class="sidebar-menu">
+            <div class="sidebar-menu">
                 <a href="dashboard_web.html">Trang chủ</a>
                 <a href="users_web.html" class="active">Nhân sự</a>
                 <a href="menu_web.html">Thực đơn</a>
@@ -61,10 +196,11 @@
                 </div>
                 <div class="form-group">
                     <label>Tên đăng nhập (Tự động tạo)</label>
-                    <input type="text" id="username" placeholder="Tự động tạo từ họ tên..." readonly style="background-color: #f7f7f7; cursor: not-allowed;">
+                    <input type="text" id="username" placeholder="Tự động tạo từ họ tên..." readonly
+                        style="background-color: #f7f7f7; cursor: not-allowed;">
                 </div>
                 <div class="form-group">
-                    <label>Mật khẩu tạm thời</label>
+                    <label>Mật khẩu</label>
                     <input type="password" id="temp-pass" placeholder="Nhập mật khẩu tạm thời">
                 </div>
                 <div class="form-group">
@@ -76,93 +212,96 @@
                     <input type="tel" id="phone" placeholder="Nhập số điện thoại">
                 </div>
                 <div class="form-group">
-                <div class="form-group">
-                    <label>Vai trò</label>
-                    <select id="role">
-                        <option value="CASHIER">CASHIER (Thu ngân)</option>
-                        <option value="BARISTA">BARISTA (Pha chế)</option>
-                        <option value="STORE_MANAGER">STORE_MANAGER (Quản lý cửa hàng)</option>
-                        <option value="ADMIN">ADMIN (Quản trị HQ)</option>
-                    </select>
-                </div>
-                <div class="form-group" id="pin-group">
-                    <label>Mã PIN cá nhân (4 chữ số) *</label>
-                    <input type="password" id="override-pin" placeholder="Nhập 4 chữ số PIN chấm công / xác thực nhanh" maxlength="4" pattern="[0-9]{4}" required>
-                </div>
-                <div class="form-group">
-                    <label>Chi nhánh</label>
-                    <select id="branch">
-                        <option value="Nguyen Du">Nguyen Du Branch</option>
-                        <option value="Tran Hung Dao">Tran Hung Dao Branch</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label>Vai trò</label>
+                        <select id="role">
+                            <option value="CASHIER">CASHIER (Thu ngân)</option>
+                            <option value="BARISTA">BARISTA (Pha chế)</option>
+                            <option value="STORE_MANAGER">STORE_MANAGER (Quản lý cửa hàng)</option>
+                            <option value="ADMIN">ADMIN (Quản trị HQ)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="pin-group">
+                        <label>Mã PIN cá nhân (4 chữ số) *</label>
+                        <input type="password" id="override-pin"
+                            placeholder="Nhập 4 chữ số PIN chấm công / xác thực nhanh" maxlength="4" pattern="[0-9]{4}"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label>Chi nhánh</label>
+                        <select id="branch">
+                            <option value="Nguyen Du">Nguyen Du Branch</option>
+                            <option value="Tran Hung Dao">Tran Hung Dao Branch</option>
+                        </select>
+                    </div>
 
-                <div class="btn-group">
-                    <button class="btn" onclick="saveUser()">TẠO TÀI KHOẢN</button>
-                    <button class="btn btn-secondary" onclick="location.href='users_web.html'">HỦY BỎ</button>
+                    <div class="btn-group">
+                        <button class="btn" onclick="saveUser()">TẠO TÀI KHOẢN</button>
+                        <button class="btn btn-secondary" onclick="location.href='users_web.html'">HỦY BỎ</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        function removeVietnameseTones(str) {
-            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
-            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
-            str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
-            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
-            str = str.replace(/ù|ú|ụ|u|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
-            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
-            str = str.replace(/đ/g,"d");
-            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
-            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
-            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-            str = str.replace(/Đ/g, "D");
-            str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-            return str;
-        }
-
-        document.getElementById('fullname').addEventListener('input', function(e) {
-            const name = e.target.value.trim();
-            const usernameInput = document.getElementById('username');
-            if (name === "") {
-                usernameInput.value = "";
-                return;
-            }
-            
-            const rawName = removeVietnameseTones(name).toLowerCase();
-            const words = rawName.split(/\s+/);
-            if (words.length > 0) {
-                const lastname = words[words.length - 1];
-                const initials = words.slice(0, words.length - 1).map(w => w[0]).join('');
-                usernameInput.value = initials ? `${lastname}.${initials}` : lastname;
-            }
-        });
-
-        function saveUser() {
-            const name = document.getElementById('fullname').value;
-            const uname = document.getElementById('username').value;
-            if (name.trim() === "" || uname.trim() === "") {
-                alert("Vui lòng nhập các thông tin bắt buộc.");
-                return;
-            }
-            
-            const pin = document.getElementById('override-pin').value;
-            if (pin.trim() === "") {
-                alert("Vui lòng nhập Mã PIN cá nhân cho nhân viên.");
-                return;
-            }
-            if (!/^\d{4}$/.test(pin)) {
-                alert("Mã PIN phải gồm đúng 4 chữ số.");
-                return;
+        <script>
+            function removeVietnameseTones(str) {
+                str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+                str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+                str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+                str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+                str = str.replace(/ù|ú|ụ|u|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+                str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+                str = str.replace(/đ/g, "d");
+                str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+                str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+                str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+                str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+                str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+                str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+                str = str.replace(/Đ/g, "D");
+                str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+                return str;
             }
 
-            alert("Tạo tài khoản nhân viên thành công!");
-            window.location.href = "users_web.html";
-        }
-    </script>
+            document.getElementById('fullname').addEventListener('input', function (e) {
+                const name = e.target.value.trim();
+                const usernameInput = document.getElementById('username');
+                if (name === "") {
+                    usernameInput.value = "";
+                    return;
+                }
+
+                const rawName = removeVietnameseTones(name).toLowerCase();
+                const words = rawName.split(/\s+/);
+                if (words.length > 0) {
+                    const lastname = words[words.length - 1];
+                    const initials = words.slice(0, words.length - 1).map(w => w[0]).join('');
+                    usernameInput.value = initials ? `${lastname}.${initials}` : lastname;
+                }
+            });
+
+            function saveUser() {
+                const name = document.getElementById('fullname').value;
+                const uname = document.getElementById('username').value;
+                if (name.trim() === "" || uname.trim() === "") {
+                    alert("Vui lòng nhập các thông tin bắt buộc.");
+                    return;
+                }
+
+                const pin = document.getElementById('override-pin').value;
+                if (pin.trim() === "") {
+                    alert("Vui lòng nhập Mã PIN cá nhân cho nhân viên.");
+                    return;
+                }
+                if (!/^\d{4}$/.test(pin)) {
+                    alert("Mã PIN phải gồm đúng 4 chữ số.");
+                    return;
+                }
+
+                alert("Tạo tài khoản nhân viên thành công!");
+                window.location.href = "users_web.html";
+            }
+        </script>
 </body>
+
 </html>

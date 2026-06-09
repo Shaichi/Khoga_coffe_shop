@@ -11,7 +11,7 @@ This section contains business rules, global requirements, common application me
 | BR-01 | **Membership Point Accrual**: Customers accumulate loyalty points as a percentage of the **Net Total Payable** value of their invoice, up to a maximum points accrual limit per order (configurable via system parameters). Points are not accrued for the portion of the order covered by loyalty points redemption. |
 | BR-02 | **Membership Point Redemption**: Points can be redeemed for discounts at checkout, subject to point balance validation, with a limit on the maximum percentage of the invoice value that can be paid using points, and a maximum discount amount per order (configurable via central system parameters). |
 | BR-03 | **Shift Session Closing**: A cashier cannot close a shift unless all orders associated with their shift ID are marked with terminal states (`COMPLETED` or `CANCELLED`). Cashier cannot close shift if there are active order queue items pending preparation. |
-| BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Admin dashboard as a fallback. |
+| BR-04 | **Shift Discrepancy Alert**: Any cash discrepancy exceeding 100,000 VND must be flagged and automatically emailed to the Store Manager. If email delivery fails, an in-app push notification is sent to the Store Manager's dashboard as a fallback. |
 | BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
 | BR-06 | [RESERVED / DELETED] |
 | BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
@@ -26,11 +26,11 @@ This section contains business rules, global requirements, common application me
 | BR-16 | **OTP Validity Duration**: OTP validity duration is exactly 10 minutes. |
 | BR-17 | **OTP Attempt Limit**: Maximum of 3 OTP attempts before recovery session is locked. |
 | BR-18 | **Session Token Invalidation**: Password change or setting status to Inactive terminates active session tokens on all other devices immediately. |
-| BR-19 | **Profile Field Scopes**: Cashiers and Baristas can only change their contact email and phone. Admins and Managers can update administrative parameters (e.g. roles) via admin tools. |
+| BR-19 | **Profile Field Scopes**: Cashiers and Baristas can only change their contact email and phone. Only the System Admin (`ssadmin`) can update administrative parameters (e.g. role, branch assignment, account status) via the User Account Management tools. |
 | BR-20 | **User List Pagination**: User accounts list supports pagination (default: 20 records per page). |
 | BR-21 | **Activity History Scope**: Activity history displays the last 50 logins, shift history, and changes made by the user. |
 | BR-22 | **Default Active Status**: Created accounts default status to active, and force a password change on next login. |
-| BR-23 | **Last Admin Account Protection**: System must block any attempt to deactivate or change the role of the last active Admin account. |
+| BR-23 | **Last System Admin Account Protection**: System must block any attempt to deactivate or change the role of the last active System Admin (`ssadmin`) account, since `ssadmin` is the only role able to provision users and manage system access. |
 | BR-24 | **Menu Items Autocomplete & Filters**: Items list shows search autocomplete results and real-time category filtering. |
 | BR-25 | **Menu Item Availability Status**: Availability states must indicate `Available` or `Out of Stock` based on active quantities or flags. |
 | BR-26 | **Menu Item Abbreviation Generation**: Abbreviation is automatically created based on first letters of words in the unsignified name (e.g. "Cà phê đá" -> "cfd") and updates if name is modified. |
@@ -51,12 +51,12 @@ This section contains business rules, global requirements, common application me
 | BR-41 | **Deactivation Redemption Block**: Deactivating a voucher immediately stops all checkout redemptions. |
 | BR-42 | [RESERVED / DELETED] |
 | BR-43 | [RESERVED / DELETED] |
-| BR-44 | **Reports & Metrics Scope**: Store Managers can only view and export reports scoped to their assigned branch. Admins can access and export consolidated brand reports. |
+| BR-44 | **Reports & Metrics Scope**: Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
 | BR-45 | **VAT Configuration Limits**: Default VAT rate must be between 0% and 20%. |
 | BR-46 | **Config Sync propagation**: Saving changes updates the receipt calculation engine and template layouts immediately. |
-| BR-47 | **Manager Config scope**: Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
+| BR-47 | **Branch Config Scope**: Store Managers configure their own branch's local operational settings (timezone, hardware, logo) via UC-42 Branch Local Settings. The System Admin (`ssadmin`) does not edit branch local settings; the System Admin's branch authority is limited to the Branch Management lifecycle — create, view, and deactivate branches (UC-63 to UC-65). |
 | BR-48 | **IP/COM Printer Port Validation**: Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
-| BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Admin role. |
+| BR-49 | **Manual Points Adjustment Limitations**: Manual points adjustments require a recorded reason and are locked to Business Admin role. |
 | BR-50 | **Discount Cap**: The Net Total Payable after all discounts (voucher discount and point redemption) cannot be negative. Minimum Net Total Payable is 0 VND. The system caps the combined discount value at the Gross Subtotal. |
 | BR-51 | **Order Cancellation Logging**: Every order cancellation action must record the cashier's identity, timestamp, cancellation reason, and detailed notes in the `order_cancellations` log. No manager PIN or override code verification is required. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed dynamically: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive and voucher has not been manually deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
@@ -65,10 +65,11 @@ This section contains business rules, global requirements, common application me
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
-| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
-| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
-| BR-60 | [RESERVED / DELETED] |
-| BR-61 | [RESERVED / DELETED] |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the System Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. E.g. "Nguyễn Văn An" with sequence ID 43 -> "AnNV43". |
+| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to the System Admin (`ssadmin`). A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+| BR-60 | **User Session / Shift Session Independence**: Terminating a cashier's User Session does not close the active Shift Session on the POS terminal. The Shift Session persists until explicitly closed by a cashier (UC-53) and approved by the Store Manager. |
+| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (average preparation time, orders completed per shift) are calculated at the `store_id + shift_session_id` level. No per-barista per-drink metric is recorded. |
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it have their `category_id` set to `NULL` (nullable FK) to prevent FK constraint violations. Items with `category_id = NULL` appear as uncategorized. |
 
 
 
@@ -124,25 +125,27 @@ The matrix below maps operational modules and system features to employee roles,
 - **D**: Delete
 - **—**: No Access (Unauthorized)
 
-| Feature / Functional Module | HQ Admin | Store Manager | POS Cashier | Barista |
-|---|:---:|:---:|:---:|:---:|
-| **User Account Management (CRUD)** | C / R / U / D | — | — | — |
-| **Branch Staff Profile List** | — | R (Read-Only) | — | — |
-| **Catalog Menu & Category (CRUD)** | C / R / U / D | R (Read-Only) | R (Read-Only) | R (Read-Only) |
-| **Menu Availability Status toggle** | C / R / U | C / R / U | — | — |
-| **Voucher & Campaign (CRUD)** | C / R / U / D | — | — | — |
-| **Customer Loyalty Registry** | C / R / U / D | C / R / U | C / R / U | — |
-| **Staff Scheduling & Shift planner** | — | C / R / U / D | R (Read-Only) | R (Read-Only) |
-| **Staff Attendance Logs & Reports** | — | C / R / U | — | — |
-| **Inventory Stock Management** | R (Auditing) | C / R / U | — | — |
-| **POS Shift Session Control** | — | U (Override) | C / R / U | — |
-| **POS Checkout & Invoicing** | — | U (Override) | C / R / U | — |
-| **Order Prep & Kitchen Queue** | — | R (Read-Only) | R (Read-Only) | C / R / U |
-| **HQ Consolidated Business Reports** | C / R / U / D | — | — | — |
-| **Branch Revenue & Sales Reports** | R (Consolidated) | C / R / U | — | — |
-| **Central System Configurations** | C / R / U / D | — | — | — |
-| **Branch Local Settings** | C / R / U | C / R / U | — | — |
-| **Branch Management (Lifecycle)** | C / R / U | — | — | — |
+> **HQ role split**: The former single "HQ Admin" column is now three columns per the §3.2.0 RBAC model — **CEO Viewer** (`ceoviewer`, read-only HQ reports), **Business Admin** (`businessadmin`, catalog/category/voucher/CRM), and **System Admin** (`ssadmin`, users/config/branches). Branch inventory is owned solely by the Store Manager — no HQ role has stock access (per the §3.1 Screen Authorization note).
+
+| Feature / Functional Module | CEO Viewer | Business Admin | System Admin | Store Manager | POS Cashier | Barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **User Account Management (CRUD)** | — | — | C / R / U / D | — | — | — |
+| **Branch Staff Profile List** | — | — | — | R (Read-Only) | — | — |
+| **Catalog Menu & Category (CRUD)** | — | C / R / U / D | — | R (Read-Only) | R (Read-Only) | R (Read-Only) |
+| **Menu Availability Status toggle** | — | C / R / U | — | C / R / U | — | — |
+| **Voucher & Campaign (CRUD)** | — | C / R / U / D | — | — | — | — |
+| **Customer Loyalty Registry** | — | C / R / U / D | — | C / R / U | C / R / U | — |
+| **Staff Scheduling & Shift planner** | — | — | — | C / R / U / D | R (Read-Only) | R (Read-Only) |
+| **Staff Attendance Logs & Reports** | — | — | — | C / R / U | — | — |
+| **Inventory Stock Management** | — | — | — | C / R / U | — | — |
+| **POS Shift Session Control** | — | — | — | U (Override) | C / R / U | — |
+| **POS Checkout & Invoicing** | — | — | — | U (Override) | C / R / U | — |
+| **Order Prep & Kitchen Queue** | — | — | — | R (Read-Only) | R (Read-Only) | C / R / U |
+| **HQ Consolidated Business Reports** | R (Read-Only) | — | — | — | — | — |
+| **Branch Revenue & Sales Reports** | R (Consolidated) | — | — | C / R / U | — | — |
+| **Central System Configurations** | — | — | C / R / U / D | — | — | — |
+| **Branch Local Settings** | — | — | — | C / R / U | — | — |
+| **Branch Management (Lifecycle)** | — | — | C / R / U | — | — | — |
 
 
 

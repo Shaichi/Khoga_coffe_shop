@@ -278,6 +278,18 @@ All orders follow the state transitions below:
 
 ---
 
+## 3.7.5.1 KDS Barista Performance KPI
+
+Preparation throughput metrics are aggregated at the **shift and branch level**, not attributed to individual baristas or individual drink preparations. This reflects the shared-station model where multiple baristas may contribute to the same order queue within a single shift.
+
+### Business Rule
+
+| ID | Rule Description |
+|---|---|
+| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the `store_id + shift_session_id` level. No performance metric is recorded per individual `user_id` for each beverage item. Reports expose aggregate throughput only. |
+
+---
+
 ## 3.7.6 Void & Cancellation Audit Logging
 
 All order cancellation actions are recorded in the central database to prevent fraud, track waste, and support financial bookkeeping.

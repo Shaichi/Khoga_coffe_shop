@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận Đăng xuất - Khoga Café</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fbf9f6;
+            --primary-color: #3d2314;
+            --primary-hover: #5c3826;
+            --primary-active: #2c1a11;
+            --accent-color: #c89d7c;
+            --text-main: #2c1a11;
+            --text-muted: #8c766c;
+            --border-color: #eaddd3;
+            --danger-color: #cf6679;
+            --danger-bg: rgba(207, 102, 121, 0.06);
+            --danger-border: rgba(207, 102, 121, 0.2);
+            --transition-speed: 0.25s;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* Phone mockup wrapper */
+        .phone-container {
+            width: 375px;
+            height: 100vh;
+            max-height: 812px;
+            background: white;
+            border: 1px solid #f2ede8;
+            border-radius: 24px;
+            padding: 40px 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header design */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            height: 44px;
+        }
+
+        .back-arrow {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background var(--transition-speed);
+            border: 1px solid #f2ede8;
+        }
+
+        .back-arrow:hover {
+            background-color: #fcfaf8;
+        }
+
+        .back-arrow svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--primary-color);
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-placeholder {
+            width: 32px;
+        }
+
+        /* Content container */
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        /* Decorative icon area */
+        .logout-illustration {
+            width: 100px;
+            height: 100px;
+            background: #fdf8f4;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+            border: 1px solid #f5ede6;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(200, 157, 124, 0.15);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(200, 157, 124, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(200, 157, 124, 0);
+            }
+        }
+
+        .logout-illustration svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--accent-color);
+            stroke-width: 1.8;
+            fill: none;
+        }
+
+        .confirm-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 12px 0;
+            line-height: 1.3;
+        }
+
+        .confirm-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0 15px;
+        }
+
+        /* Simulation settings */
+        .simulator-toggle-panel {
+            background: #fdfdfd;
+            border: 1.5px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 14px 16px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toggle-label span {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Switch toggle button */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e4e4e4;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Actions container */
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .btn-logout {
+            width: 100%;
+            height: 52px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            box-shadow: 0 4px 12px rgba(61, 35, 20, 0.15);
+        }
+
+        .btn-logout:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-logout:active {
+            background: var(--primary-active);
+            transform: translateY(0);
+        }
+
+        .btn-cancel {
+            width: 100%;
+            height: 52px;
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-cancel:hover {
+            background: #faf7f4;
+            border-color: var(--accent-color);
+        }
+
+        /* Alert MSG17 overlay style */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 26, 17, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-card {
+            background: white;
+            width: 100%;
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+            padding: 30px 24px;
+            box-sizing: border-box;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+        }
+
+        .modal-card.show {
+            transform: translateY(0);
+        }
+
+        .alert-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            color: var(--danger-color);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .alert-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 10px 0;
+        }
+
+        .alert-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0 0 24px 0;
+            padding: 0 10px;
+        }
+
+        .btn-modal-action {
+            width: 100%;
+            height: 48px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            margin-bottom: 10px;
+        }
+
+        .btn-modal-action:hover {
+            opacity: 0.9;
+        }
+
+        .btn-modal-close {
+            width: 100%;
+            height: 48px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-modal-close:hover {
+            background: #faf7f4;
+            color: var(--text-main);
+        }
+
+        /* Success screen overlay */
+        .success-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-check-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #f4faf6;
+            border: 1px solid #d4ede0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .success-check-icon svg {
+            width: 36px;
+            height: 36px;
+            stroke: #2e7d32;
+            stroke-width: 3;
+            fill: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="phone-container">
+
+        >
+
+        <!-- Content Area -->
+        <div class="content">
+            <div class="logout-illustration">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z" />
+                </svg>
+            </div>
+
+            <h1 class="confirm-title">Đăng xuất tài khoản?</h1>
+            <p class="confirm-desc">Bạn có chắc chắn muốn đăng xuất khỏi cổng thông tin nhân sự Khoga Café không?</p>
+        </div>
+
+        <!-- Simulator Configuration & Action Buttons -->
+        <div>
+
+
+            <div class="actions">
+                <button class="btn-logout" onclick="attemptLogout()">ĐĂNG XUẤT</button>
+                <button class="btn-cancel" onclick="goBack()">HỦY BỎ</button>
+            </div>
+        </div>
+
+
+
+        <!-- Success redirect overlay -->
+        <div class="success-overlay" id="logout-success-overlay">
+            <div class="success-check-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
+                </svg>
+            </div>
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0; color: #2e7d32;">Đăng xuất thành công</h3>
+            <p style="font-size: 14px; color: var(--text-muted); margin: 0;">Đang quay lại trang đăng nhập...</p>
+        </div>
+
+    </div>
+
+    <script>
+        function getParams() {
+            return new URLSearchParams(window.location.search);
+        }
+
+        function goBack() {
+            // Returns user to view profile screen
+            window.location.href = "view_profile.html?" + getParams().toString();
+        }
+
+        function attemptLogout() {
+            const hasActiveShift = document.getElementById("active-shift-simulator").checked;
+
+            if (hasActiveShift) {
+                // Trigger AT1: Show warning modal and block logout flow
+                const modal = document.getElementById("shift-alert-modal");
+                const card = document.getElementById("shift-modal-card");
+
+                modal.style.display = "flex";
+                setTimeout(() => {
+                    card.classList.add("show");
+                }, 10);
+            } else {
+                // Success logout flow: show animation and redirect to login.html
+                const successOverlay = document.getElementById("logout-success-overlay");
+                successOverlay.classList.add("show");
+
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 2000);
+            }
+        }
+
+        function closeAlertModal() {
+            const modal = document.getElementById("shift-alert-modal");
+            const card = document.getElementById("shift-modal-card");
+
+            card.classList.remove("show");
+            setTimeout(() => {
+                modal.style.display = "none";
+            }, 300);
+        }
+
+        function goToCloseShift() {
+            // Emulates going to close shift screen under cashier_pos_mockups/close_shift.html
+            alert("Hệ thống sẽ chuyển hướng bạn đến màn hình Đóng Ca (Shift Reconciliation / Close Shift).");
+            window.location.href = "../cashier_pos_mockups/close_shift.html";
+        }
+    </script>
+</body>
+
+</html>

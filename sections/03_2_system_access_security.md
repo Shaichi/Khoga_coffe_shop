@@ -4,6 +4,39 @@ This section details the functional requirements for authentication, user profil
 
 ---
 
+## 3.2.0 Role-Based Access Control (RBAC) Overview
+
+The system defines six user roles with strictly separated permissions. The table below is the authoritative reference for all access decisions.
+
+| Role Identifier | Display Name | Scope | Permitted Actions |
+|---|---|---|---|
+| `ceoviewer` | CEO / Executive Viewer | HQ | **Read-only** access to HQ Dashboard and all chain-wide reports. Cannot create, edit, or delete any data (menu items, vouchers, user accounts, etc.). |
+| `businessadmin` | Ops & Marketing Admin | HQ | Full CRUD on chain-wide menu, recipe formulas, categories, vouchers, and CRM customer data. Cannot access system configuration or user account provisioning. |
+| `ssadmin` | IT System Admin | HQ | System configuration (hardware, VietQR/OTP integration, license, `MAX_ACTIVE_BRANCHES`). Cannot access sales or CRM data. |
+| `storemanager` | Store Manager | Branch | Inventory import/export/audit for own branch, staff schedule management, shift close approval, temporary item deactivation via `branch_menu_status`. |
+| `cashier` | POS Cashier | Branch | POS checkout, open/close shift (own user session only), customer lookup, order history for own branch. |
+| `barista` | Barista | Branch | Barista KDS queue view, START PREP, READY (one-touch), REPORT ISSUE, print cup stickers. |
+
+### Permission Matrix Summary
+
+| Feature | ceoviewer | businessadmin | ssadmin | storemanager | cashier | barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| HQ Dashboard / Chain Reports | Read | — | — | — | — | — |
+| Menu & Recipe Management | — | CRUD | — | — | — | — |
+| Voucher & CRM Management | — | CRUD | — | — | — | — |
+| System Configuration | — | — | CRUD | — | — | — |
+| User Account Provisioning | — | — | — | — | — | — |
+| Branch Inventory | — | — | — | CRUD | — | — |
+| Branch Menu Status (temp. disable) | — | — | — | Write | — | — |
+| Staff Scheduling | — | — | — | CRUD | — | — |
+| Shift Close Approval | — | — | — | Approve | — | — |
+| POS Checkout / Shift Open | — | — | — | — | Write | — |
+| Barista KDS / Cup Stickers | — | — | — | — | — | Write |
+
+> **Note**: User account provisioning (create/edit employee accounts, assign roles) is restricted to `ssadmin` for HQ-level accounts and to `ssadmin` + `storemanager` (read-only view) for branch accounts. `businessadmin` does **not** have user management access.
+
+---
+
 ## 3.2.1 F01 - Login / UC-01 Login
 
 ### 3.2.1.1 Screen Mock-up (Mobile Portrait)
@@ -134,18 +167,21 @@ This section details the functional requirements for authentication, user profil
 | 4 | Portal | Terminates active session, records timestamp, and redirects to Login screen. |
 
 #### Alternative Flows
-##### AT1: Active Shift Check
-- **Trigger**: At step 2, Cashier has an active POS shift session open.
+##### AT1: Logout With Active Shift Session
+- **Trigger**: At step 2, Cashier has an active POS shift session open on the terminal.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"You have an active shift session open. You must close your shift (UC-53) before logging out."` (MSG17) |
-| 2.2 | Cashier | Acknowledges the error, and the logout flow is aborted. The cashier is redirected to the active shift page. |
+| 2.1 | Portal | Displays confirmation: `"Your personal session will be closed. The POS shift session on this terminal will remain open so another cashier can continue."` |
+| 2.2 | Cashier | Confirms logout. Portal terminates the **User Session** token only. The **Shift Session** on the POS register remains active and unaffected. |
+
+> **Design Note**: User Session and Shift Session are independent lifecycle objects. A cashier may log out of their personal account (e.g. short break, mid-shift role change) without triggering cash-drawer reconciliation. The shift remains open on the terminal register under its assigned POS register ID until explicitly closed via UC-53.
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-13 | Logout time must be logged upon termination of user session. |
+| BR-60 | **User Session / Shift Session Independence**: Terminating a cashier's User Session does not close the active Shift Session on the POS terminal. The Shift Session persists until explicitly closed by a cashier (UC-53) and approved by the Store Manager. |
 
 ---
 
@@ -748,8 +784,8 @@ This section details the functional requirements for authentication, user profil
 | 2 | Full Name | Text | Yes | 100 | Employee's full name. |
 | 3 | Email | Text | Yes | 100 | Contact work email address (unique). |
 | 4 | Phone | Text | Yes | 20 | Contact phone number. |
-| 5 | Role | Dropdown | Yes | | Selects role (`ADMIN`, `STORE_MANAGER`, `CASHIER`, `BARISTA`). |
-| 6 | Branch Store | Dropdown | No | | Scopes cashier/barista/manager to branch (Null for HQ Admins). |
+| 5 | Role | Dropdown | Yes | | Selects role: `ceoviewer` (CEO / Executive Viewer), `businessadmin` (Ops & Marketing), `ssadmin` (IT System Admin), `storemanager` (Store Manager), `cashier` (POS Cashier), `barista`. |
+| 6 | Branch Store | Dropdown | Conditional | | Scopes storemanager / cashier / barista to a branch. **Leave blank (NULL) for HQ roles** (`ceoviewer`, `businessadmin`, `ssadmin`). |
 | 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by Admin). |
 | 8 | Save Account | Button | | | Submits details to create account. |
 | 9 | Cancel | Button | | | Discards details and returns to Employee list. |

@@ -55,23 +55,23 @@ This section details specifications for system settings, store branding profiles
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Configures global parameters including brand name, tax rate, receipt templates, and loyalty points configuration settings. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin navigates to Central System Settings. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin navigates to Central System Settings. |
 | **Post-Condition** | Central configuration parameters are updated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
-| 2 | Admin | Clicks "Save Settings". |
+| 1 | System Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
+| 2 | System Admin | Clicks "Save Settings". |
 | 3 | Portal | Validates the input values. |
 | 4 | Portal | Saves the updated configurations. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
-- **Trigger**: Admin inputs invalid values.
+- **Trigger**: System Admin inputs invalid values.
 
 | Sub-step | Actor | Action |
 |---|---|---|
@@ -192,17 +192,17 @@ This section details specifications for system settings, store branding profiles
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-47 | Store Managers have access to configure branch settings. Admins also have permissions to view and update branch configurations. |
+| BR-47 | Store Managers have access to configure branch settings. System Admins also have permissions to view and update branch configurations. |
 | BR-48 | Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 
 ---
 
 ## 3.13.3 Branch Management
 
-This section specifies the branch lifecycle management functionality available exclusively to the HQ Admin. It covers viewing, adding, and updating/deactivating store branches.
+This section specifies the branch lifecycle management functionality available exclusively to the System Admin. It covers viewing, adding, and updating/deactivating store branches.
 
 > [!IMPORTANT]
-> Branch Management is an Admin-only function for managing the store lifecycle (create, view, deactivate). It is distinct from **UC-42 Branch Local Settings**, which allows Store Managers to configure operational parameters (timezone, hardware, logo) for their assigned branch.
+> Branch Management is a System Admin-only function for managing the store lifecycle (create, view, deactivate). It is distinct from **UC-42 Branch Local Settings**, which allows Store Managers to configure operational parameters (timezone, hardware, logo) for their assigned branch.
 
 ---
 
@@ -244,18 +244,18 @@ This section specifies the branch lifecycle management functionality available e
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Displays all registered store branches and their operational statuses. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Central System Settings Screen and clicks the "Quản lý Chi nhánh" button. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin opens the Central System Settings Screen and clicks the "Quản lý Chi nhánh" button. |
 | **Post-Condition** | Complete list of branches with statuses is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Navigates to Branch Management. |
+| 1 | System Admin | Navigates to Branch Management. |
 | 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. maximum capacity (5). |
-| 3 | Admin | Optionally filters by status or searches by keyword. |
+| 3 | System Admin | Optionally filters by status or searches by keyword. |
 
 ---
 
@@ -292,16 +292,16 @@ This section specifies the branch lifecycle management functionality available e
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Registers a new store branch in the system. |
-| **Precondition** | Admin is logged in. Total active branches is less than the maximum capacity (5). |
-| **Trigger** | Admin clicks "+ Add Branch" on Branch List screen. |
+| **Precondition** | System Admin is logged in. Total active branches is less than the maximum capacity (5). |
+| **Trigger** | System Admin clicks "+ Add Branch" on Branch List screen. |
 | **Post-Condition** | New branch is created with `is_active = true` and appears in the branch list. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Enters Branch Name, Address, and Phone, then clicks "Save Branch". |
+| 1 | System Admin | Enters Branch Name, Address, and Phone, then clicks "Save Branch". |
 | 2 | Portal | Validates inputs: name is not empty, address is not empty, phone is 10-12 digits, and branch name is unique. |
 | 3 | Portal | Creates new STORE record with `is_active = true`, records `created_at` timestamp, and returns to Branch List view. Displays confirmation: `"Branch successfully created."` (MSG15). |
 
@@ -369,43 +369,43 @@ This section specifies the branch lifecycle management functionality available e
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Modifies branch information or deactivates (closes) a branch, triggering cascading effects on associated staff and schedules. |
-| **Precondition** | Admin is logged in. Branch record exists. |
-| **Trigger** | Admin clicks on a branch row in the Branch List to open the edit form. |
+| **Precondition** | System Admin is logged in. Branch record exists. |
+| **Trigger** | System Admin clicks on a branch row in the Branch List to open the edit form. |
 | **Post-Condition** | Branch details are updated. If deactivated: staff accounts are disabled, future schedules are cancelled. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Modifies branch name, address, phone, or sets Status to `Inactive`. Clicks "Save Changes". |
+| 1 | System Admin | Modifies branch name, address, phone, or sets Status to `Inactive`. Clicks "Save Changes". |
 | 2 | Portal | Validates inputs (same rules as Add Branch form). |
 | 3 | Portal | If only contact details were changed (no status change), saves updates and returns to Branch List. |
 
 #### Alternative Flows
 ##### AT1: Deactivation Cascade — Branch Closure
-- **Trigger**: At step 1, Admin sets Status from `Active` to `Inactive`.
+- **Trigger**: At step 1, System Admin sets Status from `Active` to `Inactive`.
 
 | Sub-step | Actor | Action |
 |---|---|---|
 | 1.1 | Portal | Checks preconditions: verifies no `SHIFT_SESSION` with `status = OPEN` exists for this branch, and no `ORDER` in non-terminal state (`PENDING`, `PREPARING`, `HOLD`, `READY`) exists for this branch. |
 | 1.2 | Portal | If preconditions fail, displays error: `"Cannot deactivate branch. Please close all active shifts and complete or cancel all pending orders first."` |
 | 1.3 | Portal | If preconditions pass, displays confirmation dialog: `"Deactivating this branch will disable all staff accounts assigned to it and cancel all future scheduled shifts. This action can be reversed by reactivating the branch. Proceed?"` |
-| 1.4 | Admin | Clicks "Confirm Deactivate". |
+| 1.4 | System Admin | Clicks "Confirm Deactivate". |
 | 1.5 | Portal | Sets `STORE.is_active = false`. |
 | 1.6 | Portal | Sets `USER.is_active = false` for all users where `store_id` matches the deactivated branch. Terminates their active session tokens (BR-18). |
 | 1.7 | Portal | Deletes all `STAFF_SCHEDULE` entries with `shift_date > current_date` for this branch. Sends notification alerts to affected employees (BR-37). |
 | 1.8 | Portal | Returns to Branch List with confirmation message: `"Branch has been deactivated."` |
 
 ##### AT2: Reactivation
-- **Trigger**: At step 1, Admin sets Status from `Inactive` to `Active`.
+- **Trigger**: At step 1, System Admin sets Status from `Inactive` to `Active`.
 
 | Sub-step | Actor | Action |
 |---|---|---|
 | 1.1 | Portal | Checks that total active branches after reactivation does not exceed 5 (BR-54). |
 | 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (5) reached. Please deactivate another branch first."` (MSG16) |
 | 1.3 | Portal | If within capacity, sets `STORE.is_active = true`. |
-| 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the Admin."` |
+| 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the System Admin."` |
 
 ##### AT3: Validation Errors
 - **Trigger**: At step 2, input validation fails (same validation as AT2 in UC-64).
