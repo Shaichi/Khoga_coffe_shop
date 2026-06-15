@@ -412,15 +412,15 @@ CREATE INDEX idx_refunds_created_at ON order_refunds(created_at);
 
 ---
 
-## 3.7.7 Cashier Shift Sessions & Multi-Store Attendance Tracking
+## 3.7.8 Cashier Shift Sessions & Multi-Store Attendance Tracking
 
 This section specifies operational guidelines for cash register shifts, session management, and employee cross-branch deployments.
 
-### 3.7.7.1 Separation of User Session & Shift Session
+### 3.7.8.1 Separation of User Session & Shift Session
 - **Rule**: Cashiers are allowed to log out of their personal user account session (terminating their `User Session` token) without being forced to close the POS cash drawer ca làm việc (`Shift Session`).
 - **Operation**: The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. This bypasses the mandatory cash counting and closing float reconciliation when a cashier takes a short break or switches duties mid-shift.
 
-### 3.7.7.2 Cross-Branch Staff Mobility Support
+### 3.7.8.2 Cross-Branch Staff Mobility Support
 - **Rule**: Employees (Cashiers, Baristas) are permitted to log in, check-in for attendance, or open POS shifts at any active branch store in the chain when they are assigned as cross-branch support.
 - **Data Association**: The system dynamically identifies the active POS register terminal's `store_id` where the login or attendance popup action occurs. All resulting sales revenue, cash floats, and attendance logs are automatically recorded under that physical branch store's ID rather than the employee's default home branch.
 

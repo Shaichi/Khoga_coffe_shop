@@ -92,7 +92,7 @@ This section details specifications for system settings, store branding profiles
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
 | BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes and loyalty config changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the parameters that were active when they were created.** |
-| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE_PER_POINT` (Redeem Value per Point, default 100 VND/point — see BR-74), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
+| BR-94 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE_PER_POINT` (Redeem Value per Point, default 100 VND/point — see BR-74), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. _(Renumbered from a duplicate "BR-57" which canonically denotes Employee ID Auto-Allocation.)_ |
 
 ---
 

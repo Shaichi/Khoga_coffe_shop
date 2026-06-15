@@ -102,6 +102,7 @@ This section contains business rules, global requirements, common application me
 | BR-91 | **Absence & OT / Early-Leave Derivation**: From scheduled shifts vs `attendance_logs`, the system derives per employee per day: Absence (scheduled, no `CHECK_IN`), Overtime (worked beyond scheduled length), Early-Leave (`CHECK_OUT` before scheduled end). Non-monetary flags surfaced on attendance/worked-hours reports (UC-67/UC-80); no in-system leave-request workflow this release. (§3.9, RV-C06) |
 | BR-92 | **Labour Budget & Working-Time Validation**: At scheduling (UC-36) the system enforces `MAX_DAILY_HOURS`, `MAX_WEEKLY_HOURS`, `MIN_REST_HOURS` (hard blocks) and a per-branch `LABOUR_HOUR_BUDGET` per period (soft, override-with-reason logged). (§3.9.1, RV-C07) |
 | BR-93 | **Attendance PIN Uniqueness & Mandatory Photo**: An attendance PIN is unique within its branch (`store_id`) and locks after configurable failed attempts; the camera snapshot is mandatory — if the camera is unavailable the action is queued/flagged for SM confirmation rather than recorded photoless (closes buddy-punching). (§3.9.4, RV-C08) |
+| BR-94 | **Loyalty Config Parameters**: The loyalty engine uses central system parameters `LOYALTY_ACCRUAL_PERCENTAGE`, `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point, BR-74), `LOYALTY_MAX_REDEMPTION_PERCENT`, and `LOYALTY_MAX_REDEMPTION_LIMIT` for checkout calculations. (§3.13.1) _(Was mis-numbered "BR-57" in §3.13, which collided with Employee ID Auto-Allocation — renumbered here.)_ |
 ## 5.2 Common Requirements
 
 ### 5.2.1 Audit Logging
