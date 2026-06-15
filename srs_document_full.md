@@ -20,6 +20,13 @@ This section tracks the revision history and modifications made to the Software 
 | **1.8** | 2026-06-03 | Simplified cancellation to PENDING only (no manager PIN), popup-based 4-digit PIN + camera snapshot attendance, team-based barista KPI, branch menu status table, dynamic branch limit (MAX_ACTIVE_BRANCHES), bulk stock import invoice grid, custom loyalty cap fields, and removed all ShopeeFood/Grab integrations. | Software Engineering Team | Store Management / Product Owner |
 | **1.8.1** | 2026-06-03 | Patched discrepancies in v1.8: aligned BR-07/BR-09 with BR-05 (restricting cancellation/refund to PENDING only), added missing use cases (UC-68 to UC-72, UC-61, UC-73) to diagrams, resolved loyalty point config conflict and restored MSG14, authorized Barista for Order Detail screen, and fixed screen numbering gaps. | Software Engineering Team | Store Management / Product Owner |
 | **1.8.2** | 2026-06-03 | Integrated Central Loyalty configurations (Accrual rate, Redeem value, Max redeem %, Max discount limit) under Admin system settings. Completely removed customer membership tiers (Bronze/Silver/Gold/Diamond) and their automatic discounts. Simplified checkout stacking and discount priority rules. | Software Engineering Team | Store Management / Product Owner |
+| **1.9** | 2026-06-09 | Migrated from the legacy 4-role model to a 6-role RBAC model: the HQ "Admin" umbrella was split into `ceoviewer` (read-only reports), `businessadmin` (menu/recipe/voucher/CRM), and `ssadmin` (users/config/branches). Updated actors, use-case diagrams (§2.2.2–2.2.4), Screen Authorization matrix (§3.1, 6 columns), USER role enum, and Feature-Actor Mapping (§5.4). | Software Engineering Team | Store Management / Product Owner |
+| **1.10** | 2026-06-11 | Added UC-74 Manage Raw Material Master (§3.5.0): a chain-wide raw-material master catalog owned by `businessadmin`, source for recipe formulations and branch Import/Export dropdowns. Added screen 50, BR-63/BR-64, the `RAW_MATERIAL` entity to the ERD (with `STOCK_ITEM` and `RECIPE_ITEM` re-pointed to the master), and §2.3 / §2.2.3 use-case entries. | Software Engineering Team | Store Management / Product Owner |
+| **1.11** | 2026-06-13 | CEO-review resolutions. **P0 consistency:** finished the 6-role migration in §3.2 (use-case bodies were still 4-role), fixed BR-54 / hardcoded "5" in §3.13, unified inventory-deduction timing to `PREPARING` (UC-62/BR-07), and cleaned stale "central warehouse"/membership-tier wording in the architecture doc. **New capabilities:** (1) UC-75 Store-Manager Refund/Comp for post-`PENDING` complaints + BR-67 + `ORDER_REFUND` entity; (2) topping recipes that deduct stock (BR-65, UC-62 + §3.3.6); (3) standard-cost COGS via `RAW_MATERIAL.standard_cost` (BR-66) + UC-76 COGS/Margin & Shrinkage report; (4) mandatory audit-log of price/voucher changes (BR-68) + UC-77 Change-History report. Screens 51–53 added to §3.1; UC-75/76/77 added to §2.3. | Software Engineering Team | Store Management / Product Owner |
+| **1.12** | 2026-06-14 | Cleared the 6 CEO-review **P0** backlog items (`srs_review_findings.md`). **RV-C02/C03:** rebuilt the `attendance_logs` schema — replaced the broken `lateness_minutes` GENERATED column (referenced a non-existent `scheduled_start`) with a real `scheduled_start` column snapshotted at check-in; lateness is now derived at the reporting layer in **branch-local** time, fixing the ±7h UTC error (BR-38/BR-39). **RV-F01/F02:** defined the loyalty accrual base "Net Total Payable" (VAT-inclusive, after voucher & point redemption) as **BR-69** and the fixed Voucher→Points→VAT→accrual stacking order as **BR-70** (§3.6.7). **RV-C01:** added PDPA / Decree 13/2023 compliance — customer-consent capture at UC-25 (`consent_at`/`consent_version`, BR-71), 24-month PII retention + on-request erasure and 90-day attendance-photo purge (BR-72), and §4.2.6.1 Personal Data Protection. **RV-O17:** recipe lines must use the raw material's exact master unit — no kg↔g conversion, rejected at save (BR-73, UC-18 AT2). | Software Engineering Team | Store Management / Product Owner |
+| **1.15** | 2026-06-14 | Cleared the **remaining P1** backlog (operations/inventory + compliance/people/NFR) — **all P0 and P1 findings are now resolved**. **VietQR/payment (RV-O01/O02/O06):** UC-51 auto-confirm on callback, RETRY-QR idempotency (one settlement per `order_id`), and late-callback reconciliation (auto-flag refund, no order revival) — BR-84/BR-85, UC-51 AT2/AT3. **Offline (RV-O05/C19):** cash-only degraded mode (no offline card auth) with client-UUID identifiers, append-only sync, conflict surfacing, and `MAX_OFFLINE_HOURS` — BR-86, UC-51 AT4, §4.2.2 rewritten. **Order lifecycle (RV-O03/O04):** new terminal `ABANDONED` state + `READY_ABANDON_TIMEOUT` auto-expiry + SM force-close at shift close (BR-88); KDS/printer offline fallback (BR-87, §3.7.7). **Inventory (RV-O16):** negative-stock / `phantom_usage` ledger instead of clamping to 0 (BR-89, UC-62 AT1). **Staff (RV-C04/C05/C06/C07/C08):** cross-branch assignment by home SM + audit + BR-59 host-visibility exception (BR-90, UC-36 AT3); consolidated the duplicate BR-38; absence/OT/early-leave derivation (BR-91); labour-budget & max-hours/rest scheduling validation (BR-92, UC-36 AT2); attendance PIN uniqueness + mandatory photo (BR-93). **NFR (RV-C16/C17):** capacity expressed per-branch × `MAX_ACTIVE_BRANCHES`; 99.9% uptime measured excluding the scheduled maintenance window (§4.2.2/§4.2.3/§4.2.5). New BRs **BR-84…BR-93**. | Software Engineering Team | Store Management / Product Owner |
+| **1.14** | 2026-06-14 | Cleared the **RV-S (fraud & security) P1** backlog cluster, applying the project's "audit-log instead of maker-checker" philosophy consistently. **RV-S05:** mandatory **MFA for HQ roles** (`ceoviewer`/`businessadmin`/`ssadmin`) via email OTP (reusing UC-03/04) or TOTP, parameter `HQ_MFA_REQUIRED` (default on); POS/branch roles exempt — added UC-01 AT4, §3.2.14 MFA Challenge (screen 58), **BR-83**. **RV-S04:** **BR-82** — first `ssadmin` seeded at install (no in-app bootstrap), self-escalation blocked (own role/status change requires a different ssadmin); added UC-12/14 AT3. **RV-S03:** **BR-81** + **UC-83** User Account Change & Access Review report (CEO Viewer, §3.2.15, screen 60) — audits every account create/role-change/deactivate as the SoD compensating control. **RV-S02:** **BR-80** — every checkout voucher application & point redemption written to immutable `AUDIT_LOG` (§3.6.7). **RV-S01:** **UC-82** Cashier Void/Refund Anomaly report (Store Manager + CEO Viewer, §3.12.9, screen 59) + **BR-79** flagging cancel/refund outliers against `CANCEL_REFUND_ALERT_THRESHOLD`; PENDING cancel stays no-PIN (BR-05) and refunds stay SM-authorised (BR-67). Added screens 58–60 to §3.1, UC-82/83 to §2.3, two matrix rows to §5.4, and two security params to §3.13. | Software Engineering Team | Store Management / Product Owner |
+| **1.13** | 2026-06-14 | Cleared the **RV-F (financial/reporting) P1** backlog cluster. **RV-F03:** standardised the point-to-cash parameter to `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point), redemption in multiples of 100, floor-to-VND rounding (**BR-74**; §3.6.5/§3.6.7/§3.13). **RV-F04:** confirmed voucher + point stacking (≤1 voucher, points after voucher, combined cap = Gross Subtotal) via cross-reference to BR-70/BR-50 (§3.6.7). **RV-F05:** added **UC-78** Loyalty Liability & Movement report (CEO Viewer) reporting outstanding points + issued/redeemed/expired movement in points (**BR-75**, §3.12.6). **RV-F06:** added **UC-79** Labour Hours vs Revenue report (CEO Viewer + Store Manager) — a non-monetary staffing-efficiency KPI that stores no wage data, keeping payroll external per §1.2 (**BR-76**, §3.12.7). **RV-F07:** added **UC-80** Worked-Hours Export (Store Manager, own branch) — paired CHECK_IN/CHECK_OUT hours with missing-checkout flagging, feeding external payroll (**BR-77**, §3.9.6). **RV-F08:** added **UC-81** Daily Z-Report (Store Manager) consolidating all of a day's shifts into one branch statement (**BR-78**, §3.12.8). Added screens 54–57 to §3.1, UC-78/79/80/81 to §2.3, four matrix rows to §5.4. | Software Engineering Team | Store Management / Product Owner |
 
 
 
@@ -34,10 +41,12 @@ This section tracks the revision history and modifications made to the Software 
    - 2.1 Actors
    - 2.2 Use Cases
      - 2.2.1 General User & Authentication Use Cases
-     - 2.2.2 Admin Use Cases
-     - 2.2.3 Store Manager Use Cases
-     - 2.2.4 Cashier Use Cases
-     - 2.2.5 Barista Use Cases
+     - 2.2.2 CEO / Executive Viewer Use Cases
+     - 2.2.3 Business Admin Use Cases
+     - 2.2.4 System Admin Use Cases
+     - 2.2.5 Store Manager Use Cases
+     - 2.2.6 Cashier Use Cases
+     - 2.2.7 Barista Use Cases
 
 3. [Software Features](#31-functional-overview)
 
@@ -79,6 +88,7 @@ This section tracks the revision history and modifications made to the Software 
      - 3.4.4 Delete Category
 
    - **3.5 Inventory & Stock Management**
+     - 3.5.0 Manage Raw Material Master (Chain-wide)
      - 3.5.1 View Stock List
      - 3.5.2 Import Stock (Nhập kho)
      - 3.5.3 Export Stock (Xuất kho)
@@ -396,12 +406,15 @@ graph LR
         UC_UpdateMenu([Update Menu Item & Recipe])
         UC_DeleteMenu([Delete Menu Item])
         UC_ManageToppings([Manage Toppings & Options])
+
+        UC_ManageMaterials([Manage Raw Material Master])
     end
 
     %% Business Admin Links
     Actor_BizAdmin --> UC_ListVouchers
     Actor_BizAdmin --> UC_ListCustomers
     Actor_BizAdmin --> UC_ListMenu
+    Actor_BizAdmin --> UC_ManageMaterials
 
     %% Voucher extends
     UC_AddVoucher -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListVouchers
@@ -628,32 +641,41 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-07** | Authentication & Profile | View Profile | User (Base Staff) | **Description**: Accesses employee details.<br>**Main Flow**:<br>1. User opens their profile details.<br>2. User views their contact details, assigned branch, and operational role. |
 | **UC-08** | Authentication & Profile | Update Profile | User (Base Staff) | **Description**: Edits employee contact information.<br>**Main Flow**:<br>1. User updates contact details (e.g., phone or email) and saves.<br>2. The profile displays the updated information. |
 | **UC-09** | Authentication & Profile | Change Password | User (Base Staff) | **Description**: Modifies active password.<br>**Main Flow**:<br>1. User enters current password and a new secure password.<br>2. User receives a password change confirmation. |
-| **UC-10** | User Management | View User Account List | System Admin | **Description**: Lists employee user accounts.<br>**Main Flow**:<br>1. Admin opens the employee list.<br>2. Admin views active, suspended, and role-categorized profiles. |
-| **UC-11** | User Management | Add User Account | System Admin | **Description**: Registers a new employee profile.<br>**Main Flow**:<br>1. Admin submits new employee info, role, and branch assignment.<br>2. A new staff profile is created, enabling them to log in. |
-| **UC-12** | User Management | Update User Account | System Admin | **Description**: Modifies employee details.<br>**Main Flow**:<br>1. Admin edits employee details and saves.<br>2. The employee profile is updated. |
-| **UC-13** | User Management | View User Account Detail | System Admin | **Description**: Audits employee history.<br>**Main Flow**:<br>1. Admin selects a user profile.<br>2. Admin reviews profile metadata and activity records. |
-| **UC-14** | User Management | Deactivate User Account | System Admin | **Description**: Revokes employee system access.<br>**Main Flow**:<br>1. Admin suspends employee profile.<br>2. Active access is revoked, preventing further login. |
-| **UC-15** | Menu & Categories | View Menu & Categories List | Business Admin | **Description**: Reviews catalog items.<br>**Main Flow**:<br>1. Admin opens the product catalog.<br>2. Admin reviews categories, active dishes/beverages, and prices. |
-| **UC-68** | Menu & Categories | View Menu Item Detail | Business Admin | **Description**: Displays the detailed card of a specific menu item, including its ingredients recipe and options.<br>**Main Flow**:<br>1. Admin selects an item from the menu grid.<br>2. Portal displays detailed properties: pricing, description, abbreviation, custom toppings list, and recipe mappings. |
-| **UC-69** | Menu & Categories | View Categories List | Business Admin | **Description**: Displays all product categories.<br>**Main Flow**:<br>1. Admin opens Category Management.<br>2. Portal displays current categories and associated item count metrics. |
-| **UC-16** | Menu & Categories | Add Category | Business Admin | **Description**: Creates a new product category.<br>**Main Flow**:<br>1. Admin inputs category details and saves.<br>2. New category is added to the menu configuration. |
-| **UC-17** | Menu & Categories | Update Category | Business Admin | **Description**: Modifies category settings.<br>**Main Flow**:<br>1. Admin updates category details or visibility.<br>2. The category parameters are updated. |
-| **UC-70** | Menu & Categories | Delete Category | Business Admin | **Description**: Deactivates/deletes an empty category.<br>**Main Flow**:<br>1. Admin clicks delete on a row.<br>2. Portal displays Delete Category Confirmation modal.<br>3. Admin clicks "Confirm Delete".<br>4. Portal deletes category and returns to list view. |
-| **UC-18** | Menu & Categories | Add Menu Item & Recipe | Business Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
-| **UC-71** | Menu & Categories | Manage Toppings & Options | Business Admin | **Description**: Configures modifiers that customers can add to their drinks.<br>**Main Flow**:<br>1. Admin enters Name and Price, and clicks "Add Topping".<br>2. Portal validates inputs and saves new topping. |
+| **UC-10** | User Management | View User Account List | System Admin | **Description**: Lists employee user accounts.<br>**Main Flow**:<br>1. System Admin opens the employee list.<br>2. System Admin views active, suspended, and role-categorized profiles. |
+| **UC-11** | User Management | Add User Account | System Admin | **Description**: Registers a new employee profile.<br>**Main Flow**:<br>1. System Admin submits new employee info, role, and branch assignment.<br>2. A new staff profile is created, enabling them to log in. |
+| **UC-12** | User Management | Update User Account | System Admin | **Description**: Modifies employee details.<br>**Main Flow**:<br>1. System Admin edits employee details and saves.<br>2. The employee profile is updated. |
+| **UC-13** | User Management | View User Account Detail | System Admin | **Description**: Audits employee history.<br>**Main Flow**:<br>1. System Admin selects a user profile.<br>2. System Admin reviews profile metadata and activity records. |
+| **UC-14** | User Management | Deactivate User Account | System Admin | **Description**: Revokes employee system access.<br>**Main Flow**:<br>1. System Admin suspends employee profile.<br>2. Active access is revoked, preventing further login. |
+| **UC-15** | Menu & Categories | View Menu & Categories List | Business Admin | **Description**: Reviews catalog items.<br>**Main Flow**:<br>1. Business Admin opens the product catalog.<br>2. Business Admin reviews categories, active dishes/beverages, and prices. |
+| **UC-68** | Menu & Categories | View Menu Item Detail | Business Admin | **Description**: Displays the detailed card of a specific menu item, including its ingredients recipe and options.<br>**Main Flow**:<br>1. Business Admin selects an item from the menu grid.<br>2. Portal displays detailed properties: pricing, description, abbreviation, custom toppings list, and recipe mappings. |
+| **UC-69** | Menu & Categories | View Categories List | Business Admin | **Description**: Displays all product categories.<br>**Main Flow**:<br>1. Business Admin opens Category Management.<br>2. Portal displays current categories and associated item count metrics. |
+| **UC-16** | Menu & Categories | Add Category | Business Admin | **Description**: Creates a new product category.<br>**Main Flow**:<br>1. Business Admin inputs category details and saves.<br>2. New category is added to the menu configuration. |
+| **UC-17** | Menu & Categories | Update Category | Business Admin | **Description**: Modifies category settings.<br>**Main Flow**:<br>1. Business Admin updates category details or visibility.<br>2. The category parameters are updated. |
+| **UC-70** | Menu & Categories | Delete Category | Business Admin | **Description**: Deactivates/deletes an empty category.<br>**Main Flow**:<br>1. Business Admin clicks delete on a row.<br>2. Portal displays Delete Category Confirmation modal.<br>3. Business Admin clicks "Confirm Delete".<br>4. Portal deletes category and returns to list view. |
+| **UC-18** | Menu & Categories | Add Menu Item & Recipe | Business Admin | **Description**: Creates a new product and links its raw recipe.<br>**Main Flow**:<br>1. Business Admin inputs name, price, barcode, and raw ingredient list.<br>2. The product and recipe are registered, making them available for checkout. |
+| **UC-71** | Menu & Categories | Manage Toppings & Options | Business Admin | **Description**: Configures modifiers that customers can add to their drinks.<br>**Main Flow**:<br>1. Business Admin enters Name and Price, and clicks "Add Topping".<br>2. Portal validates inputs and saves new topping. |
 | **UC-19** | Menu & Categories | Update Menu Item & Recipe | Business Admin, Store Manager | **Description**: Edits product details or recipes, or toggles store availability.<br>**Main Flow**:<br>1. Actor alters item pricing, details, or store availability.<br>2. Adjustments are saved, updating local POS catalogs. |
-| **UC-72** | Menu & Categories | Delete Menu Item | Business Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
-| **UC-20** | Voucher Management | View Vouchers List | Business Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Admin opens promotions list.<br>2. Admin views campaign details, voucher codes, and usage metrics. |
-| **UC-21** | Voucher Management | Add Voucher | Business Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
-| **UC-22** | Voucher Management | Update Voucher | Business Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
-| **UC-23** | Voucher Management | Delete Voucher | Business Admin | **Description**: Deactivates or removes a voucher code.<br>**Main Flow**:<br>1. Admin selects voucher and deactivates it.<br>2. The voucher code is disabled, preventing further usage at checkout. |
-| **UC-24** | Customer Management | View Customer List | Business Admin | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Admin views customer directory.<br>2. Admin reviews list of active members and membership levels. |
+| **UC-72** | Menu & Categories | Delete Menu Item | Business Admin | **Description**: Soft deletes a menu item.<br>**Main Flow**:<br>1. Business Admin selects a menu item and deactivates or removes it.<br>2. The item is removed from the active menu list and POS checkout. |
+| **UC-74** | Raw Materials | Manage Raw Material Master | Business Admin | **Description**: Maintains the chain-wide catalog of raw materials/ingredients — the canonical source for recipe formulations and branch Import/Export stock dropdowns (§3.5.0, BR-63/64).<br>**Main Flow**:<br>1. Business Admin opens the Raw Material Master screen and reviews the catalog.<br>2. Business Admin adds or edits a material (Code, Name, Unit, Suggested Minimum), or sets it `Inactive` (soft-delete). |
+| **UC-20** | Voucher Management | View Vouchers List | Business Admin | **Description**: Lists active discount promotions.<br>**Main Flow**:<br>1. Business Admin opens promotions list.<br>2. Business Admin views campaign details, voucher codes, and usage metrics. |
+| **UC-21** | Voucher Management | Add Voucher | Business Admin | **Description**: Configures new promotional discount.<br>**Main Flow**:<br>1. Business Admin submits voucher code, discount values, minimum caps, and active dates.<br>2. The voucher configuration is saved. |
+| **UC-22** | Voucher Management | Update Voucher | Business Admin | **Description**: Edits voucher parameters.<br>**Main Flow**:<br>1. Business Admin adjusts campaign dates, total usage caps, or customer limits.<br>2. The voucher rules are updated. |
+| **UC-23** | Voucher Management | Delete Voucher | Business Admin | **Description**: Deactivates or removes a voucher code.<br>**Main Flow**:<br>1. Business Admin selects voucher and deactivates it.<br>2. The voucher code is disabled, preventing further usage at checkout. |
+| **UC-24** | Customer Management | View Customer List | Business Admin | **Description**: Reviews membership registry.<br>**Main Flow**:<br>1. Business Admin views customer directory.<br>2. Business Admin reviews list of active members and loyalty point balances. |
 | **UC-25** | Customer Management | Add Customer | Business Admin, Cashier | **Description**: Registers a new membership customer.<br>**Main Flow**:<br>1. Business Admin or Cashier enters member details (name, phone, email) and saves.<br>2. Customer is registered as a loyalty member. |
 | **UC-26** | Customer Management | Update Customer | Business Admin, Cashier | **Description**: Modifies customer details.<br>**Main Flow**:<br>1. Business Admin or Cashier edits member details and saves.<br>2. The membership profile is updated. |
-| **UC-27** | Customer Management | View Customer History | Business Admin | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Admin opens member profile.<br>2. Admin reviews historical orders, point accumulation ledger, and milestones. |
-| **UC-28** | Reports & Analytics | View Consolidated Business Reports | CEO Viewer | **Description**: Accesses centralized reports.<br>**Main Flow**:<br>1. Admin opens consolidation dashboard.<br>2. Admin reviews global brand revenue, compares branch performance, and views best-seller charts. |
-| **UC-29** | Reports & Analytics | Export HQ Reports | CEO Viewer | **Description**: Downloads brand report sheets.<br>**Main Flow**:<br>1. Admin triggers export.<br>2. The report files are generated and downloaded. |
-| **UC-30** | System Configuration | Configure Central System Settings | System Admin | **Description**: Configures central parameters.<br>**Main Flow**:<br>1. Admin modifies tax rates, loyalty points rates, or API credentials.<br>2. Changes to central configurations are saved. |
+| **UC-27** | Customer Management | View Customer History | Business Admin | **Description**: Reviews membership loyalty records.<br>**Main Flow**:<br>1. Business Admin opens member profile.<br>2. Business Admin reviews historical orders, point accumulation ledger, and redemption history. |
+| **UC-28** | Reports & Analytics | View Consolidated Business Reports | CEO Viewer | **Description**: Accesses centralized reports.<br>**Main Flow**:<br>1. CEO Viewer opens consolidation dashboard.<br>2. CEO Viewer reviews global brand revenue, compares branch performance, and views best-seller charts. |
+| **UC-29** | Reports & Analytics | Export HQ Reports | CEO Viewer | **Description**: Downloads brand report sheets.<br>**Main Flow**:<br>1. CEO Viewer triggers export.<br>2. The report files are generated and downloaded. |
+| **UC-76** | Reports & Analytics | View COGS / Margin & Ingredient Shrinkage Report | CEO Viewer | **Description**: Chain-wide gross margin per item (price − standard-cost COGS, BR-66) and ingredient shrinkage (theoretical vs audited usage), by branch and chain-wide (§3.12.4).<br>**Main Flow**:<br>1. CEO Viewer selects date range/branch.<br>2. Portal computes margin and shrinkage tables and flags anomalies. |
+| **UC-77** | Reports & Analytics | View Price & Voucher Change History | CEO Viewer | **Description**: Read-only audit trail of every menu price change and voucher create/update/delete from `AUDIT_LOG` (BR-68); compensating control for the single businessadmin role (§3.12.5).<br>**Main Flow**:<br>1. CEO Viewer filters by date/entity/actor.<br>2. Portal displays the change history with before/after values. |
+| **UC-78** | Reports & Analytics | View Loyalty Liability & Movement Report | CEO Viewer | **Description**: Outstanding chain loyalty liability (total un-redeemed/un-expired points) + period movement issued/redeemed/expired, reported in points (BR-75, §3.12.6).<br>**Main Flow**:<br>1. CEO Viewer selects a period/branch.<br>2. Portal shows outstanding balance and the issued/redeemed/expired movement table. |
+| **UC-79** | Reports & Analytics | View Labour Hours vs Revenue Report | CEO Viewer; Store Manager (own branch) | **Description**: Non-monetary staffing-efficiency KPI relating worked-hours to net sales per branch (Hours/1M VND, VND/Hour); no wages — payroll is external (BR-76, §3.12.7).<br>**Main Flow**:<br>1. Actor selects a period (and branch if CEO Viewer).<br>2. Portal sums worked-hours and net sales per branch and computes ratios. |
+| **UC-80** | Staff & Schedule | Export Worked-Hours Report | Store Manager (own branch) | **Description**: Per-employee worked-hours for a pay period, exportable (CSV/PDF) to feed external payroll; hours only, no wage calc (BR-77, §1.2, §3.9.6).<br>**Main Flow**:<br>1. Manager selects a pay period.<br>2. Portal pairs CHECK_IN/CHECK_OUT, sums hours, flags missing checkouts, and exports. |
+| **UC-81** | POS Sales & Billing | View Daily Z-Report | Store Manager (own branch) | **Description**: End-of-day consolidated branch statement aggregating all shifts: gross/net sales, voucher/point discounts, VAT, refunds, tender breakdown (BR-78, §3.12.8).<br>**Main Flow**:<br>1. Manager selects a business day.<br>2. Portal aggregates the day's shift sessions into one Z-report and offers export/print. |
+| **UC-82** | Reports & Analytics | View Cashier Void/Refund Anomaly Report | Store Manager (own branch); CEO Viewer (chain) | **Description**: Detective control surfacing per-cashier cancellation/refund/voucher/comp activity, flagging outliers above `CANCEL_REFUND_ALERT_THRESHOLD` (BR-79/BR-80, §3.12.9).<br>**Main Flow**:<br>1. Actor selects a period (and branch if CEO Viewer).<br>2. Portal aggregates per-cashier voids/refunds/discounts and flags anomalies. |
+| **UC-83** | System Access & Security | View User Account Change & Access Review Report | CEO Viewer | **Description**: SoD compensating control — lists current HQ-role accounts for periodic attestation + every account create/role-change/deactivate/credential-reset from `AUDIT_LOG` (BR-81, §3.2.15).<br>**Main Flow**:<br>1. CEO Viewer selects a period/role filter.<br>2. Portal displays current HQ accounts and the account-change log. |
+| **UC-30** | System Configuration | Configure Central System Settings | System Admin | **Description**: Configures central parameters.<br>**Main Flow**:<br>1. System Admin modifies tax rates, loyalty points rates, or API credentials.<br>2. Changes to central configurations are saved. |
 | **UC-31** | Inventory Management | View Stock List | Store Manager | **Description**: Reviews store stock levels.<br>**Main Flow**:<br>1. Manager opens branch inventory list.<br>2. Manager reviews raw materials quantities and low stock indicators. |
 | **UC-32** | Inventory Management | Import Stock | Store Manager | **Description**: Logs raw material receipt from suppliers.<br>**Main Flow**:<br>1. Manager inputs invoice detail, items, and quantities received.<br>2. Stock counts are updated and import actions are recorded. |
 | **UC-33** | Inventory Management | Export Stock | Store Manager | **Description**: Logs physical material withdrawal.<br>**Main Flow**:<br>1. Manager selects items, inputs quantities, and reasons (e.g., wastage/damage).<br>2. Stock counts are updated and export actions are recorded. |
@@ -680,15 +702,16 @@ This part describes the use cases & their main flow (the list of the user action
 | **UC-54** | POS Sales & Billing | View Local Order History | Cashier | **Description**: Displays local branch orders.<br>**Main Flow**:<br>1. Cashier opens order history grid.<br>2. Cash drawer orders processed during the current shift are displayed. |
 | **UC-73** | POS Sales & Billing | View Order Detail | Cashier, Store Manager, Barista | **Description**: Displays receipt details, payments, and fulfillment tracking metrics for an order.<br>**Main Flow**:<br>1. User taps on specific order.<br>2. Portal displays details, payments log, and order item list. |
 | **UC-55** | POS Sales & Billing | Request Transaction Refund | Cashier | **Description**: Initiates refund and cancellation process for PENDING orders.<br>**Precondition**: Order must be in `PENDING` state.<br>**Main Flow**:<br>1. Cashier selects a pending order and clicks Cancel Order.<br>2. Cashier inputs cancellation reason and details, then confirms cancellation. POS voids transaction and updates stock immediately. |
+| **UC-75** | POS Sales & Billing | Store-Manager Refund or Comp | Store Manager | **Description**: Handles complaints after preparation has started (`PREPARING`/`READY`/`COMPLETED`) — cannot be cancelled (BR-05). SM authorises a Refund or a Comp/Remake; logged with `sm_id` (§3.7.5a, BR-67).<br>**Main Flow**:<br>1. Cashier opens the order and taps Refund/Comp; Store Manager authorises (login/PIN).<br>2. SM selects Refund (full/partial) or Comp/Remake, enters reason; system applies money + loyalty effects and logs the record. |
 | **UC-57** | Order Prep & Queue | View Order Queue Display | Barista | **Description**: Monitors preparation queue.<br>**Main Flow**:<br>1. Barista opens queue display.<br>2. Pending, preparing, and ready orders are displayed. |
 | **UC-58** | Order Prep & Queue | Update Preparation Status | Barista | **Description**: Modifies preparation flags.<br>**Main Flow**:<br>1. Barista selects active order and moves it to preparing/ready.<br>2. Timestamps are logged and the cashier status is updated. |
 | **UC-59** | Order Prep & Queue | Print Drink Label Sticker | Barista | **Description**: Prints label stickers for cups.<br>**Main Flow**:<br>1. Barista clicks Print Sticker for drink item.<br>2. The label parameters are sent to the local printer. |
 | **UC-60** | Order Prep & Queue | Report Issue / Escalate Order | Barista | **Description**: Flags order preparation errors.<br>**Main Flow**:<br>1. Barista reports machine/ingredient issue.<br>2. The order is marked with an issue flag, notifying POS cashiers. |
 | **UC-61** | Inventory Management | View Import/Export History | Store Manager | **Description**: Reviews past stock movements.<br>**Main Flow**:<br>1. Manager opens history logs.<br>2. Details of stock imports and exports are displayed. |
 | **UC-62** | Inventory Management | Auto-Deduct Inventory on Order Completion | System (automated) | **Description**: Automatically deducts ingredient quantities from stock based on the recipe formulation when an order transitions to the PREPARING state.<br>**Main Flow**:<br>1. Barista taps "START PREP" on an order.<br>2. System retrieves recipes for each menu item.<br>3. System deducts corresponding ingredient quantities and logs transactions. |
-| **UC-63** | Branch Management | View Branch List | System Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. Admin opens the Branch Management panel.<br>2. Admin views all branches with name, address, phone, and active/inactive status. |
-| **UC-64** | Branch Management | Add Branch | System Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
-| **UC-65** | Branch Management | Update / Deactivate Branch | System Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
+| **UC-63** | Branch Management | View Branch List | System Admin | **Description**: Lists all registered branches and their statuses.<br>**Main Flow**:<br>1. System Admin opens the Branch Management panel.<br>2. System Admin views all branches with name, address, phone, and active/inactive status. |
+| **UC-64** | Branch Management | Add Branch | System Admin | **Description**: Registers a new store branch.<br>**Main Flow**:<br>1. System Admin enters branch name, address, and phone number, then clicks "Save".<br>2. A new branch is created with active status and appears in the branch list. |
+| **UC-65** | Branch Management | Update / Deactivate Branch | System Admin | **Description**: Updates branch information or deactivates (closes) a branch.<br>**Main Flow**:<br>1. System Admin edits branch details or sets status to Inactive, then clicks "Save".<br>2. Branch information is updated. If deactivated, all associated staff accounts are disabled and future schedules are cancelled. |
 
 
 
@@ -878,7 +901,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 50 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
+The table below specifies access control policies across all 60 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
 
 | Screen Name | ceoviewer | businessadmin | ssadmin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -938,6 +961,16 @@ The table below specifies access control policies across all 50 screens. The sin
 | 48. Manager Order History Screen | No | No | No | **Yes** | No | No |
 | 49. Order Detail Screen | No | No | No | **Yes** | **Yes** | **Yes** |
 | 50. Raw Material Master | No | **Yes** | No | No | No | No |
+| 51. Refund / Comp Modal (post-PENDING) | No | No | No | **Yes** | **Yes** | No |
+| 52. COGS / Margin & Shrinkage Report | **Yes** | No | No | **Yes** | No | No |
+| 53. Price & Voucher Change History | **Yes** | No | No | No | No | No |
+| 54. Loyalty Liability & Movement Report | **Yes** | No | No | No | No | No |
+| 55. Labour Hours vs Revenue Report | **Yes** | No | No | **Yes** | No | No |
+| 56. Worked-Hours Export | No | No | No | **Yes** | No | No |
+| 57. Daily Z-Report | No | No | No | **Yes** | No | No |
+| 58. HQ MFA Challenge (login step) | **Yes** | **Yes** | **Yes** | No | No | No |
+| 59. Cashier Void/Refund Anomaly Report | **Yes** | No | No | **Yes** | No | No |
+| 60. User Account Change & Access Review Report | **Yes** | No | No | No | No | No |
 
 > **Note on inventory access (two layers):** **Branch stock quantities** (Stock List/History/Import/Export/Audit, screens 26–29) are owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens; chain-wide stock visibility reaches `ceoviewer` only through consolidated HQ reports. Separately, the **Raw Material Master** (screen 50, UC-74) is a chain-wide *catalog* — defining which materials exist — owned by the `businessadmin`; it carries no per-branch quantities. There is no central warehouse.
 
@@ -967,6 +1000,7 @@ erDiagram
     STORE ||--o{ SHIFT_SESSION : hosts
     STORE ||--o{ ORDER : receives
     STORE ||--o{ STOCK_ITEM : holds
+    RAW_MATERIAL ||--o{ STOCK_ITEM : "stocked per branch as"
     STORE ||--o{ STAFF_SCHEDULE : schedules
     STORE ||--o{ ATTENDANCE : tracks
     STORE ||--o{ BRANCH_MENU_STATUS : "manages availability in"
@@ -982,6 +1016,8 @@ erDiagram
     MENU_ITEM ||--o{ BRANCH_MENU_STATUS : "has local status at"
     ORDER ||--o{ ORDER_ITEM : contains
     ORDER ||--o| ORDER_CANCELLATION : "is cancelled by"
+    ORDER ||--o{ ORDER_REFUND : "is refunded/comped by"
+    USER ||--o{ ORDER_REFUND : "authorises"
     ORDER_ITEM ||--o{ ORDER_ITEM_TOPPING : customized-with
     OPTION_TOPPING ||--o{ ORDER_ITEM_TOPPING : applied
     CUSTOMER ||--o{ ORDER : places
@@ -990,7 +1026,7 @@ erDiagram
     VOUCHER ||--o{ ORDER : discounts
     MENU_ITEM ||--o{ RECIPE_ITEM : formulated-with
     OPTION_TOPPING ||--o{ RECIPE_ITEM : formulated-with
-    STOCK_ITEM ||--o{ RECIPE_ITEM : consumed-by
+    RAW_MATERIAL ||--o{ RECIPE_ITEM : consumed-by
 ```
 
 ---
@@ -1009,7 +1045,8 @@ erDiagram
 | 7 | orders | Represents sales transactions, linking customers, shifts, payment statuses, and fulfillment statuses. |
 | 8 | order_items | Line items detailing the specific menu products and quantities purchased in an order. |
 | 9 | order_item_toppings | Tracks specific toppings applied to ordered menu items. |
-| 10 | stock_items | Raw materials and shop supplies inventory quantities scoped per branch. |
+| 10 | raw_materials | Chain-wide master catalog of raw materials/ingredients owned by Business Admin (UC-74); the canonical source for recipe formulations (§3.3) and for the item dropdowns on every branch's Import/Export Stock screens. |
+| 10a | stock_items | Branch-level on-hand quantities of a master raw material (references `raw_materials` by FK); scoped per branch. |
 | 11 | stock_transactions | Historical ledger recording inventory imports, exports, physical audits, and wastage logs. |
 | 12 | vouchers | Stores promotional discount rules, coupon codes, validation dates, and customer usage limits. |
 | 13 | recipe_items | Defines the raw stock ingredient quantity consumed to produce one unit of a menu item or topping. |
@@ -1147,6 +1184,22 @@ Fulfillment cancellation and refund audits logs.
 | 5 | notes | | Long Text | Yes | Detailed comments. |
 | 6 | created_at | | Date & Time | Yes | Timestamp of cancellation. |
 
+### 7b. `ORDER_REFUND`
+Post-`PENDING` refund / comp audit log, Store-Manager authorised (UC-75 / BR-67).
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the refund/comp record. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | sm_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The Store Manager who authorised. |
+| 4 | cashier_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who initiated. |
+| 5 | shift_session_id | | Unique ID (UUID) | No | FK - the open shift drawer charged for cash refunds (BR-09). |
+| 6 | refund_type | | Selection (`REFUND`, `COMP_REMAKE`) | Yes | Refund (money returned) or Comp/Remake (zero-charge replacement). |
+| 7 | amount | | Decimal (Currency/VND) | Yes | Refunded amount (0 for comp/remake). Supports partial refunds. |
+| 8 | reason | | Text (Max 100 characters) | Yes | Reason string. |
+| 9 | notes | | Long Text | Yes | Detailed comments. |
+| 10 | created_at | | Date & Time | Yes | Timestamp of the refund/comp. |
+
 ### 8. `ORDER_ITEM`
 Line items in an order.
 
@@ -1169,18 +1222,30 @@ Toppings attached to a specific order line item.
 | 4 | quantity | | Whole Number | Yes | Quantity of the topping applied. |
 | 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the topping at the time of purchase. |
 
-### 10. `STOCK_ITEM`
-Raw inventory tracking (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
+### 10. `RAW_MATERIAL`
+Chain-wide master catalog of raw materials/ingredients, owned exclusively by the Business Admin (UC-74 / §3.5.0). The canonical source for recipe formulations (§3.3) and for branch Import/Export stock dropdowns (UC-32/33). See BR-63/BR-64.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the raw material. |
+| 2 | code | | Text (Max 20 characters) | Yes | Unique chain-wide material code (e.g., "STK-01"). Immutable after creation. |
+| 3 | name | | Text (Max 100 characters) | Yes | Display name of the raw material (e.g., "Coffee Beans", "Fresh Milk"). |
+| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "ml", "piece"). Locked once any stock transaction references the material. |
+| 5 | suggested_min_threshold | | Decimal (Quantity) | No | Default low-stock threshold proposed to branches (each branch may override locally). |
+| 6 | standard_cost | | Decimal (Currency/VND) | No | Standard unit cost per master unit, maintained by Business Admin; basis for chain-wide COGS & margin (BR-66). |
+| 7 | is_active | | Yes/No (Boolean) | Yes | Active status flag. Soft-delete: `Inactive` hides the material from new recipe/import selections (BR-64). |
+
+### 10a. `STOCK_ITEM`
+Branch-level on-hand quantity of a master raw material (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock item. |
 | 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
-| 3 | name | | Text (Max 100 characters) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
-| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
-| 5 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
-| 6 | min_alert_threshold | | Decimal (Quantity) | Yes | Threshold triggering low stock alert. |
-| 7 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
+| 3 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id). Name and unit derive from the master (BR-63). |
+| 4 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
+| 5 | min_alert_threshold | | Decimal (Quantity) | Yes | Branch-local threshold triggering low stock alert (defaults from the master's suggested minimum). |
+| 6 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
 
 ### 11. `STOCK_TRANSACTION`
 Historical ledger of stock modifications.
@@ -1221,7 +1286,7 @@ Defines the ingredients/stock consumed to produce menu items and toppings.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the recipe item. |
 | 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
 | 3 | option_topping_id | | Unique ID (UUID) | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
-| 4 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
+| 4 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id) being consumed. Recipes reference the chain-wide master, not branch stock (BR-63). |
 | 5 | quantity_required | | Decimal (Quantity) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
 
 ### 14. `STORE`
@@ -1362,7 +1427,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows authorized staff members to authenticate and access their specific operational portals. |
 | **Precondition** | User account is active and user is not currently logged in. |
 | **Trigger** | User opens the application and lands on the Login screen. |
@@ -1373,7 +1438,8 @@ The system defines six user roles with strictly separated permissions. The table
 |---|---|---|
 | 1 | User | Enters Username and Password, and clicks the "Login" button. |
 | 2 | Portal | Verifies the credentials and checks account status. |
-| 3 | Portal | Validates successful login and redirects the user to the interface matching their role. |
+| 2a | Portal | **If the account is an HQ role** (`ceoviewer` / `businessadmin` / `ssadmin`) and `HQ_MFA_REQUIRED` is on, challenges for a second factor before establishing the session (BR-83 — see AT4). |
+| 3 | Portal | Validates successful login (and MFA if required) and redirects the user to the interface matching their role. |
 
 #### Alternative Flows
 ##### AT1: Invalid Credentials
@@ -1395,7 +1461,16 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Suspends the user account from login attempts for 15 minutes, unless manually unlocked by a Store Manager (for branch staff) or HQ Admin (for any user). |
+| 2.1 | Portal | Suspends the user account from login attempts for 15 minutes, unless manually unlocked by a Store Manager (for branch staff) or System Admin (for any user). |
+
+##### AT4: HQ Multi-Factor Authentication (MFA)
+- **Trigger**: At step 2a, password is valid for an HQ-role account (`ceoviewer` / `businessadmin` / `ssadmin`) and `HQ_MFA_REQUIRED` is on.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2a.1 | Portal | Sends a 6-digit MFA code to the account's registered email (reusing the OTP channel) **or** prompts for the current TOTP authenticator code, and shows the MFA Challenge screen (screen 58). |
+| 2a.2 | User | Enters the second-factor code and submits. |
+| 2a.3 | Portal | On match, establishes the session (step 3). On 3 failed attempts, applies the same lockout as AT3 (BR-17 reuse) and does **not** establish the session. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -1403,6 +1478,7 @@ The system defines six user roles with strictly separated permissions. The table
 | BR-10 | Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | Mandatory password change flag blocks navigation to any other module. |
+| BR-83 | **Mandatory MFA for HQ Roles**: Login by an HQ role (`ceoviewer` / `businessadmin` / `ssadmin`) requires a **second factor** after the password — a 6-digit email OTP (reusing the UC-03/04 OTP infrastructure) or a TOTP authenticator code — governed by the parameter `HQ_MFA_REQUIRED` (default **true**). Branch/POS roles (`storemanager`, `cashier`, `barista`) are **exempt** to avoid interrupting shared-terminal shift operations (they rely on password + attendance PIN per BR-53). Three failed MFA attempts trigger the standard lockout (BR-17) and block the session. (RV-S05) |
 
 ---
 
@@ -1438,7 +1514,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Safely terminates the active user session. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User clicks the "Logout" button/link. |
@@ -1509,7 +1585,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows logged-in users to update their password. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User navigates to Change Password screen in settings. |
@@ -1587,7 +1663,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Initiates password recovery when a user forgets their credentials. |
 | **Precondition** | User is not logged in. |
 | **Trigger** | User clicks the "Forgot Password" link on the Login screen. |
@@ -1650,7 +1726,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Validates the 6-digit verification code sent during password recovery. |
 | **Precondition** | Forgot password request has been initiated. |
 | **Trigger** | Redirected from Forgot Password view. |
@@ -1722,7 +1798,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Finalizes password recovery flow by configuring a new password. |
 | **Precondition** | User session has a validated recovery status. |
 | **Trigger** | Redirected from OTP Verification page. |
@@ -1854,7 +1930,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows logged-in staff to view their personal detail cards. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User selects the "Profile" option in settings/menu. |
@@ -1904,7 +1980,7 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows staff to modify their personal contact details. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User clicks the "Edit Profile" button. |
@@ -1935,7 +2011,7 @@ The system defines six user roles with strictly separated permissions. The table
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-19 | Cashiers and Baristas can only change their contact email and phone. Admins and Managers can update administrative parameters (e.g. roles) via admin tools. |
+| BR-19 | Cashiers and Baristas can only change their own contact email and phone. The System Admin (`ssadmin`) updates administrative parameters (e.g. roles, branch assignment) via the account management tools; no other role can change roles. |
 
 ---
 
@@ -1944,7 +2020,7 @@ The system defines six user roles with strictly separated permissions. The table
 ### 3.2.10.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management                                      |
+| HQ Portal > Employee Account Management                                      |
 +---------------------------------------------------------------------------------+
 |  Search: [ nva_cashier          ]   Role: [ All Roles ] [v]   Status: [Active]v |
 |                                                                                 |
@@ -1952,7 +2028,7 @@ The system defines six user roles with strictly separated permissions. The table
 |  | ID  | Username   | Full Name     | Role    | Email              | Status  |  |
 |  +-----+------------+---------------+---------+--------------------+---------+  |
 |  | 001 | nva_cashier| Nguyen Van A  | Cashier | nva@coffeezone.com | Active  |  |
-|  | 002 | admin_hq   | Tran Thi B    | Admin   | admin@coffee.com   | Active  |  |
+|  | 002 | ssadmin_hq | Tran Thi B    | System Admin | admin@coffee.com | Active |  |
 |  +-----+------------+---------------+---------+--------------------+---------+  |
 |  [Page 1 of 5]                                              [ + Add Account ]  |
 +---------------------------------------------------------------------------------+
@@ -1975,18 +2051,18 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Provides an administrative directory of all system accounts. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Employee Account Management menu. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin opens the Employee Account Management menu. |
 | **Post-Condition** | Active grid of employee accounts is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Accesses Employee Account Management panel. |
+| 1 | System Admin | Accesses Employee Account Management panel. |
 | 2 | Portal | Displays filters and user listing grid (defaults to active accounts). |
-| 3 | Admin | Enters query or filter selection to search profiles. |
+| 3 | System Admin | Enters query or filter selection to search profiles. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -2000,7 +2076,7 @@ The system defines six user roles with strictly separated permissions. The table
 ### 3.2.11.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management > View Account Details               |
+| HQ Portal > Employee Account Management > View Account Details               |
 +---------------------------------------------------------------------------------+
 |  ID: EMP-001          Full Name: Nguyen Van A          Role: Cashier            |
 |  Username: nva        Email: nva@coffeezone.com        Phone: 0987654321        |
@@ -2029,16 +2105,16 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Displays full account profile details and operational history of a selected user. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin selects a user account from the grid. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin selects a user account from the grid. |
 | **Post-Condition** | Selected user's profile card and action history are displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Selects an employee row. |
+| 1 | System Admin | Selects an employee row. |
 | 2 | Portal | Displays detailed profile information and activity history log. |
 
 #### Business Rules
@@ -2053,7 +2129,7 @@ The system defines six user roles with strictly separated permissions. The table
 ### 3.2.12.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management > Add Account                        |
+| HQ Portal > Employee Account Management > Add Account                        |
 +---------------------------------------------------------------------------------+
 |  Username: [ nva_cashier      ]   Full Name:   [ Nguyen Van A             ]     |
 |  Email:    [ nva@coffee.com   ]   Phone:       [ 0987654321               ]     |
@@ -2072,7 +2148,7 @@ The system defines six user roles with strictly separated permissions. The table
 | 4 | Phone | Text | Yes | 20 | Contact phone number. |
 | 5 | Role | Dropdown | Yes | | Selects role: `ceoviewer` (CEO / Executive Viewer), `businessadmin` (Ops & Marketing), `ssadmin` (IT System Admin), `storemanager` (Store Manager), `cashier` (POS Cashier), `barista`. |
 | 6 | Branch Store | Dropdown | Conditional | | Scopes storemanager / cashier / barista to a branch. **Leave blank (NULL) for HQ roles** (`ceoviewer`, `businessadmin`, `ssadmin`). |
-| 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by Admin). |
+| 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by the System Admin). |
 | 8 | Save Account | Button | | | Submits details to create account. |
 | 9 | Cancel | Button | | | Discards details and returns to Employee list. |
 
@@ -2085,18 +2161,18 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Provisions a new employee account. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Account" on user list view. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin clicks "+ Add Account" on user list view. |
 | **Post-Condition** | New user account created and login activation email is sent. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Fills out employee fields, assigns role and branch, and clicks "Save Account". |
+| 1 | System Admin | Fills out employee fields, assigns role and branch, and clicks "Save Account". |
 | 2 | Portal | Validates constraints (username uniqueness, email uniqueness, phone uniqueness, and syntax format). |
-| 3 | Portal | Registers account as active, auto-generates a secure random temporary password, sets the `must_change_password` flag to true, sends an activation welcome email with these credentials to the user, and returns to list view. |
+| 3 | Portal | Registers account as active, auto-generates a secure random temporary password, sets the `must_change_password` flag to true, sends an activation welcome email with these credentials to the user, **writes a create-account entry to the immutable `AUDIT_LOG` (actor `ssadmin_id`, target user, assigned role, timestamp — BR-81)**, and returns to list view. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -2110,8 +2186,10 @@ The system defines six user roles with strictly separated permissions. The table
 | ID | Rule Description |
 |---|---|
 | BR-22 | Created accounts default status to active, and force a password change on next login. |
+| BR-81 | **User Account Change Audit & Access Review**: Every account **create** (UC-11), **role / status change or deactivation** (UC-12/14), and **PIN/credential reset** writes an immutable `AUDIT_LOG` entry (actor `ssadmin_id`, target user, before/after role + status, timestamp). Because `ssadmin` (IT) can provision business-role accounts without a second approver (no maker-checker, consistent with BR-68), this audit trail plus the periodic **Access Review report** (UC-83, surfaced read-only to `ceoviewer`) is the compensating Segregation-of-Duties control. (RV-S03) |
+| BR-82 | **Privilege Bootstrap & Self-Escalation Prevention**: (a) The **first** `ssadmin` account is provisioned via a secure one-time installation/seed process — never through the in-app user-management UI (resolves the chicken-and-egg bootstrap). (b) **No user may change their own role, permissions, or active status**; any role/status change to an account (especially HQ roles) must be performed by a *different* `ssadmin`. (c) All such changes are audit-logged per BR-81. Extends the last-admin protection (BR-23). (RV-S04) |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
-| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. The first letter of the main name must be lowercase (e.g. "Nguyễn Văn An" with sequence ID 43 -> "anNV43"). |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the System Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. The first letter of the main name must be lowercase (e.g. "Nguyễn Văn An" with sequence ID 43 -> "anNV43"). |
 
 
 ---
@@ -2121,7 +2199,7 @@ The system defines six user roles with strictly separated permissions. The table
 ### 3.2.13.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management > Edit Account                       |
+| HQ Portal > Employee Account Management > Edit Account                       |
 +---------------------------------------------------------------------------------+
 |  Username: nva_cashier (Read-only)  Full Name:   [ Nguyen Van A             ]   |
 |  Email:    [ nva@coffee.com   ]     Phone:       [ 0987654321               ]   |
@@ -2154,29 +2232,36 @@ The system defines six user roles with strictly separated permissions. The table
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Modifies employee account details or deactivates them to revoke access. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "Edit User" on details page. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin clicks "Edit User" on details page. |
 | **Post-Condition** | Account parameters are updated and active tokens invalidated if deactivated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Modifies employee parameters (name, contact, role) or sets status to Inactive (deactivating account), and clicks "Save Changes". |
+| 1 | System Admin | Modifies employee parameters (name, contact, role) or sets status to Inactive (deactivating account), and clicks "Save Changes". |
 | 2 | Portal | Validates inputs and flags. |
-| 3 | Portal | Saves changes to USER registry. If deactivated, terminates active session tokens on all devices immediately (BR-18). |
+| 3 | Portal | Saves changes to USER registry, **writes a change entry to the immutable `AUDIT_LOG` (actor, target, before/after role + status, timestamp — BR-81)**. If deactivated, terminates active session tokens on all devices immediately (BR-18). |
 
 #### Alternative Flows
-##### AT1: Attempting to Deactivate Last Admin
-- **Trigger**: At step 2, Admin attempts to set status of last Admin to `Inactive` or change role.
+##### AT1: Attempting to Deactivate Last System Admin
+- **Trigger**: At step 2, the System Admin attempts to set the status of the last active `ssadmin` account to `Inactive` or to change its role.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Cannot deactivate the last remaining Admin account."` |
+| 2.1 | Portal | Displays error message: `"Cannot deactivate the last remaining System Admin account."` |
+
+##### AT3: Self-Escalation Blocked
+- **Trigger**: At step 2, the System Admin attempts to change **their own** role, permissions, or active status.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Blocks the change and displays: `"You cannot change your own role or status. Another System Admin must perform this action."` (BR-82) |
 
 ##### AT2: Unlock Suspended User
-- **Trigger**: Admin (via Edit User) or Store Manager (via Branch Staff Details) views a user account currently suspended due to 5 failed login attempts.
+- **Trigger**: System Admin (via Edit User) or Store Manager (via Branch Staff Details) views a user account currently suspended due to 5 failed login attempts.
 
 | Sub-step | Actor | Action |
 |---|---|---|
@@ -2186,10 +2271,99 @@ The system defines six user roles with strictly separated permissions. The table
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-23 | System must block any attempt to deactivate or change the role of the last active Admin account. |
+| BR-23 | System must block any attempt to deactivate or change the role of the last active System Admin (`ssadmin`) account. |
 | BR-18 | Password change or setting status to Inactive terminates active session tokens on all other devices immediately. |
 
+---
 
+## 3.2.14 F12.1 - HQ Multi-Factor Authentication Challenge / (part of UC-01)
+
+### 3.2.14.1 Screen Mock-up (Desktop / Mobile)
+```
++------------------------------------+
+|        Verify It's You (MFA)       |
+|                                    |
+|  HQ account: biz_an                |
+|  A 6-digit code was sent to your   |
+|  registered email. Enter it below: |
+|                                    |
+|  Code: [ _ _ _ _ _ _ ]             |
+|                                    |
+|        [   VERIFY   ]              |
+|   _Resend code (60s cooldown)_     |
++------------------------------------+
+```
+
+#### Table 3-70: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | HQ account | Label | | | The HQ-role username being authenticated. |
+| 2 | Code | Text | Yes | 6 | Second-factor code: email OTP (UC-03/04 channel) or TOTP authenticator code. |
+| 3 | Verify | Button | | | Submits the second factor; on match the session is established (UC-01 step 3). |
+| 4 | Resend code | Link | | | Resends the email OTP (60-second cooldown); hidden for TOTP. |
+
+> This screen appears only for HQ roles (`ceoviewer` / `businessadmin` / `ssadmin`) when `HQ_MFA_REQUIRED` is on (BR-83). It is part of the UC-01 login flow (AT4), not a standalone use case. Three failed attempts trigger the BR-17 lockout.
+
+---
+
+## 3.2.15 F12.2 - User Account Change & Access Review Report / UC-83 View Access Review Report
+
+### 3.2.15.1 Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Reports > User Account Change & Access Review                 |
++---------------------------------------------------------------------------------+
+|  Period: [ 2026-04-01 ] to [ 2026-06-30 ]   Role: [ All v ]      [ Export ]     |
+|                                                                                 |
+|  -- Current HQ-role accounts (for attestation) --                               |
+|  +-----------+----------------+----------+----------+                           |
+|  | Username  | Role           | Status   | Created  |                           |
+|  | biz_an    | businessadmin  | Active   | 2026-01  |                           |
+|  | ss_root   | ssadmin        | Active   | 2026-01  |                           |
+|  | ceo_v     | ceoviewer      | Active   | 2026-02  |                           |
+|  +-----------+----------------+----------+----------+                           |
+|                                                                                 |
+|  -- Account changes in period (AUDIT_LOG) --                                    |
+|  | 2026-05-12 | ss_root created biz_lan (businessadmin)                         |
+|  | 2026-05-20 | ss_root changed mgr_d1 role: cashier -> storemanager            |
+|  | 2026-06-02 | ss_root deactivated bar_07 (barista)                            |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-71: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Period | Date Picker | Yes | | Reporting window for account changes. |
+| 2 | Role | Dropdown | No | | Filter by role, or `All`. |
+| 3 | Current HQ accounts grid | Grid | | | Read-only list of active `ceoviewer` / `businessadmin` / `ssadmin` accounts for periodic attestation. |
+| 4 | Account changes grid | Grid | | | Read-only `AUDIT_LOG` entries for create / role-change / status-change / deactivate / credential-reset (BR-81). |
+
+### 3.2.15.2 Use Case Description
+
+| Use Case ID | UC-83 | Use Case Name | View User Account Change & Access Review Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | CEO Viewer (read-only) |
+| **Description** | A read-only Segregation-of-Duties control: lists current HQ-role accounts for **periodic attestation** and every account create / role-change / deactivation / credential-reset from `AUDIT_LOG` (BR-81). Because `ssadmin` (IT) can provision business-role accounts unilaterally, this report lets the CEO detect inappropriate provisioning or privilege drift. |
+| **Precondition** | CEO Viewer is logged in. |
+| **Trigger** | CEO Viewer opens the Access Review report (e.g. quarterly attestation). |
+| **Post-Condition** | Current HQ accounts and the account-change log are displayed; exportable via UC-29. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | CEO Viewer | Selects a period and optional role filter. |
+| 2 | Portal | Retrieves current HQ-role accounts and matching `AUDIT_LOG` account-change entries. |
+| 3 | Portal | Displays the attestation list and the change log. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-81 | **User Account Change Audit & Access Review** (defined in §3.2.12): account create/role-change/deactivate/credential-reset are immutably logged; this report is the read-only attestation surface for `ceoviewer`. |
 
 
 
@@ -2383,10 +2557,18 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Price must be a positive number greater than zero."` or `"A menu item with this name already exists."` |
 
+##### AT2: Recipe Unit Mismatch
+- **Trigger**: At step 2, a recipe line specifies a measurement unit that differs from the referenced `RAW_MATERIAL`'s master stock-keeping unit (BR-73).
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Rejects the save and displays: `"Recipe quantity for {material} must be entered in its master unit ({master_unit}). Unit conversion is not supported."` |
+
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified name (e.g. "Cà phê đá" -> "cfd") and updates if name is modified. |
+| BR-73 | **Recipe Unit Consistency**: Every recipe line (base item recipe via UC-18/19 **and** topping recipe via §3.3.6) must express its quantity in the **exact master stock-keeping unit** of the referenced `RAW_MATERIAL` (UC-74). The system performs no kg↔g / l↔ml conversion: a unit other than the master unit is rejected at save. This guarantees deduction (UC-62) and standard-cost COGS (BR-66) operate on like units and prevents silent count corruption (e.g. subtracting "18 g" from a kg balance). |
 
 ---
 
@@ -2466,6 +2648,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|
 | BR-27 | [RESERVED / DELETED] |
 | BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified (diacritic-removed) name (e.g. "Cà phê đá" → "cfd") and updates if name is modified. **Collision handling:** If the generated abbreviation already exists in the catalog, a numeric suffix is appended incrementally (e.g. "cfd2", "cfd3") until a unique value is found. |
+| BR-68 | *(Applies — defined in §3.12.5)* Every change to a menu item's **selling price** is written to the immutable `AUDIT_LOG` (actor, timestamp, before/after) and is reviewable by `ceoviewer` via the Price & Voucher Change History report (UC-77). |
 
 ---
 
@@ -2528,12 +2711,14 @@ This section details specifications for viewing, adding, updating, and deactivat
 | HQ Admin Portal > Menu Management > Manage Toppings                             |
 +---------------------------------------------------------------------------------+
 |  + Add New Topping:                                                             |
-|  Name: [ Tapioca Pearls     ]  Price: [ 5,000 VND    ]  [ Add Topping ]         |
+|  Name: [ Tapioca Pearls     ]  Price: [ 5,000 VND    ]                          |
+|  Recipe: [ Tapioca (STK-07) v   Qty: 30 g ]  [ + add ingredient ]               |
+|                                                       [ Add Topping ]           |
 |                                                                                 |
 |  Active Modifier list:                                                          |
-|  1. Extra Espresso Shot (Price: 10,000 VND)                         [ Delete ]  |
-|  2. Oat Milk (Price: 10,000 VND)                                    [ Delete ]  |
-|  3. Tapioca Pearls (Price: 5,000 VND)                               [ Delete ]  |
+|  1. Extra Espresso Shot (Price: 10,000 VND | Recipe: 9g beans)      [ Delete ]  |
+|  2. Oat Milk (Price: 10,000 VND | Recipe: 120ml oat milk)           [ Delete ]  |
+|  3. Tapioca Pearls (Price: 5,000 VND | Recipe: 30g tapioca)         [ Delete ]  |
 +---------------------------------------------------------------------------------+
 ```
 
@@ -2542,8 +2727,9 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|---|---|---|
 | 1 | Name | Text | Yes | 100 | Name of the topping option. |
 | 2 | Price | Decimal | Yes | | Price of the topping modifier in VND. |
-| 3 | Add Topping | Button | | | Saves topping modifier. |
-| 4 | Delete | Button | | | Soft deletes specific topping modifier. |
+| 3 | Recipe / Ingredients | Grid | No | | One or more `RAW_MATERIAL` + quantity consumed per topping unit. Feeds automatic stock deduction (UC-62) and standard-cost COGS (BR-66). Quantities use the material's master unit. May be empty for zero-material options (e.g. "No Ice"). |
+| 4 | Add Topping | Button | | | Saves topping modifier and its recipe. |
+| 5 | Delete | Button | | | Soft deletes specific topping modifier. |
 
 ### 3.3.6.2 Use Case Description
 
@@ -2563,14 +2749,15 @@ This section details specifications for viewing, adding, updating, and deactivat
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Business Admin | Enters Name and Price, and clicks "Add Topping". |
-| 2 | Portal | Validates inputs (non-negative price, non-empty name). |
-| 3 | Portal | Saves new topping and updates grid list. |
+| 1 | Business Admin | Enters Name, Price, and (optionally) the recipe ingredients (raw material + quantity), then clicks "Add Topping". |
+| 2 | Portal | Validates inputs (non-negative price, non-empty name; each recipe line references an active raw material with quantity in its **master unit** — a mismatched unit is rejected per BR-73). |
+| 3 | Portal | Saves the topping with its recipe and updates grid list. |
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
+| BR-65 | **Topping Recipe & Deduction**: A topping/option may carry its own recipe (`RECIPE_ITEM` linked via `option_topping_id` → `RAW_MATERIAL`). When an order enters `PREPARING`, UC-62 deducts the recipes of the base item **and** of every selected topping. Toppings with material cost therefore consume stock and contribute to COGS (BR-66); only truly material-free options (e.g. "No Ice") may have an empty recipe. |
 
 ---
 
@@ -2885,7 +3072,8 @@ This section details specifications for the chain-wide raw-material master catal
 | 4 | Material Name | Text | Yes | 100 | Display name of the raw material / ingredient. |
 | 5 | Unit | Dropdown | Yes | | Unit of measure (`kg`, `liter`, `ml`, `gram`, `piece`, ...). Locked once any stock transaction references the material. |
 | 6 | Suggested Minimum | Text | No | 10 | Default low-stock threshold proposed to branches (each branch may override locally). |
-| 7 | Status | Toggle | | | `Active` / `Inactive` (soft delete). |
+| 7 | Standard Cost | Decimal (Currency/VND) | No | | Standard unit cost per **Unit** (e.g. VND per kg). The chain-wide reference cost used to compute recipe COGS and gross margin (BR-66). Maintained by Business Admin; not a per-branch purchase price. |
+| 8 | Status | Toggle | | | `Active` / `Inactive` (soft delete). |
 
 ### 3.5.0.2 Use Case Description
 
@@ -2930,6 +3118,7 @@ This section details specifications for the chain-wide raw-material master catal
 |---|---|
 | BR-63 | **Raw Material Master Ownership**: The raw-material catalog is chain-wide and maintained exclusively by the `businessadmin`. Branch `STOCK_ITEM` records reference a master material by foreign key; Store Managers may transact quantities (UC-32/33/34) but cannot create, rename, or delete material types. |
 | BR-64 | **Raw Material Soft-Delete**: Raw materials are never hard-deleted — they are set `Inactive` to preserve recipe links and historical stock transactions. An inactive material is hidden from new recipe and import selections but remains visible in history and existing branch stock. |
+| BR-66 | **Standard-Cost COGS**: Each `RAW_MATERIAL` carries a chain-wide `standard_cost` per master unit, maintained by `businessadmin`. The cost of a menu item or topping is computed as Σ(`RECIPE_ITEM.quantity_required` × `RAW_MATERIAL.standard_cost`) across its recipe lines. Gross margin = selling price − computed cost. Standard cost (not per-branch purchase price) is the single basis for chain-wide COGS, margin, and ingredient-shrinkage reporting (see §3.12). Recipe quantities must be expressed in the material's master unit. |
 
 ---
 
@@ -3236,11 +3425,11 @@ This section details specifications for the chain-wide raw-material master catal
 
 ---
 
-## 3.5.6 F27.1 - Auto-Deduct Stock on Sale / UC-62 Auto-Deduct Inventory on Order Completion
+## 3.5.6 F27.1 - Auto-Deduct Stock on Prep Start / UC-62 Auto-Deduct Inventory on Prep Start
 
 ### 3.5.6.1 Use Case Description
 
-| Use Case ID | UC-62 | Use Case Name | Auto-Deduct Inventory on Order Completion |
+| Use Case ID | UC-62 | Use Case Name | Auto-Deduct Inventory on Prep Start |
 |---|---|---|---|
 | **Author** | Antigravity | **Version** | 1.1 |
 | **Date** | 2026-06-01 | | |
@@ -3248,7 +3437,7 @@ This section details specifications for the chain-wide raw-material master catal
 | Field | Description |
 |---|---|
 | **Actor** | System (automated) |
-| **Description** | Automatically deducts ingredient quantities from stock based on the menu item recipe formulation when an order transitions to the `PREPARING` state. |
+| **Description** | Automatically deducts ingredient quantities from stock based on the recipe formulation of each menu item **and each selected topping** (BR-65) when an order transitions to the `PREPARING` state. |
 | **Precondition** | Order status transitions from `PENDING` to `PREPARING`. Menu items in the order have linked recipe ingredient mappings. |
 | **Trigger** | Barista clicks "START PREP" on the kitchen queue display, transitioning the order to `PREPARING`. |
 | **Post-Condition** | Stock quantities for all associated ingredients are reduced according to each item's recipe. A stock transaction log entry of type `AUTO` is created. |
@@ -3257,7 +3446,7 @@ This section details specifications for the chain-wide raw-material master catal
 | Step | Actor | Action |
 |---|---|---|
 | 1 | Barista | Taps "START PREP" on an order in the queue. |
-| 2 | System | Retrieves the recipe formulation (ingredient quantities) for each menu item in the order. |
+| 2 | System | Retrieves the recipe formulation (ingredient quantities) for each menu item **and each topping selected** on the order's line items. |
 | 3 | System | Deducts the corresponding quantities from each ingredient's stock count. |
 | 4 | System | Logs each deduction as a stock transaction record (type: `AUTO`, linked to Order ID). |
 | 5 | System | If any ingredient falls below the safety threshold after deduction, triggers MSG07 low-stock notification to the Store Manager. |
@@ -3268,16 +3457,17 @@ This section details specifications for the chain-wide raw-material master catal
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 3.1 | System | Logs a stock discrepancy warning. Deduction proceeds to zero (stock cannot go negative). |
+| 3.1 | System | Records the **full recipe deduction** even if it drives the balance below zero — the `STOCK_ITEM` balance is allowed to go **negative**, and the shortfall is captured as a `phantom_usage` ledger entry rather than being clamped to 0 (BR-89). This preserves the true consumption signal for shrinkage audit. |
 | 3.2 | System | Sends MSG07 critical low-stock alert to the Store Manager immediately. |
 
-> **Note:** The system does **not** block order preparation due to insufficient stock. Operational continuity takes priority; the discrepancy is flagged for manual audit by the Store Manager.
+> **Note:** The system does **not** block order preparation due to insufficient stock. Operational continuity takes priority; the negative balance / phantom usage is flagged for manual audit by the Store Manager (it is **not** silently reset to zero — clamping would hide theft/over-pour and corrupt the count).
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-32 | *(Applies)* Any discrepancy between expected and actual counts must be noted. |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
+| BR-07 | **Inventory Deduction Timing**: Recipe-based stock for an order is deducted exactly once, when the order transitions from `PENDING` to `PREPARING` (UC-62, Barista taps "START PREP"). Every saleable item in the catalog is a prepared beverage/item that passes through the Barista queue, so this single trigger covers all stock movement — the chain sells no packaged/ready-to-serve goods that bypass preparation. Because cancellation is only permitted while the order is still `PENDING` (BR-05), no deduction has occurred at cancellation time, so no replenishment is ever required. |
+| BR-89 | **Negative-Stock / Phantom-Usage Ledger**: When a deduction would exceed the available balance, the system records the full deduction and lets the `STOCK_ITEM` balance go **negative**, logging the shortfall as a `phantom_usage` stock-transaction entry (never clamping to 0). Negative balances surface in the low-stock alert (MSG07) and the COGS/shrinkage report (UC-76) so the loss signal is auditable and not silently erased. (RV-O16) |
 
 
 
@@ -3592,7 +3782,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 1 | Cashier | Enters quantity of points to redeem (e.g. 100) and clicks "Apply Discount". |
 | 2 | Portal | Validates point balance is sufficient and value is a multiple of 100. |
-| 3 | Portal | Computes equivalent cash discount based on `LOYALTY_REDEMPTION_VALUE` (default: 100 VND per point) and deducts points from active totals. |
+| 3 | Portal | Computes equivalent cash discount based on `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default: 100 VND per point) and deducts points from active totals. |
 
 #### Alternative Flows
 ##### AT1: Insufficient Points
@@ -3612,7 +3802,8 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
+| BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE_PER_POINT`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
+| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the system parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND per point**), maintained in Central System Settings (UC-30). Redeemed points must be a whole **multiple of 100** (MSG14). The raw discount `Redeemed Points × LOYALTY_REDEMPTION_VALUE_PER_POINT` is then **floored to the nearest whole VND** before the %/absolute caps in §3.6.7 step 3 are applied. This is the single definition of redemption value used by checkout (§3.6.7) and the loyalty-liability report (UC-78). |
 
 ---
 
@@ -3667,7 +3858,8 @@ This section details specifications for cashier POS checkout sessions, order pro
 | Step | Actor | Action |
 |---|---|---|
 | 1 | Cashier | Selects payment method and initiates transaction. |
-| 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) or registers Cash drawer float logic. |
+| 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) bound to the `order_id`, or registers Cash drawer float logic. |
+| 2a | Portal | **VietQR auto-confirm**: on receiving the gateway settlement callback for that `order_id`, the Portal **automatically** marks the payment confirmed (no manual cashier confirmation needed) — the 60-second timeout (AT1) is the error fallback, not the normal path (BR-84). |
 | 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.7 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
 
 #### Alternative Flows
@@ -3678,21 +3870,49 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 2.1 | Portal | Displays warning message: `"Payment gateway timeout. Please check customer transaction status or retry."` |
 
+##### AT2: Retry QR (idempotency)
+- **Trigger**: Cashier taps "RETRY QR" after a timeout/no-show callback.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Voids the previous QR request and issues a new one for the **same `order_id`**. The gateway accepts **at most one settlement per `order_id`** — if both the old and new QR are paid, the second is auto-flagged for refund/reconciliation (BR-84/BR-85). No double-charge is recorded against the order. |
+
+##### AT3: Late Callback (payment after cancel/timeout)
+- **Trigger**: A VietQR settlement callback arrives for an `order_id` that was already cancelled or timed-out.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 3.1 | Portal | Does **not** revive the order. It records the funds in a **payment-reconciliation queue**, marks them for **refund**, and alerts the Store Manager (BR-85). |
+
+##### AT4: Offline / Gateway Down (cash-only degraded mode)
+- **Trigger**: At step 1, the network or payment gateway is unreachable.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Disables `CARD` and `VIETQR`, allowing **cash only**. Orders and cash transactions are queued locally and synced when connectivity returns; loyalty accrual/redemption and online voucher checks are suspended (only preloaded local vouchers verify). Banner: `"Offline mode — cash only. Card/QR resume when online."` (BR-86, §4.2.2) |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-84 | **VietQR Settlement Idempotency & Auto-Confirm**: A VietQR request is bound to its `order_id`; the gateway settles **at most once per `order_id`** (auto-confirmed on callback — the 60s timeout is only the error fallback). "RETRY QR" voids the prior QR and reissues for the same order; any duplicate settlement is auto-flagged for refund (BR-85), so a retry can never double-charge the order. (RV-O02/O06) |
+| BR-85 | **VietQR Late-Callback Reconciliation**: A settlement callback for an already-cancelled / timed-out `order_id` does **not** revive the order. The funds are placed in a payment-reconciliation queue, flagged for refund, and surfaced to the Store Manager. No order is silently resurrected and no money lands on a void order unreconciled. (RV-O01) |
+| BR-86 | **Offline Degraded Mode (Cash-Only)**: When the branch is offline or the gateway is down, the POS operates **cash-only** — `CARD`/`VIETQR` are disabled (no offline card auth). Orders + cash sales are recorded to a local queue and synced on reconnect; loyalty accrual/redemption and online voucher verification are suspended, only preloaded local vouchers verify (subject to later reconciliation/clawback). Full offline behaviour (ID strategy, conflict resolution, max duration) is specified in §4.2.2. (RV-C19/O05/O11) |
+
 ---
 
 ## 3.6.7 Discount Priority & Stacking Rules
 
-This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap.
+This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap. The fixed evaluation order below is authoritative and is codified as **BR-70** (Discount & Tax Stacking Order); the **Net Total Payable** it produces is the single accrual base defined in **BR-69**.
 
 ### 1. Stacking Rules & Restrictions
-- **Voucher and Loyalty Point Redemption Stackability**: Percentage-based or flat-rate **Voucher discounts** and **Loyalty Point Redemption discounts** can stack together directly.
-- **Order of Calculations**:
+- **Voucher and Loyalty Point Redemption Stackability**: Percentage-based or flat-rate **Voucher discounts** and **Loyalty Point Redemption discounts** can stack together directly. **At most one voucher per order** may be applied; the voucher is evaluated before point redemption (BR-70), and the **combined** voucher + point discount is capped so Net Total Payable ≥ 0 VND (BR-50). _(This is the authoritative answer to whether points and vouchers may be combined — RV-F04.)_
+- **Order of Calculations** (BR-70 — applied strictly in this sequence: **Voucher → Loyalty redemption → VAT extraction → accrual**):
   1. **Gross Subtotal**: Sum of the base prices of all selected menu items plus any applied custom toppings or option modifiers.
   2. **Voucher Discount**:
      - If a voucher is applied, compute: `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
      - `Discounted Subtotal = Gross Subtotal - Voucher Discount (VND)`.
   3. **Loyalty Point Redemption**:
-     - Compute redemption value: `Raw Point Discount = Redeemed Points * LOYALTY_REDEMPTION_VALUE` (where `LOYALTY_REDEMPTION_VALUE` is configured globally, e.g. 100 VND per point).
+     - Compute redemption value: `Raw Point Discount = floor(Redeemed Points * LOYALTY_REDEMPTION_VALUE_PER_POINT)` to the nearest whole VND (where `LOYALTY_REDEMPTION_VALUE_PER_POINT` is configured globally, default 100 VND per point — BR-74; redeemed points are a multiple of 100).
      - Apply config-based limits:
        - Limit by maximum percentage: `Max Point Discount % = Discounted Subtotal * (LOYALTY_MAX_REDEMPTION_PERCENT / 100)`.
        - `Point Discount Value = Min(Raw Point Discount, Max Point Discount %)`
@@ -3705,7 +3925,10 @@ This section outlines the business logic for calculating and applying discounts 
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
   5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
-  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable * (LOYALTY_ACCRUAL_PERCENTAGE / 100))`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
+  6. **Loyalty Point Accrual (BR-01 / BR-69)**: If a customer membership is linked to the order, loyalty points are earned on the **Net Total Payable** — i.e. the VAT-**inclusive** amount actually collected, *after* the voucher discount and *after* loyalty-point redemption (steps 2–3): `points_earned = floor(Net Total Payable * (LOYALTY_ACCRUAL_PERCENTAGE / 100))`. Because Net Total Payable is already net of the redeemed value, accrual does not apply to the portion of the order covered by loyalty-point redemption (BR-01). The result is then capped per the per-order accrual limit (§3.10).
+
+### 2. Checkout Discount Audit (BR-80)
+Every **voucher application** and every **loyalty-point redemption** applied at checkout is written to the immutable `AUDIT_LOG` with `cashier_id`, `order_id`, timestamp, the voucher code / redeemed points, and the resulting discount amount (BR-80). This closes the gap where `order_cancellations` was the only POS-side audit: voucher/comp abuse for acquaintances is now traceable per cashier, and the records feed the Cashier Void/Refund Anomaly report (UC-82).
 
 ---
 
@@ -3856,14 +4079,18 @@ All orders follow the state transitions below:
 [HOLD] ----(Barista: RESUME PREP)--> [PREPARING]
 
 [READY] -----(Cashier: handover/pickup)-> [COMPLETED]
+        \----(auto-expiry / SM force-close)-> [ABANDONED]
 
 [COMPLETED] → Terminal state (no further transitions)
 [CANCELLED]  → Terminal state (no further transitions)
+[ABANDONED]  → Terminal state (uncollected READY order; stock already deducted at PREPARING)
 ```
 
 > **Note on COMPLETED state:** For DINE_IN and TAKE_AWAY orders, the transition from READY to COMPLETED is triggered by the Cashier confirming the order handover (customer pickup). For DELIVERY orders, it is triggered by delivery partner API sales report reconciliation.
 
-> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager or Admin must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved.
+> **Note on ABANDONED state (RV-O03):** A `READY` order that is never collected would otherwise block end-of-day shift close (BR-03 forbids closing while non-terminal orders exist). After `READY_ABANDON_TIMEOUT` (configurable) the system marks it `ABANDONED`, and the Store Manager may force-close remaining `READY` orders to `ABANDONED` at shift close (BR-88). Stock was already deducted at `PREPARING` (UC-62/BR-07), so no stock reversal occurs; the order is excluded from sales as uncollected.
+
+> **HOLD state:** Triggered by the Barista via the "Report Issue" action when a preparation problem occurs (missing ingredient, equipment fault, etc.). A HOLD order remains visible in the Barista queue with a highlighted warning indicator. The Store Manager must be notified. The Barista can resume preparation (→ PREPARING) once the issue is resolved.
 
 ---
 
@@ -4111,10 +4338,79 @@ All orders follow the state transitions below:
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-05 | **Order Cancellation Rules**: Order cancellation is strictly restricted to the `PENDING` status. Once the order transitions to `PREPARING` (preparation started), the cancellation action is disabled for all users, including Cashiers and Managers. |
+| BR-05 | **Order Cancellation Rules**: Cancellation (voiding an order before preparation) is strictly restricted to the `PENDING` status; once the order transitions to `PREPARING`, the cancellation action is disabled for all users. Post-preparation complaints (wrong/spilled/slow) are **not** handled by cancellation — they use the Store-Manager-authorised Refund/Comp path (UC-75 / BR-67). |
 | BR-06 | [RESERVED / DELETED] |
-| BR-07 | **Inventory Action on Cancellation**: For packaged/ready-to-serve products, stock is deducted immediately at payment checkout (UC-51). If the order is cancelled while in the `PENDING` state, these items are auto-replenished. For freshly prepared items, stock is only deducted when the order transitions to the `PREPARING` state (UC-62). If cancelled while in the `PENDING` state, no stock deduction has occurred yet, so no replenishment is needed. |
+| BR-07 | **Inventory Deduction Timing**: Recipe-based stock for an order is deducted exactly once, when the order transitions from `PENDING` to `PREPARING` (UC-62, Barista taps "START PREP"). Every saleable item in the catalog is a prepared beverage/item that passes through the Barista queue, so this single trigger covers all stock movement — the chain sells no packaged/ready-to-serve goods that bypass preparation. Because cancellation is only permitted while the order is still `PENDING` (BR-05), no deduction has occurred at cancellation time, so no replenishment is ever required. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
+
+---
+
+## 3.7.5a F39.1 - Refund / Comp After Preparation / UC-75 Store-Manager Refund or Comp
+
+### 3.7.5a.1 Screen Mock-up (Mobile Portrait Modal)
+```
++------------------------------------+
+|        Refund / Comp Order         |
+|        Order #A-1042  (READY)      |
+|                                    |
+|  Items:                            |
+|   1x Peach Tea (L)      45,000 VND |
+|   1x Espresso           30,000 VND |
+|                                    |
+|  Action:                           |
+|   (x) Refund    ( ) Comp / Remake  |
+|  Refund amount:                    |
+|   (x) Full (75,000)  ( ) Item [v]  |
+|                                    |
+|  Reason: [ Wrong item         ][v] |
+|  Notes:  [ Customer got latte    ] |
+|                                    |
+|  --- Store Manager authorisation --|
+|  SM PIN: [ ____ ]    or [ SM Login ]|
+|                                    |
+|      [ Confirm ]      [ Cancel ]   |
++------------------------------------+
+```
+
+#### Table 3-63: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Action | Radio | Yes | | `Refund` (return money) or `Comp / Remake` (zero-charge replacement). |
+| 2 | Refund amount | Radio + Selector | Conditional | | `Full` or a specific line item (partial refund). Required when Action = Refund. |
+| 3 | Reason | Dropdown | Yes | | Complaint reason (Wrong item, Spilled, Too slow, Quality, Other). |
+| 4 | Notes | Text | No | 255 | Free-text detail for the audit record. |
+| 5 | SM PIN / SM Login | Auth | Yes | | Store Manager authorisation — 4-digit SM PIN or SM login. Recorded as `sm_id` (BR-67). |
+| 6 | Confirm | Button | | | Processes the refund/comp and writes the `ORDER_REFUND` audit record. |
+| 7 | Cancel | Button | | | Closes the modal with no change. |
+
+### 3.7.5a.2 Use Case Description
+
+| Use Case ID | UC-75 | Use Case Name | Store-Manager Refund or Comp |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-13 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Store Manager (authoriser); Cashier may initiate the request |
+| **Description** | Handles customer complaints that arise **after** preparation has started — when the order is `PREPARING`, `READY`, or already `COMPLETED` and therefore cannot be cancelled (BR-05). The Store Manager authorises either a **Refund** (return money) or a **Comp / Remake** (replacement at no charge). The order's preparation/sales history is preserved; a refund record is attached. |
+| **Precondition** | Order is in `PREPARING`, `READY`, or `COMPLETED`; payment was captured. A Store Manager is available to authorise. |
+| **Trigger** | Cashier opens Order Detail of a post-`PENDING` order and taps **Refund / Comp**. |
+| **Post-Condition** | A refund/comp record is logged with the approving `sm_id`; money and loyalty effects are applied per BR-67. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Cashier | Opens the order in Order Detail and taps **Refund / Comp**. |
+| 2 | Store Manager | Authorises via SM login or SM PIN. |
+| 3 | Store Manager | Selects type — **Refund** (full or partial amount) or **Comp / Remake** — and enters reason + notes. |
+| 4 | Portal | If **Refund**: returns money per BR-67 (cash → currently-open shift drawer per BR-09; card/VietQR → payment gateway) and reverses loyalty per BR-08. If **Comp / Remake**: pushes a new zero-charge line to the Barista queue (which deducts stock again at its `PREPARING` per UC-62). |
+| 5 | Portal | Writes an `order_refunds` audit record (`order_id`, `sm_id`, `cashier_id`, type, amount, reason, notes) and surfaces it on the Store Manager dashboard. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-67 | **Store-Manager Refund / Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or SM PIN), always logged with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09); card/VietQR refunds go through the payment gateway. A refund reverses accrued loyalty points and restores redeemed points proportionally to the refunded amount (per BR-08). **Partial / single-line-item refunds are permitted.** A Comp / Remake issues a zero-charge replacement that re-enters the prep queue and deducts stock again (UC-62). The original order's prep/sales history is preserved (not voided). |
 
 ---
 
@@ -4148,8 +4444,34 @@ CREATE TABLE order_cancellations (
 
 CREATE INDEX idx_cancellations_order ON order_cancellations(order_id);
 CREATE INDEX idx_cancellations_created_at ON order_cancellations(created_at);
+
+-- Refund / Comp audit log (post-PENDING, Store-Manager authorised — UC-75 / BR-67)
+CREATE TABLE order_refunds (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(id),
+    sm_id UUID NOT NULL REFERENCES users(id),        -- Store Manager who authorised
+    cashier_id UUID NOT NULL REFERENCES users(id),   -- Cashier who initiated
+    shift_session_id UUID REFERENCES shift_sessions(id), -- Open shift drawer charged for cash refunds (BR-09)
+    refund_type VARCHAR(20) NOT NULL,                -- REFUND | COMP_REMAKE
+    amount DECIMAL(12,2) NOT NULL DEFAULT 0,         -- Refunded amount (0 for comp/remake)
+    reason VARCHAR(100) NOT NULL,
+    notes TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_refunds_order ON order_refunds(order_id);
+CREATE INDEX idx_refunds_created_at ON order_refunds(created_at);
 ```
 
+---
+
+## 3.7.7 Fulfilment Resilience & Queue Lifecycle
+
+### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the Kitchen Display System or sticker printer is unreachable, orders are **not** lost — new tickets queue locally and are (re)dispatched on reconnect, and the POS exposes a **manual fallback** (on-screen ticket list + reprint, UC-56/UC-57) so the Barista can keep working during peak hours. A printer/KDS outage never blocks taking or preparing orders. (RV-O04) |
+| BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected for longer than the configurable `READY_ABANDON_TIMEOUT` is auto-transitioned to the terminal state `ABANDONED`. At shift close, BR-03 still forbids closing while non-terminal orders exist, but the Store Manager may **force-close** any remaining `READY` orders to `ABANDONED` (logged with `sm_id`). Because stock was deducted at `PREPARING` (UC-62/BR-07), no stock reversal occurs; `ABANDONED` orders are reported separately as uncollected and excluded from net sales. (RV-O03) |
 
 ---
 
@@ -4270,9 +4592,9 @@ This section details specifications for loyalty membership profiles search, enro
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | User | Enters customer Name, Phone, and optional Email. Clicks "Register". |
+| 1 | User | Enters customer Name, Phone, and optional Email, and confirms the customer has **consented** to enrolment and to processing of their personal data for the loyalty program (BR-71). Clicks "Register". |
 | 2 | Portal | Validates phone syntax format and checks for duplicates. |
-| 3 | Portal | Saves new customer record with 0 starting points, returning to list view. |
+| 3 | Portal | Saves new customer record with 0 starting points, stamping `consent_at` and `consent_version`, and returning to list view. |
 #### Alternative Flows
 ##### AT1: Phone Number Duplicate
 - **Trigger**: At step 2, phone number is already registered.
@@ -4287,6 +4609,19 @@ This section details specifications for loyalty membership profiles search, enro
 | Sub-step | Actor | Action |
 |---|---|---|
 | 2.1 | Portal | Displays warning message: `"Please enter a valid phone number (10-11 digits)."` |
+
+##### AT3: Consent Not Given
+- **Trigger**: At step 1, the consent confirmation is not checked.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Disables "Register" and displays: `"Customer consent is required to enrol a member and store their personal data."` |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-71 | **Customer PII Consent (PDPA / Decree 13/2023)**: Enrolling a customer requires recorded consent to process their personal data (phone, optional email, purchase history) for the loyalty program. The system stamps `consent_at` (timestamp) and `consent_version` on the `CUSTOMER` record at registration. A customer may later withdraw consent, which triggers the erasure/anonymisation flow in BR-72. |
+| BR-72 | **Personal Data Retention & Erasure**: Customer PII is retained for **24 months from the last transaction**, after which the record is **anonymised** (phone/email/name irreversibly hashed or nulled; aggregate sales history retained without PII). Attendance camera snapshots (`photo_url`) are auto-deleted **90 days** after capture (`photo_purge_at`), with the attendance row preserved for payroll. The system supports an **on-request erasure/anonymisation** action for a specific customer (data-subject request) ahead of the 24-month window. Erasure must preserve legally mandated financial records (orders/payments per §4.2.6) by detaching PII rather than deleting the transaction. |
 
 ---
 
@@ -4481,9 +4816,9 @@ This section details specifications for staff shifts assignment, schedules views
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Manager | Selects Employee, Date, Shift Type, and POS Register, and clicks "Assign". |
-| 2 | Portal | Validates employee schedule availability (conflicts check). |
-| 3 | Portal | Saves the shift session and updates schedule calendar. |
+| 1 | Manager | Selects Employee, Date, **Start/End time** (or Shift Type), POS Register, and **target Branch** (defaults to the manager's own branch; may be another branch for cross-branch help — BR-90), then clicks "Assign". |
+| 2 | Portal | Validates schedule availability (conflict check) **and** labour constraints — max daily/weekly hours, minimum rest between shifts, and the branch labour-hour budget (BR-92). |
+| 3 | Portal | Saves the shift session and updates the schedule calendar. If the target branch differs from the employee's home branch, writes a cross-branch assignment audit entry (BR-90). |
 
 #### Alternative Flows
 ##### AT1: Schedule Conflict
@@ -4492,6 +4827,20 @@ This section details specifications for staff shifts assignment, schedules views
 | Sub-step | Actor | Action |
 |---|---|---|
 | 2.1 | Portal | Displays conflict error message: "Employee shift conflict. The employee is already scheduled..." (MSG12). |
+
+##### AT2: Labour Constraint Exceeded
+- **Trigger**: At step 2, the assignment would breach max daily/weekly hours, the minimum-rest gap, or the branch labour-hour budget.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Warns the Manager: `"This shift exceeds {max hours / rest gap / labour budget}. Adjust or confirm override."` Hard limits (max hours, rest) block; the labour-budget cap is a soft warning the Manager may override with a reason (logged). (BR-92) |
+
+##### AT3: Cross-Branch Assignment
+- **Trigger**: At step 1, the Manager selects a target branch other than the employee's home branch.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 3.1 | Portal | Creates the shift at the target branch, audit-logs the cross-branch assignment (`employee_id`, home `store_id`, target `store_id`, actor SM, date), and makes the borrowed employee visible to the **host** branch's Store Manager for that shift (BR-90 / BR-59 exception). No host approval is required. |
 
 ---
 
@@ -4660,9 +5009,13 @@ This section details specifications for staff shifts assignment, schedules views
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-38 | **Attendance Log Recording**: The system records check-in and check-out entries under the local branch's `store_id` where the attendance action was taken, calculating lateness against the scheduled shift. |
-| BR-39 | Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
+| BR-38 | **Attendance Log Recording**: The system records check-in and check-out entries under the local branch's `store_id` where the attendance action was taken. At `CHECK_IN`, the system snapshots the scheduled shift's start time into the `scheduled_start` column (nullable for cross-branch walk-ins with no `shift_id`) so lateness can be reconstructed historically even if the schedule is later edited. |
+| BR-39 | **Lateness Computation (branch-local, derived)**: Lateness is **not** persisted as a stored column — it is derived at the reporting layer as `max(0, recorded_at − scheduled_start)`, where **both timestamps are first converted to the branch's configured local timezone** (per §5.2.2) before the comparison. A `CHECK_IN` at or before `scheduled_start` yields 0 lateness. Lateness is `NULL` when `scheduled_start` is `NULL` (cross-branch walk-in). _(Computing on raw UTC instants is prohibited to avoid the ±7h error for Asia/Ho_Chi_Minh — RV-C03.)_ |
 | BR-53 | **Attendance Check-in & Check-out**: Staff check-in and check-out are performed via a dedicated attendance popup by entering a personal 4-digit PIN and taking a camera snapshot. This action is independent of the active terminal session login — the shared POS session on the terminal is not interrupted. |
+| BR-90 | **Cross-Branch Shift Assignment**: A Store Manager may assign one of **their own-branch** employees to a shift at **another branch** directly (no host approval), via UC-36. The assignment is audit-logged (`employee_id`, home `store_id`, target `store_id`, assigning SM, date) and makes the borrowed employee visible to the **host** Store Manager for that shift's duration (BR-59 exception). Worked hours follow `employee_id` (payroll) and branch labour cost follows the terminal `store_id` (BR-53a). (RV-C04) |
+| BR-91 | **Absence & OT / Early-Leave Derivation**: From scheduled shifts (UC-36) vs `attendance_logs`, the system derives, per employee per day: **Absence** = a scheduled shift with no `CHECK_IN`; **Overtime** = worked-hours beyond the scheduled shift length; **Early-Leave** = `CHECK_OUT` before the scheduled end. These are computed flags/metrics surfaced on the attendance and worked-hours reports (UC-67/UC-80) — non-monetary; payroll stays external (§1.2). No in-system leave-request workflow is provided in this release. (RV-C06) |
+| BR-92 | **Labour Budget & Working-Time Validation**: At scheduling (UC-36), the system enforces configurable working-time limits — `MAX_DAILY_HOURS`, `MAX_WEEKLY_HOURS`, and `MIN_REST_HOURS` between consecutive shifts (hard blocks) — and a per-branch `LABOUR_HOUR_BUDGET` per period (soft warning the Store Manager may override with a logged reason). Prevents uncontrolled labour cost and unsafe rostering. (RV-C07) |
+| BR-93 | **Attendance PIN Uniqueness & Mandatory Photo**: An attendance PIN must be **unique within its branch** (`store_id` scope) and is locked after a configurable number of failed entries. The camera snapshot is **mandatory** at check-in/out; if the camera is unavailable, the action is **queued and flagged** for Store-Manager confirmation rather than recorded without a photo — closing the buddy-punching gap left by a nullable photo. (RV-C08) |
 
 ### 3.9.4.3 Database Schema (Attendance Logs)
 
@@ -4672,19 +5025,24 @@ CREATE TABLE attendance_logs (
     user_id         UUID NOT NULL REFERENCES users(id),
     store_id        UUID NOT NULL REFERENCES stores(id),   -- branch where action was taken
     shift_id        UUID REFERENCES staff_shifts(id),      -- scheduled shift (nullable: cross-branch walk-ins)
+    scheduled_start TIMESTAMP WITH TIME ZONE,              -- snapshot of the shift's scheduled start at CHECK_IN (BR-38); NULL when shift_id is NULL
     action          VARCHAR(10) NOT NULL,                  -- 'CHECK_IN' | 'CHECK_OUT'
     photo_url       VARCHAR(500),                          -- camera snapshot URL (taken at action time)
-    recorded_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    lateness_minutes INTEGER GENERATED ALWAYS AS (
-        EXTRACT(EPOCH FROM (recorded_at - scheduled_start)) / 60
-    ) STORED                                               -- null if shift_id is null
+    photo_purge_at  DATE,                                  -- scheduled erasure date for the snapshot = recorded_at::date + 90 days (BR-72)
+    recorded_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    -- NOTE: lateness is NOT stored. It is derived at the reporting layer per BR-39, comparing
+    --       recorded_at vs scheduled_start AFTER converting both to the branch-local timezone (§5.2.2).
+    --       The previous GENERATED column referenced a non-existent `scheduled_start` and never ran (RV-C02).
 );
 
 CREATE INDEX idx_attendance_store_date ON attendance_logs(store_id, recorded_at);
 CREATE INDEX idx_attendance_user       ON attendance_logs(user_id);
+CREATE INDEX idx_attendance_photo_purge ON attendance_logs(photo_purge_at) WHERE photo_url IS NOT NULL;
 ```
 
-> **photo_url**: Stores the URL/path of the camera snapshot taken during the attendance popup. Required for fraud prevention (verifying the correct employee is clocking in). Nullable only when the attendance action is performed in an offline/no-camera mode.
+> **scheduled_start**: A point-in-time copy of the rostered start of `shift_id`, written at `CHECK_IN`. Storing it as a real column (rather than joining to `staff_shifts` at read time) makes historical lateness immune to later schedule edits and removes the broken generated-column dependency.
+>
+> **photo_url / photo_purge_at**: `photo_url` stores the URL/path of the camera snapshot taken during the attendance popup, required for fraud prevention (verifying the correct employee is clocking in). Nullable only when the attendance action is performed in an offline/no-camera mode. `photo_purge_at` drives the automatic erasure job that deletes the biometric-adjacent snapshot 90 days after capture (BR-72 / §4.2.6); the log row itself is retained for payroll history with `photo_url` nulled.
 
 ---
 
@@ -4748,8 +5106,74 @@ CREATE INDEX idx_attendance_user       ON attendance_logs(user_id);
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to HQ Admin. A Store Manager must not be allowed to view rosters or contact details of staff registered at other branch facilities. |
+| BR-59 | **Branch Staff Isolation & Read-Only**: A Store Manager can only view, search, and call their local staff. All mutation capabilities (create, modify role, deactivate user, update PIN) are restricted to the System Admin (`ssadmin`). A Store Manager must not view rosters or contact details of staff registered at other branches — **except** an employee currently assigned a cross-branch shift at the manager's branch, who becomes visible to that host Store Manager for the duration of the assignment (BR-90). |
 
+---
+
+## 3.9.6 F46.3 - Export Worked-Hours Report / UC-80 Export Worked-Hours Report
+
+### 3.9.6.1 Screen Mock-up (Mobile / Tablet Portrait)
+```
++------------------------------------+
+|       Worked-Hours Export          |
+|                                    |
+|  Branch: District 1 (yours)        |
+|  Period: [2026-05-01]–[2026-05-31] |
+|                                    |
+|  Employee        Days  Hours  Flag |
+|  Nguyen Van An    24   188.5    -  |
+|  Tran Thi Binh    22   171.0   (1) |
+|  Le Van Cuong     20   152.5    -  |
+|  ........................          |
+|  (1) = 1 day with missing checkout |
+|                                    |
+|  [ Export CSV ]   [ Export PDF ]   |
++------------------------------------+
+```
+
+#### Table 3-69: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Period | Date Picker | Yes | | Pay-period window (branch-local, §5.2.2). |
+| 2 | Employee rows | Grid | | | Per employee: days worked, total worked-hours (BR-77), and a flag count of days with missing/unpaired checkout. |
+| 3 | Missing-checkout flag | Indicator | | | Days with a `CHECK_IN` but no matching `CHECK_OUT` are flagged for manual correction and **excluded** from the hours total (BR-77). |
+| 4 | Export CSV / PDF | Button | | | Generates the worked-hours file to feed the external payroll/accounting system (§1.2). |
+
+### 3.9.6.2 Use Case Description
+
+| Use Case ID | UC-80 | Use Case Name | Export Worked-Hours Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Store Manager (own branch only) |
+| **Description** | Produces a per-employee **worked-hours** summary for a pay period at the manager's branch, exportable as CSV/PDF to feed the **external** payroll system. The system computes hours only — it does **not** calculate or pay wages (§1.2). Cross-branch shifts are attributed per BR-53a (payroll hours follow `employee_id`). |
+| **Precondition** | Store Manager is logged in and viewing their own branch. |
+| **Trigger** | Store Manager opens "Worked-Hours Export" and selects a period. |
+| **Post-Condition** | A worked-hours file is generated; days needing correction are flagged. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Store Manager | Selects the pay period. |
+| 2 | Portal | Pairs each `CHECK_IN` with its next `CHECK_OUT` per employee per day and sums the durations (BR-77). |
+| 3 | Portal | Lists per-employee days and total hours, flagging any day with a missing checkout. |
+| 4 | Store Manager | Clicks Export CSV / PDF to download the file for external payroll. |
+
+#### Alternative Flows
+##### AT1: Missing Checkout
+- **Trigger**: At step 2, an employee has a `CHECK_IN` with no matching `CHECK_OUT` for that day.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Flags that day, excludes it from the hours total, and surfaces it for manual correction before export. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-77 | **Worked-Hours Computation**: For each employee per business day (branch-local, §5.2.2), worked-hours = Σ of paired (`CHECK_OUT` − `CHECK_IN`) durations from `attendance_logs`. A `CHECK_IN` with no matching `CHECK_OUT` (or vice-versa) is **flagged and excluded** from the total — never auto-completed. Hours are aggregated by `employee_id` for payroll (BR-53a). The system reports hours only and performs **no wage calculation** (§1.2); the export feeds an external payroll system. |
 
 
 
@@ -4945,6 +5369,7 @@ This section details specifications for managing discount codes and promotional 
 | BR-41 | Deactivating a voucher immediately stops all checkout redemptions. |
 | BR-42 | **Voucher Percentage Discount Cap**: When `discount_type = PERCENTAGE` and `max_discount_amount` is configured, the discount amount applied at checkout is capped at this limit: `applied_discount = min(subtotal * discount_value / 100, max_discount_amount)`. |
 | BR-52 | **Voucher Status Definitions**: A voucher's display status is computed as follows: `SCHEDULED` = current date is before `Start Date`; `ACTIVE` = current date is between `Start Date` and `End Date` inclusive, and voucher is not deactivated; `EXPIRED` = current date is after `End Date` or voucher has been manually deactivated. |
+| BR-68 | *(Applies — defined in §3.12.5)* Every voucher create / update / delete is written to the immutable `AUDIT_LOG` (actor, timestamp, before/after) and is reviewable by `ceoviewer` via the Price & Voucher Change History report (UC-77). |
 
 ---
 
@@ -5137,6 +5562,381 @@ This section details specifications for business reports views, sales analytics 
 |---|---|
 | BR-44 | Store Managers can only view and export reports scoped to their assigned branch. CEO Viewers can access and export consolidated brand reports. |
 
+---
+
+## 3.12.4 F51.2 - COGS / Margin & Ingredient Shrinkage Report / UC-76 View COGS & Shrinkage Report
+
+### 3.12.4.1 Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Reports > COGS / Margin & Shrinkage                            |
++---------------------------------------------------------------------------------+
+|  Date Range: [ 2026-05-01 ] to [ 2026-05-31 ]  Branch: [ All v ]  [ Export ]    |
+|                                                                                 |
+|  Margin per Item (standard-cost COGS — BR-66):                                  |
+|  +-----------------+--------+---------+----------+---------+                     |
+|  | Item            | Price  | COGS    | Margin   | Margin% |                     |
+|  +-----------------+--------+---------+----------+---------+                     |
+|  | Espresso        | 30,000 |  8,500  |  21,500  |   72%   |                     |
+|  | Peach Tea (L)   | 45,000 | 16,200  |  28,800  |   64%   |                     |
+|  | Topping: Oat Milk| 10,000|  6,000  |   4,000  |   40%   |                     |
+|  +-----------------+--------+---------+----------+---------+                     |
+|                                                                                 |
+|  Ingredient Shrinkage (theoretical vs audited @ standard cost):                 |
+|  +-----------------+----------+---------+----------+-----------+                 |
+|  | Material        | Theoret. | Actual  | Variance | Loss VND  |                 |
+|  +-----------------+----------+---------+----------+-----------+                 |
+|  | Fresh Milk (L)  |  120.0   |  131.5  |  -11.5   |  230,000  | (!)             |
+|  | Coffee Beans(kg)|   18.0   |   18.4  |   -0.4   |   60,000  |                 |
+|  +-----------------+----------+---------+----------+-----------+                 |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-64: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Date Range | Date Picker | Yes | | Reporting period boundaries. |
+| 2 | Branch | Dropdown | No | | Filter to a single branch or `All` (consolidated). Store Manager is locked to own branch (BR-44). |
+| 3 | Export | Button | | | Exports the report via the Export Report modal (UC-29). |
+| 4 | Margin per Item grid | Grid | | | Price, standard-cost COGS, gross margin and margin% per menu item / topping (BR-66). |
+| 5 | Ingredient Shrinkage grid | Grid | | | Theoretical (recipe deductions) vs audited usage per material, variance valued at standard cost; abnormal variances flagged `(!)`. |
+
+### 3.12.4.2 Use Case Description
+
+| Use Case ID | UC-76 | Use Case Name | View COGS / Margin & Ingredient Shrinkage Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-13 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | CEO Viewer (read-only); Store Manager sees own-branch scope (per BR-44) |
+| **Description** | Surfaces the chain's unit economics that branch-scoped screens cannot: (a) **gross margin per menu item** = selling price − standard-cost COGS (BR-66), chain-wide and per branch; (b) **ingredient shrinkage** = theoretical consumption (recipe deductions, UC-62) vs actual usage from physical audits (UC-34), valued at standard cost, by raw material and branch. This is the consolidated path by which HQ regains chain-wide stock/cost visibility (there is no HQ stock screen — see §3.1 note). |
+| **Precondition** | CEO Viewer is logged in; menu recipes and `RAW_MATERIAL.standard_cost` are populated. |
+| **Trigger** | CEO Viewer opens the COGS & Shrinkage report and selects a date range. |
+| **Post-Condition** | Margin and shrinkage tables are displayed; exportable via UC-29. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | CEO Viewer | Selects date range and (optionally) a branch filter. |
+| 2 | Portal | Computes per-item COGS = Σ(recipe qty × standard_cost) and gross margin vs price (BR-66). |
+| 3 | Portal | Computes shrinkage = (theoretical deductions − audited actual usage) × standard_cost, grouped by raw material and branch. |
+| 4 | Portal | Displays margin and shrinkage tables; flags items/materials with abnormal shrinkage. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-66 | *(Applies — defined in §3.5.0)* Standard-cost basis for COGS and margin. |
+
+---
+
+## 3.12.5 F51.3 - Price & Voucher Change History / UC-77 View Price & Voucher Change History
+
+### 3.12.5.1 Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Reports > Price & Voucher Change History                      |
++---------------------------------------------------------------------------------+
+|  Date Range: [ 2026-05-01 ] to [ 2026-05-31 ]  Type: [ All v ]  Actor: [ All v ]|
+|                                                                                 |
+|  +---------------------+-----------+-------------------+-----------+-----------+ |
+|  | Timestamp           | Actor     | Entity            | Old       | New       | |
+|  +---------------------+-----------+-------------------+-----------+-----------+ |
+|  | 2026-05-12 09:14    | biz_an    | Price: Espresso   | 28,000    | 30,000    | |
+|  | 2026-05-10 16:40    | biz_an    | Voucher: SUMMER   | (created) | 20% / cap | |
+|  | 2026-05-08 11:02    | biz_lan   | Voucher: TET      | active    | deleted   | |
+|  +---------------------+-----------+-------------------+-----------+-----------+ |
+|  [Page 1 of 8]                                                                  |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-65: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Date Range | Date Picker | Yes | | Reporting period boundaries. |
+| 2 | Type | Dropdown | No | | Filter: `Menu Price`, `Voucher`, or `All`. |
+| 3 | Actor | Dropdown | No | | Filter by the `businessadmin` account that made the change. |
+| 4 | Change History grid | Grid | | | Read-only `AUDIT_LOG` entries: timestamp, actor, entity, old value, new value (BR-68). Append-only; not editable. |
+
+### 3.12.5.2 Use Case Description
+
+| Use Case ID | UC-77 | Use Case Name | View Price & Voucher Change History |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-13 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | CEO Viewer (read-only) |
+| **Description** | A read-only audit trail of every chain-wide **menu price change** and every **voucher create / update / delete**, sourced from `AUDIT_LOG` (BR-68). Acts as the compensating control for keeping `businessadmin` as a single unilateral role (no maker-checker): the CEO can review who changed what, when, and the before/after values. |
+| **Precondition** | CEO Viewer is logged in. |
+| **Trigger** | CEO Viewer opens the Price & Voucher Change History report. |
+| **Post-Condition** | Chronological change log is displayed and exportable (UC-29). |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | CEO Viewer | Selects date range, entity type (Menu Price / Voucher), and optional actor filter. |
+| 2 | Portal | Retrieves matching `AUDIT_LOG` entries (actor, timestamp, before/after). |
+| 3 | Portal | Displays the change history table. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-68 | **Mandatory Audit Log for Price & Voucher Changes**: Because `businessadmin` has unilateral CRUD on selling price and vouchers (no second-approver workflow), every menu **price change** and every voucher **create / update / delete** must be written to the immutable `AUDIT_LOG` with the actor's `user_id`, timestamp, and before/after values. These records are surfaced read-only to `ceoviewer` via this report (UC-77). |
+
+---
+
+## 3.12.6 F51.4 - Loyalty Liability & Movement Report / UC-78 View Loyalty Liability & Movement Report
+
+### 3.12.6.1 Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Reports > Loyalty Points Liability & Movement                 |
++---------------------------------------------------------------------------------+
+|  Period: [ 2026-05-01 ] to [ 2026-05-31 ]   Branch: [ All v ]    [ Export ]     |
+|                                                                                 |
+|  Outstanding Points Balance (chain, as of period end):     1,284,500 pts        |
+|                                                                                 |
+|  +----------------------------+-------------------+                             |
+|  | Movement (selected period) |        Points     |                             |
+|  +----------------------------+-------------------+                             |
+|  | Opening balance            |       1,190,000   |                             |
+|  | (+) Points Issued          |         210,500   |                             |
+|  | (-) Points Redeemed        |         (98,000)  |                             |
+|  | (-) Points Expired (BR-35) |         (18,000)  |                             |
+|  | = Closing balance          |       1,284,500   |                             |
+|  +----------------------------+-------------------+                             |
+|                                                                                 |
+|  Note: Liability is reported in POINTS only (not VND). Per-point value is set   |
+|        by LOYALTY_REDEMPTION_VALUE_PER_POINT (BR-74) if a VND estimate is needed.|
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-66: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Period | Date Picker | Yes | | Movement reporting window. |
+| 2 | Branch | Dropdown | No | | Filter movement by branch, or `All` (chain). Outstanding balance is chain-wide. |
+| 3 | Outstanding Points Balance | Label | | | Total un-redeemed, un-expired points across all active customers at period end. |
+| 4 | Movement grid | Grid | | | Opening balance, points issued, redeemed, expired (BR-35), closing balance — in points (BR-75). |
+| 5 | Export | Button | | | Exports via the Export Report modal (UC-29). |
+
+### 3.12.6.2 Use Case Description
+
+| Use Case ID | UC-78 | Use Case Name | View Loyalty Liability & Movement Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | CEO Viewer (read-only) |
+| **Description** | Surfaces the chain's **outstanding loyalty-point liability** (total un-redeemed, un-expired points) plus a period **movement** breakdown (issued / redeemed / expired). Reported in **points** so the CEO can monitor whether the loyalty programme's exposure is growing; a VND estimate can be derived externally via `LOYALTY_REDEMPTION_VALUE_PER_POINT` (BR-74). |
+| **Precondition** | CEO Viewer is logged in. |
+| **Trigger** | CEO Viewer opens the Loyalty Liability & Movement report. |
+| **Post-Condition** | Outstanding balance and movement table are displayed; exportable via UC-29. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | CEO Viewer | Selects a period and optional branch filter. |
+| 2 | Portal | Computes the outstanding points balance at period end and the issued / redeemed / expired movement for the period. |
+| 3 | Portal | Displays the outstanding balance and the movement table. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-75 | **Loyalty Liability Reporting**: The outstanding loyalty liability is the **sum of all customers' current point balances** (points that are neither redeemed nor expired per BR-35), reported in **points** (not converted to VND). The movement table reconciles `Opening + Issued − Redeemed − Expired = Closing` for the selected period. Issuance follows BR-01/BR-69 (accrual), redemption follows BR-02/BR-74, expiry follows BR-35 (12-month inactivity). |
+
+---
+
+## 3.12.7 F51.5 - Labour Hours vs Revenue Report / UC-79 View Labour Hours vs Revenue Report
+
+### 3.12.7.1 Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Reports > Labour Hours vs Revenue                             |
++---------------------------------------------------------------------------------+
+|  Period: [ 2026-05-01 ] to [ 2026-05-31 ]   Branch: [ All v ]    [ Export ]     |
+|                                                                                 |
+|  +-----------------+-------------+-------------+----------------+--------------+ |
+|  | Branch          | Labour Hrs  | Net Sales   | Hrs / 1M VND   | VND / Hr     | |
+|  +-----------------+-------------+-------------+----------------+--------------+ |
+|  | District 1      |      612.5  | 248,400,000 |          2.47  |   405,551    | |
+|  | Thu Duc         |      488.0  | 171,900,000 |          2.84  |   352,254    | |
+|  | (Chain total)   |    1,100.5  | 420,300,000 |          2.62  |   381,917    | |
+|  +-----------------+-------------+-------------+----------------+--------------+ |
+|                                                                                 |
+|  Note: Productivity metric only — no wage/payroll amounts (payroll is external, |
+|        §1.2). Labour hours sourced from attendance worked-hours (BR-77).        |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-67: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Period | Date Picker | Yes | | Reporting window. |
+| 2 | Branch | Dropdown | No | | `All` (chain, CEO Viewer) or a single branch. A Store Manager sees only their own branch. |
+| 3 | Labour Hrs | Label | | | Total worked-hours for the branch in the period (BR-77). |
+| 4 | Net Sales | Label | | | Net sales (Net Total Payable summed) for the branch in the period. |
+| 5 | Hrs / 1M VND | Label | | | Labour intensity = Labour Hrs ÷ (Net Sales / 1,000,000). |
+| 6 | VND / Hr | Label | | | Revenue productivity = Net Sales ÷ Labour Hrs. |
+
+### 3.12.7.2 Use Case Description
+
+| Use Case ID | UC-79 | Use Case Name | View Labour Hours vs Revenue Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | CEO Viewer (chain, read-only); Store Manager (own branch only) |
+| **Description** | Relates **labour hours worked** to **revenue earned** per branch, as a staffing-efficiency KPI. Deliberately a **non-monetary** labour metric (hours, not wages) because payroll calculation is out of scope and handled by external accounting (§1.2). Lets the chain spot over/under-staffed branches relative to sales. |
+| **Precondition** | Actor is logged in (CEO Viewer or Store Manager). |
+| **Trigger** | Actor opens the Labour Hours vs Revenue report. |
+| **Post-Condition** | Per-branch labour-intensity and revenue-productivity figures are displayed; exportable via UC-29/UC-41. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Actor | Selects a period (and branch, if CEO Viewer). |
+| 2 | Portal | Sums worked-hours (BR-77) and Net Sales per branch for the period and computes the ratios. |
+| 3 | Portal | Displays the per-branch table (CEO Viewer sees all branches + chain total; Store Manager sees their branch only). |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-76 | **Labour Productivity Metric (non-monetary)**: Labour efficiency is reported as **Labour Hours vs Net Sales** — `Hours per 1,000,000 VND` and `Net Sales per Labour Hour` — using worked-hours (BR-77) and Net Sales (BR-69). The system stores **no wage/salary rate** and converts no hours to money; payroll cost remains external (§1.2). Branch labour hours are attributed by the terminal `store_id` where the shift was worked (BR-53a). |
+
+---
+
+## 3.12.8 F51.6 - Daily Z-Report / UC-81 View Daily Z-Report
+
+### 3.12.8.1 Screen Mock-up (Desktop / Tablet Landscape)
+```
++---------------------------------------------------------------------------------+
+| Store Manager Portal > Reports > Daily Z-Report                                 |
++---------------------------------------------------------------------------------+
+|  Business Day: [ 2026-05-24 ]   Branch: District 1            [ Export / Print ] |
+|                                                                                 |
+|  Sales                              | Tender Breakdown                          |
+|  Gross Sales            58,200,000  | Cash                  21,400,000          |
+|  (-) Voucher Discounts  (1,900,000) | Card                  15,800,000          |
+|  (-) Point Redemptions    (640,000) | VietQR                19,820,000          |
+|  = Net Sales            55,660,000  | --------------------------------          |
+|  VAT (incl, 10/110)      5,060,000  | Total Collected       57,020,000          |
+|  (-) Refunds            (1,360,000) |                                           |
+|                                     | Orders Completed: 412   Refunds: 6        |
+|  Shifts in day: 3 (all CLOSED)      | Cancellations (PENDING): 11               |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-68: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Business Day | Date Picker | Yes | | The calendar business day (branch-local, §5.2.2) to summarise. |
+| 2 | Sales block | Label group | | | Gross sales, voucher discounts, point redemptions, net sales, VAT, refunds. |
+| 3 | Tender Breakdown | Label group | | | Amount collected by tender type (cash / card / VietQR) and total collected. |
+| 4 | Counters | Label group | | | Orders completed, refund count, PENDING cancellation count, number of shifts. |
+| 5 | Export / Print | Button | | | Exports / prints the Z-report (UC-41 / UC-29). |
+
+### 3.12.8.2 Use Case Description
+
+| Use Case ID | UC-81 | Use Case Name | View Daily Z-Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Store Manager (own branch) |
+| **Description** | A consolidated **end-of-day** summary for one branch and one business day — aggregating **all shift sessions** in that day into a single statement of sales, discounts, VAT, refunds, and tender breakdown. Complements the per-shift Close-Shift report (UC-53) with a day/branch total the manager reconciles and the chain can audit. |
+| **Precondition** | Store Manager is logged in; the business day has at least one shift session. |
+| **Trigger** | Store Manager opens the Daily Z-Report for a chosen business day. |
+| **Post-Condition** | The day's consolidated totals are displayed; exportable / printable. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Store Manager | Selects a business day. |
+| 2 | Portal | Aggregates every shift session of that day (branch-local) into gross sales, voucher/point discounts, net sales, VAT, refunds, and tender totals (BR-78). |
+| 3 | Portal | Displays the Z-report and offers export/print. |
+
+#### Alternative Flows
+##### AT1: Open Shift in the Day
+- **Trigger**: At step 2, the selected business day still has an `OPEN` shift session.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Displays the totals so far with a banner: `"Provisional — 1 shift still open. Figures finalise when all shifts are closed."` |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-78 | **Daily Z-Report Composition**: The Z-report aggregates **all shift sessions** of one branch for one business day (branch-local, §5.2.2) into: Gross Sales, Voucher Discounts, Point Redemptions, Net Sales (BR-69), VAT (inclusive, 10/110), Refunds (`ORDER_REFUND`, BR-67), tender breakdown (cash / card / VietQR), and counters (orders completed, refund count, PENDING cancellation count). It is read-only and reconciles to the sum of that day's Close-Shift reports (UC-53). |
+
+---
+
+## 3.12.9 F51.7 - Cashier Void/Refund Anomaly Report / UC-82 View Cashier Void/Refund Anomaly Report
+
+### 3.12.9.1 Screen Mock-up (Desktop / Tablet Landscape)
+```
++---------------------------------------------------------------------------------+
+| Reports > Cashier Void / Refund Anomaly                                         |
++---------------------------------------------------------------------------------+
+|  Period: [ 2026-05-01 ]–[ 2026-05-31 ]   Branch: [ District 1 v ]   [ Export ]  |
+|                                                                                 |
+|  +-----------+--------+----------+---------+----------+--------+---------------+ |
+|  | Cashier   | Orders | Cancels  | Refunds | Vouchers | Comps  | Flag          | |
+|  +-----------+--------+----------+---------+----------+--------+---------------+ |
+|  | An (C)    |   612  |  8 (1.3%)|  3      |  41      |  2     |  -            | |
+|  | Binh (C)  |   470  | 39 (8.3%)| 17      |  88      |  9     | ⚠ HIGH cancel | |
+|  | Cuong (C) |   388  |  5 (1.3%)|  2      |  30      |  1     |  -            | |
+|  +-----------+--------+----------+---------+----------+--------+---------------+ |
+|                                                                                 |
+|  ⚠ rows exceed CANCEL_REFUND_ALERT_THRESHOLD — review for void/comp abuse.      |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-72: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Period | Date Picker | Yes | | Reporting window. |
+| 2 | Branch | Dropdown | No | | Store Manager: own branch only. CEO Viewer: any branch or `All` (chain). |
+| 3 | Per-cashier grid | Grid | | | Per cashier: orders, cancellations (count + % of orders), refunds, vouchers applied, comps — sourced from `order_cancellations` (BR-51), `ORDER_REFUND` (BR-67), and the checkout discount log (BR-80). |
+| 4 | Flag | Indicator | | | ⚠ when a cashier's cancel or refund rate exceeds `CANCEL_REFUND_ALERT_THRESHOLD` (BR-79). |
+| 5 | Export | Button | | | Exports via the Export Report modal (UC-29/UC-41). |
+
+### 3.12.9.2 Use Case Description
+
+| Use Case ID | UC-82 | Use Case Name | View Cashier Void/Refund Anomaly Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | Store Manager (own branch); CEO Viewer (chain, read-only) |
+| **Description** | Surfaces per-cashier **cancellation, refund, voucher and comp activity** so abnormal patterns (e.g. a cashier voiding cash orders or over-applying vouchers/comps for acquaintances) are visible. PENDING cancellation stays no-PIN (BR-05) and every refund already requires Store-Manager authorisation (BR-67); this report is the **detective control** that complements those, flagging outliers against a configurable threshold (BR-79). |
+| **Precondition** | Actor is logged in (Store Manager or CEO Viewer). |
+| **Trigger** | Actor opens the Cashier Void/Refund Anomaly report. |
+| **Post-Condition** | Per-cashier activity is displayed with anomaly flags; exportable via UC-29/UC-41. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | Actor | Selects a period (and branch, if CEO Viewer). |
+| 2 | Portal | Aggregates per-cashier cancellations (BR-51), refunds (BR-67), voucher/point applications and comps (BR-80) for the period. |
+| 3 | Portal | Computes cancel/refund rates and flags cashiers exceeding `CANCEL_REFUND_ALERT_THRESHOLD` (BR-79). |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-79 | **Cancellation & Refund Anomaly Monitoring**: The system tracks, per cashier per period, the count and value of order cancellations (BR-51), refunds (BR-67), vouchers applied and comps (BR-80), and flags any cashier whose cancellation or refund rate exceeds the configurable parameter `CANCEL_REFUND_ALERT_THRESHOLD`. Flags are surfaced to the Store Manager (own branch) and CEO Viewer (chain) via UC-82. This is a detective control; it does not block transactions (PENDING cancel stays no-PIN per BR-05, refunds stay SM-authorised per BR-67). (RV-S01) |
+| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry with `cashier_id`, `order_id`, timestamp, voucher code / redeemed points, and discount amount. Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.7, RV-S02) |
 
 
 
@@ -5172,6 +5972,9 @@ This section details specifications for system settings, store branding profiles
 |  Accrual Rate:  [ 1.0          ] %   Redeem Value:  [ 100          ] VND/point  |
 |  Max Redeem:    [ 50           ] %   Max Discount:  [ 100,000      ] VND/order  |
 |                                                                                 |
+|  Security & Fraud Settings:                                                     |
+|  HQ MFA Required: [x]   Cancel/Refund Alert Threshold: [ 5.0 ] % of orders      |
+|                                                                                 |
 |                                                     [ Save Settings ] [ Cancel ] |
 +---------------------------------------------------------------------------------+
 ```
@@ -5190,8 +5993,10 @@ This section details specifications for system settings, store branding profiles
 | 9 | Redeem Value | Number | Yes | 6 | Cash value per point in VND (must be > 0). |
 | 10 | Max Redeem | Decimal | Yes | 5 | Max percentage of order subtotal paid via points (0% to 100%). |
 | 11 | Max Discount | Number | Yes | 8 | Max absolute discount amount in VND via points per order (must be >= 0). |
-| 12 | Save Settings | Button | | | Commits and saves global brand changes. |
-| 13 | Cancel | Button | | | Discards edits and returns to dashboard home. |
+| 12 | HQ MFA Required | Toggle | Yes | | `HQ_MFA_REQUIRED` — when on, HQ-role logins (ceoviewer/businessadmin/ssadmin) require a second factor (BR-83). Default on. |
+| 13 | Cancel/Refund Alert Threshold | Decimal | Yes | 5 | `CANCEL_REFUND_ALERT_THRESHOLD` — per-cashier cancel/refund rate (% of orders) above which the anomaly report flags the cashier (BR-79). |
+| 14 | Save Settings | Button | | | Commits and saves global brand changes. |
+| 15 | Cancel | Button | | | Discards edits and returns to dashboard home. |
 
 ### 3.13.1.2 Use Case Description
 
@@ -5234,7 +6039,7 @@ This section details specifications for system settings, store branding profiles
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
 | BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes and loyalty config changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the parameters that were active when they were created.** |
-| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
+| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE_PER_POINT` (Redeem Value per Point, default 100 VND/point — see BR-74), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
 
 ---
 
@@ -5369,7 +6174,7 @@ This section specifies the branch lifecycle management functionality available e
 |  | 002 | Coffee Zone - Dist 7   | 45 Nguyen Thi Thap, D7   | 02839301 | Active| |
 |  | 003 | Coffee Zone - Thu Duc  | 78 Vo Van Ngan, Thu Duc   | 02839302 | Closed| |
 |  +-----+------------------------+--------------------------+----------+-------+ |
-|  Active: 2 / 5 Max                                        [ + Add Branch ]     |
+|  Active: 2 / MAX_ACTIVE_BRANCHES                          [ + Add Branch ]     |
 +---------------------------------------------------------------------------------+
 ```
 
@@ -5379,8 +6184,8 @@ This section specifies the branch lifecycle management functionality available e
 | 1 | Search | Text | No | 100 | Filter branches by name or address. |
 | 2 | Status | Dropdown | No | | Filter by status: `Active`, `Inactive`, `All`. |
 | 3 | Branch Grid | Grid | | | Displays branch listings including ID, name, address, phone, and status. |
-| 4 | Active Counter | Label | | | Shows `Active: X / 5 Max` to indicate capacity utilization. |
-| 5 | Add Branch | Button | | | Navigates to Add Branch form. Disabled when 5 active branches already exist. |
+| 4 | Active Counter | Label | | | Shows `Active: X / MAX_ACTIVE_BRANCHES` to indicate capacity utilization. |
+| 5 | Add Branch | Button | | | Navigates to Add Branch form. Disabled when `MAX_ACTIVE_BRANCHES` active branches already exist. |
 
 #### Use Case Description
 
@@ -5401,7 +6206,7 @@ This section specifies the branch lifecycle management functionality available e
 | Step | Actor | Action |
 |---|---|---|
 | 1 | System Admin | Navigates to Branch Management. |
-| 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. maximum capacity (5). |
+| 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. the configured maximum capacity (`MAX_ACTIVE_BRANCHES`). |
 | 3 | System Admin | Optionally filters by status or searches by keyword. |
 
 ---
@@ -5549,8 +6354,8 @@ This section specifies the branch lifecycle management functionality available e
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 1.1 | Portal | Checks that total active branches after reactivation does not exceed 5 (BR-54). |
-| 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (5) reached. Please deactivate another branch first."` (MSG16) |
+| 1.1 | Portal | Checks that total active branches after reactivation does not exceed `MAX_ACTIVE_BRANCHES` (BR-54). |
+| 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (MAX_ACTIVE_BRANCHES) reached. Please deactivate another branch first."` (MSG16) |
 | 1.3 | Portal | If within capacity, sets `STORE.is_active = true`. |
 | 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the System Admin."` |
 
@@ -5564,7 +6369,7 @@ This section specifies the branch lifecycle management functionality available e
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously. Deactivated branches do not count toward this limit. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches do not count toward this limit. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 
@@ -5624,14 +6429,17 @@ This section includes all requirements affecting usability, user productivity, t
 Requirements for system reliability, availability, fault tolerance, and bug rates.
 
 - **Availability**:
-  - **System Availability**: The cloud system and APIs must maintain at least **99.9% uptime** over a 24/7/365 operational schedule.
-  - **Maintenance Access**: System maintenance must be scheduled during low-traffic periods (02:00 AM to 04:00 AM on Sundays) and must not exceed **2 hours** per month.
-  - **Degraded Mode Operations (Offline POS)**:
+  - **System Availability**: The cloud system and APIs must maintain at least **99.9% uptime**, **measured excluding the scheduled maintenance window** below (so planned maintenance does not consume the error budget). This reconciles the SLA with the maintenance allowance — the two no longer contradict (RV-C17).
+  - **Maintenance Access**: System maintenance is scheduled during low-traffic periods (02:00 AM to 04:00 AM on Sundays), must not exceed **2 hours per month**, and is announced in advance; downtime inside this window is excluded from the 99.9% measurement.
+  - **Degraded Mode Operations (Offline POS — cash-only)** *(RV-C19, aligns with BR-86)*:
     > [!IMPORTANT]
-    > If the local store internet connection drops, the POS cashier terminal must continue to function. It will store orders locally in secure local storage.
-    - Offline operations allow cash and card checkouts. Live VietQR transfers are suspended.
-    - Loyalty points redemptions and online voucher verifications are suspended; only preloaded local vouchers can be verified.
-    - Synchronizing queued offline orders to the cloud database must trigger automatically within **60 seconds** after internet connection recovery.
+    > If the local store internet connection or the payment gateway drops, the POS cashier terminal must continue to function in a **cash-only** degraded mode, storing orders in secure local storage.
+    - **Tender**: **Cash only.** `CARD` and `VIETQR` are disabled while offline — there is **no offline card authorisation** (avoids decline/chargeback risk).
+    - **Promotions**: Loyalty accrual/redemption and online voucher verification are suspended; only preloaded local vouchers verify, flagged for reconciliation/clawback on reconnect (e.g. single-use voucher spent twice offline is detected and reversed).
+    - **Identifier strategy**: Offline orders/payments are keyed by **client-generated UUIDs** so they never collide with server IDs; the server accepts them idempotently on sync (no renumbering, no duplicates).
+    - **Conflict resolution**: On reconnect, queued transactions sync **append-only** in client-timestamp order; server-authoritative records (stock balances, voucher usage counters) are recomputed centrally, and any conflict (e.g. voucher over-use, negative stock per BR-89) is surfaced to the Store Manager rather than silently merged.
+    - **Max offline duration**: The terminal may operate offline for up to `MAX_OFFLINE_HOURS` (configurable); beyond it, the terminal warns and requires reconnection/manual reconciliation before continuing.
+    - **Sync**: Queued offline orders sync to the cloud automatically within **60 seconds** of connectivity recovery.
 - **Mean Time Between Failures (MTBF)**:
   - The MTBF for POS client applications must be at least **8,000 hours** of continuous run-time.
   - The MTBF for server-side components must be at least **10,000 hours**.
@@ -5659,9 +6467,9 @@ The system's performance characteristics, transaction response times, and capaci
   - **UC-28 View Consolidated Business Reports**: Central report compilation and display must load in **under 2.0 seconds** average, **under 5.0 seconds** maximum.
 - **Throughput**:
   - The backend APIs must handle a minimum throughput of **100 transactions per second (TPS)** globally without degradation.
-- **Capacity**:
-  - The system must accommodate up to the configured `MAX_ACTIVE_BRANCHES` branches and **100 concurrent active cashier POS sessions**.
-  - The central database must handle up to **10,000 daily order transactions**.
+- **Capacity** *(expressed per-branch × `MAX_ACTIVE_BRANCHES`, not as fixed totals — RV-C16)*:
+  - **Per branch**: at least **50 concurrent active POS/staff sessions** and **2,000 order transactions per day** (consistent with the §4.2.5 single-branch floor).
+  - **Chain total**: scales as `per-branch capacity × MAX_ACTIVE_BRANCHES`. The architecture must scale with `MAX_ACTIVE_BRANCHES` without redesign — there is **no hardcoded chain-wide ceiling** (the former fixed "100 sessions / 10,000 orders" figures are removed).
 - **Resource Utilization**:
   - **POS client memory**: The active application must consume **less than 512MB RAM** on terminal devices.
   - **Local storage disk footprint**: Local cached orders and master catalog data must require **less than 2GB of disk storage**.
@@ -5676,13 +6484,20 @@ The system's performance characteristics, transaction response times, and capaci
 
 ### 4.2.5 Scalability
 - The system architecture must support horizontal scaling to accommodate a dynamic number of branches (configured via `MAX_ACTIVE_BRANCHES`) without requiring architectural redesign.
-- A single branch deployment must handle a minimum of **500 transactions per day** and **50 concurrent active users** without performance degradation.
+- A single branch deployment must handle at least **2,000 transactions per day** and **50 concurrent active users** without performance degradation; chain-wide capacity scales as this per-branch figure × `MAX_ACTIVE_BRANCHES` (per §4.2.3, RV-C16).
 
 ### 4.2.6 Data Retention & Archival
 - **Transaction Records** (Orders, Payments): Retained for a minimum of **5 years** to comply with financial audit requirements.
 - **Audit Logs**: Retained for a minimum of **2 years**.
 - **Shift Sessions**: Retained for **1 year**, then archived to cold storage.
+- **Customer PII** (phone, email, name): Retained for **24 months from the customer's last transaction**, then irreversibly anonymised; aggregate sales history is preserved without PII (BR-72).
+- **Attendance camera snapshots** (`attendance_logs.photo_url`): Auto-deleted **90 days** after capture via the `photo_purge_at` job (BR-72); the attendance row (times, lateness inputs) is retained for payroll with `photo_url` nulled.
 - Data older than retention limits may be archived to a read-only cold storage tier and will not appear in active reports.
+
+#### 4.2.6.1 Personal Data Protection (PDPA / Decree 13/2023)
+- **Consent**: Customer enrolment captures explicit consent (`consent_at`, `consent_version`) before any PII is stored (BR-71). Attendance biometrics-adjacent photos are collected solely for clock-in fraud prevention and are subject to the 90-day purge above.
+- **Right to erasure**: The system must support a data-subject erasure/anonymisation request for a specific customer ahead of the 24-month window (BR-72). Erasure detaches PII from legally mandated financial records (5-year orders/payments) rather than deleting the transaction itself.
+- **Lawful basis & minimisation**: Only the data fields specified in §3.8 (customer) and §3.9 (attendance) are collected; `ceoviewer` exports are restricted to aggregate, non-row-level PII (see RV-S12 backlog).
 
 ### 4.2.7 Backup & Disaster Recovery
 - **Recovery Point Objective (RPO)**: Maximum data loss tolerance is **1 hour**. Automated database backups must run every 60 minutes.
@@ -5752,8 +6567,8 @@ This section contains business rules, global requirements, common application me
 | BR-35 | **Loyalty Points Expiry**: Loyalty points expire after 12 months of customer inactivity (no new transactions made by the customer). |
 | BR-36 | **Past Schedules Block**: Cannot modify schedules that occurred in the past. |
 | BR-37 | **Schedules Deletion Notify**: Deletion removes the shift and sends notification alerts to affected employees. |
-| BR-38 | **Attendance PIN Verification**: Staff attendance check-in and check-out records are recorded manually via the dedicated attendance popup, and are not automatically created upon logging into the user account session. |
-| BR-39 | **Lateness Calculation Rule**: Lateness is calculated relative to the scheduled shift start time (e.g. check-in after 06:00 AM for a morning shift). |
+| BR-38 | **Attendance Log Recording** (authoritative; single definition — see §3.9.4.2): Check-in/out are recorded manually via the attendance popup (PIN + photo, BR-53/BR-93), **not** auto-created from the user-session login, under the branch `store_id` where taken. At `CHECK_IN` the scheduled shift start is snapshotted into `scheduled_start` (nullable for cross-branch walk-ins) so lateness reconstructs historically. _(RV-C05: this is the one BR-38; the prior duplicate "PIN Verification" wording is merged here.)_ |
+| BR-39 | **Lateness Computation (branch-local, derived)**: Lateness is not stored; it is derived as `max(0, recorded_at − scheduled_start)` with **both timestamps converted to the branch-local timezone** (§5.2.2) first. Check-in at/before `scheduled_start` = 0; `NULL` when `scheduled_start` is `NULL`. (RV-C03; mirrors §3.9.4.2) |
 | BR-40 | **Read-Only Voucher Code**: Alphanumeric Voucher Code string value cannot be modified after saving. |
 | BR-41 | **Deactivation Redemption Block**: Deactivating a voucher immediately stops all checkout redemptions. |
 | BR-42 | [RESERVED / DELETED] |
@@ -5780,9 +6595,35 @@ This section contains business rules, global requirements, common application me
 | BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it have their `category_id` set to `NULL` (nullable FK) to prevent FK constraint violations. Items with `category_id = NULL` appear as uncategorized. |
 | BR-63 | **Raw Material Master Ownership**: The raw-material catalog is chain-wide and maintained exclusively by the `businessadmin` (UC-74). Branch `STOCK_ITEM` records reference a master material by foreign key; Store Managers may transact quantities (UC-32/33/34) but cannot create, rename, or delete material types. There is no central warehouse — branches import directly from third-party suppliers. |
 | BR-64 | **Raw Material Soft-Delete**: Raw materials are never hard-deleted — they are set `Inactive` to preserve recipe links and historical stock transactions. An inactive material is hidden from new recipe and import selections but remains visible in history and existing branch stock. |
-
-
-
+| BR-65 | **Topping Recipe & Deduction**: A topping/option may carry its own recipe (`RECIPE_ITEM` via `option_topping_id` → `RAW_MATERIAL`). UC-62 deducts the recipes of the base item **and** every selected topping at `PREPARING`. Only material-free options (e.g. "No Ice") may have an empty recipe. (§3.3.6) |
+| BR-66 | **Standard-Cost COGS**: Each `RAW_MATERIAL` carries a chain-wide `standard_cost` (per master unit), maintained by `businessadmin`. Item/topping cost = Σ(recipe qty × standard_cost); gross margin = price − cost. Standard cost (not per-branch purchase price) is the single basis for chain-wide COGS, margin, and ingredient-shrinkage reporting. (§3.5.0, §3.12.4) |
+| BR-67 | **Store-Manager Refund/Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or PIN), logged in `ORDER_REFUND` with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09); card/VietQR via gateway. Refund reverses loyalty per BR-08; partial/line-item refunds allowed; Comp/Remake re-enters the prep queue (UC-62). Original prep/sales history preserved. (UC-75, §3.7.5a) |
+| BR-68 | **Mandatory Audit Log for Price & Voucher Changes**: As `businessadmin` has unilateral CRUD on selling price and vouchers (no maker-checker), every menu price change and every voucher create/update/delete is written to the immutable `AUDIT_LOG` (actor, timestamp, before/after) and surfaced read-only to `ceoviewer` via UC-77. (§3.12.5) |
+| BR-69 | **Loyalty Accrual Base ("Net Total Payable")**: The loyalty accrual base is the **Net Total Payable** — the VAT-**inclusive** amount actually collected, computed *after* voucher discount and *after* loyalty-point redemption (Gross Subtotal − voucher − point redemption, floored at 0 per BR-50). It includes toppings/option modifiers (part of Gross Subtotal) and the VAT portion, but excludes the value covered by redeemed points (BR-01). This single definition governs accrual everywhere (§3.6.7 step 6, §3.10.4). |
+| BR-70 | **Discount & Tax Stacking Order**: At checkout, calculations are applied in a fixed sequence: (1) Gross Subtotal → (2) Voucher discount → (3) Loyalty-point redemption (with %/absolute caps) → (4) VAT extraction (inclusive) → (5) accrual on Net Total Payable. Voucher and point redemption may stack (≤1 voucher per order); the combined discount is capped at Gross Subtotal so Net Total Payable ≥ 0 (BR-50). Authoritative procedure: §3.6.7. |
+| BR-71 | **Customer PII Consent (PDPA / Decree 13/2023)**: Enrolling a customer requires recorded consent to process their personal data (phone, optional email, purchase history) for the loyalty program; the system stamps `consent_at` and `consent_version` on the `CUSTOMER` record at registration (UC-25). Consent may be withdrawn, triggering BR-72. (§3.8, §4.2.6.1) |
+| BR-72 | **Personal Data Retention & Erasure**: Customer PII is retained **24 months from the last transaction**, then irreversibly anonymised (PII hashed/nulled; aggregate sales history kept). Attendance camera snapshots are auto-deleted **90 days** after capture (`photo_purge_at`), the attendance row preserved for payroll. The system supports on-request data-subject erasure ahead of the window, detaching PII from the 5-year financial records rather than deleting the transaction. (§3.8, §3.9, §4.2.6) |
+| BR-73 | **Recipe Unit Consistency**: Every recipe line (base item via UC-18/19 and topping via §3.3.6) must use the **exact master stock-keeping unit** of the referenced `RAW_MATERIAL`; no kg↔g / l↔ml conversion is performed and a mismatched unit is rejected at save. Guarantees stock deduction (UC-62) and standard-cost COGS (BR-66) operate on like units. (§3.3, §3.5) |
+| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND/point**, Central System Settings / UC-30). Redeemed points must be a whole **multiple of 100** (MSG14); the raw discount `points × value` is **floored to the nearest whole VND** before the %/absolute caps (§3.6.7 step 3). Single definition used by checkout and the loyalty-liability report (UC-78). (§3.6.5, §3.13) |
+| BR-75 | **Loyalty Liability Reporting**: Outstanding loyalty liability = **sum of all customers' current point balances** (neither redeemed nor expired per BR-35), reported in **points** (not VND). The movement table reconciles `Opening + Issued − Redeemed − Expired = Closing` for the period (issuance per BR-01/BR-69, redemption per BR-02/BR-74, expiry per BR-35). Surfaced read-only to `ceoviewer` via UC-78. (§3.12.6) |
+| BR-76 | **Labour Productivity Metric (non-monetary)**: Labour efficiency is reported as **Labour Hours vs Net Sales** (`Hours per 1,000,000 VND` and `Net Sales per Labour Hour`) using worked-hours (BR-77) and Net Sales (BR-69). The system stores **no wage/salary rate** and converts no hours to money — payroll cost stays external (§1.2). Branch hours attributed by terminal `store_id` (BR-53a). Visible to `ceoviewer` (chain) and Store Manager (own branch) via UC-79. (§3.12.7) |
+| BR-77 | **Worked-Hours Computation**: Per employee per business day (branch-local, §5.2.2), worked-hours = Σ of paired (`CHECK_OUT` − `CHECK_IN`) durations from `attendance_logs`. An unmatched `CHECK_IN`/`CHECK_OUT` is **flagged and excluded** (never auto-completed). Aggregated by `employee_id` for payroll (BR-53a); the system computes hours only and performs **no wage calculation** (§1.2). Exported via UC-80 (Store Manager, own branch) to feed external payroll. (§3.9.6) |
+| BR-78 | **Daily Z-Report Composition**: The Z-report aggregates **all shift sessions** of one branch for one business day (branch-local) into Gross Sales, Voucher Discounts, Point Redemptions, Net Sales (BR-69), VAT (inclusive 10/110), Refunds (`ORDER_REFUND`, BR-67), tender breakdown (cash/card/VietQR), and counters (orders completed, refunds, PENDING cancellations). Read-only; reconciles to the day's Close-Shift reports (UC-53). Store Manager via UC-81. (§3.12.8) |
+| BR-79 | **Cancellation & Refund Anomaly Monitoring**: The system tracks, per cashier per period, the count/value of cancellations (BR-51), refunds (BR-67), vouchers applied and comps (BR-80), and flags any cashier whose cancel/refund rate exceeds the configurable `CANCEL_REFUND_ALERT_THRESHOLD`. Surfaced to Store Manager (own branch) + CEO Viewer (chain) via UC-82. Detective control only — does not block (PENDING cancel stays no-PIN per BR-05; refunds stay SM-authorised per BR-67). (§3.12.9, RV-S01) |
+| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry (`cashier_id`, `order_id`, timestamp, voucher code / redeemed points, discount amount). Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.7, RV-S02) |
+| BR-81 | **User Account Change Audit & Access Review**: Account create (UC-11), role/status change or deactivation (UC-12/14), and credential/PIN reset write an immutable `AUDIT_LOG` entry (actor `ssadmin_id`, target, before/after role+status, timestamp). With no maker-checker on provisioning (consistent with BR-68), this audit + the periodic **Access Review report** (UC-83, read-only to `ceoviewer`) is the SoD compensating control. (§3.2.12/3.2.15, RV-S03) |
+| BR-82 | **Privilege Bootstrap & Self-Escalation Prevention**: (a) The first `ssadmin` is provisioned via a secure one-time install/seed process, never the in-app UI; (b) no user may change their own role/permissions/active status — such changes require a *different* `ssadmin`; (c) all changes audit-logged (BR-81). Extends last-admin protection (BR-23). (§3.2.13, RV-S04) |
+| BR-83 | **Mandatory MFA for HQ Roles**: Login by `ceoviewer` / `businessadmin` / `ssadmin` requires a second factor after password — 6-digit email OTP (reusing UC-03/04 infra) or TOTP — governed by `HQ_MFA_REQUIRED` (default true). Branch/POS roles are exempt to avoid disrupting shared-terminal operations. Three failed MFA attempts trigger the BR-17 lockout. (§3.2.1/3.2.14, RV-S05) |
+| BR-84 | **VietQR Settlement Idempotency & Auto-Confirm**: A VietQR request is bound to its `order_id`; the gateway settles **at most once per `order_id`** (auto-confirmed on callback — the 60s timeout is only the error fallback). "RETRY QR" voids the prior QR and reissues for the same order; any duplicate settlement is auto-flagged for refund (BR-85), so a retry never double-charges. (§3.6.6, RV-O02/O06) |
+| BR-85 | **VietQR Late-Callback Reconciliation**: A settlement callback for an already-cancelled / timed-out `order_id` does **not** revive the order; funds go to a payment-reconciliation queue, are flagged for refund, and surfaced to the Store Manager. No order is silently resurrected and no money lands unreconciled on a void order. (§3.6.6, RV-O01) |
+| BR-86 | **Offline Degraded Mode (Cash-Only)**: When offline or the gateway is down, the POS is **cash-only** (`CARD`/`VIETQR` disabled, no offline card auth). Orders + cash queue locally (client-UUID keyed) and sync on reconnect; loyalty and online voucher checks suspend, only preloaded local vouchers verify (with reconciliation/clawback). Full offline semantics — ID strategy, conflict resolution, `MAX_OFFLINE_HOURS` — in §4.2.2. (RV-C19/O05/O11) |
+| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the KDS or sticker printer is unreachable, tickets queue locally and re-dispatch on reconnect, and the POS exposes a manual on-screen ticket list + reprint (UC-56/57). A printer/KDS outage never blocks taking or preparing orders. (§3.7.7, RV-O04) |
+| BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected beyond `READY_ABANDON_TIMEOUT` auto-transitions to terminal state `ABANDONED`; at shift close the Store Manager may force-close remaining `READY` orders to `ABANDONED` (logged). Stock was deducted at `PREPARING` (BR-07) so no reversal; abandoned orders are reported as uncollected and excluded from net sales. (§3.7, RV-O03) |
+| BR-89 | **Negative-Stock / Phantom-Usage Ledger**: When a deduction exceeds the available balance, the system records the full deduction and lets the `STOCK_ITEM` balance go **negative**, logging the shortfall as a `phantom_usage` transaction (never clamped to 0). Negative balances surface in MSG07 and the COGS/shrinkage report (UC-76) so loss signals are auditable. (§3.5.6, RV-O16) |
+| BR-90 | **Cross-Branch Shift Assignment**: A Store Manager may assign an own-branch employee to a shift at another branch directly (no host approval, UC-36), audit-logged (employee, home/target `store_id`, SM, date); the borrowed employee becomes visible to the host Store Manager for that shift (BR-59 exception). Worked hours follow `employee_id`, branch labour cost follows terminal `store_id` (BR-53a). (§3.9.1, RV-C04) |
+| BR-91 | **Absence & OT / Early-Leave Derivation**: From scheduled shifts vs `attendance_logs`, the system derives per employee per day: Absence (scheduled, no `CHECK_IN`), Overtime (worked beyond scheduled length), Early-Leave (`CHECK_OUT` before scheduled end). Non-monetary flags surfaced on attendance/worked-hours reports (UC-67/UC-80); no in-system leave-request workflow this release. (§3.9, RV-C06) |
+| BR-92 | **Labour Budget & Working-Time Validation**: At scheduling (UC-36) the system enforces `MAX_DAILY_HOURS`, `MAX_WEEKLY_HOURS`, `MIN_REST_HOURS` (hard blocks) and a per-branch `LABOUR_HOUR_BUDGET` per period (soft, override-with-reason logged). (§3.9.1, RV-C07) |
+| BR-93 | **Attendance PIN Uniqueness & Mandatory Photo**: An attendance PIN is unique within its branch (`store_id`) and locks after configurable failed attempts; the camera snapshot is mandatory — if the camera is unavailable the action is queued/flagged for SM confirmation rather than recorded photoless (closes buddy-punching). (§3.9.4, RV-C08) |
 ## 5.2 Common Requirements
 
 ### 5.2.1 Audit Logging
@@ -5851,9 +6692,18 @@ The matrix below maps operational modules and system features to employee roles,
 | **Inventory Stock Management** | — | — | — | C / R / U | — | — |
 | **POS Shift Session Control** | — | — | — | U (Override) | C / R / U | — |
 | **POS Checkout & Invoicing** | — | — | — | U (Override) | C / R / U | — |
+| **Order Refund / Comp (post-PENDING)** | — | — | — | C / R (authorise) | C / R (initiate) | — |
 | **Order Prep & Kitchen Queue** | — | — | — | R (Read-Only) | R (Read-Only) | C / R / U |
 | **HQ Consolidated Business Reports** | R (Read-Only) | — | — | — | — | — |
 | **Branch Revenue & Sales Reports** | R (Consolidated) | — | — | C / R / U | — | — |
+| **COGS / Margin & Ingredient Shrinkage Report** | R (Consolidated) | — | — | R (own branch) | — | — |
+| **Price & Voucher Change History (audit)** | R (Read-Only) | — | — | — | — | — |
+| **Loyalty Liability & Movement Report** | R (Read-Only) | — | — | — | — | — |
+| **Labour Hours vs Revenue Report** | R (Consolidated) | — | — | R (own branch) | — | — |
+| **Worked-Hours Export (payroll feed)** | — | — | — | R (own branch) | — | — |
+| **Daily Z-Report (store EOD)** | — | — | — | R (own branch) | — | — |
+| **Cashier Void/Refund Anomaly Report** | R (Consolidated) | — | — | R (own branch) | — | — |
+| **User Account Change & Access Review** | R (Read-Only) | — | — | — | — | — |
 | **Central System Configurations** | — | — | C / R / U / D | — | — | — |
 | **Branch Local Settings** | — | — | — | C / R / U | — | — |
 | **Branch Management (Lifecycle)** | — | — | C / R / U | — | — | — |

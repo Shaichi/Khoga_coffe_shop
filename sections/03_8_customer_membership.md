@@ -96,9 +96,9 @@ This section details specifications for loyalty membership profiles search, enro
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | User | Enters customer Name, Phone, and optional Email. Clicks "Register". |
+| 1 | User | Enters customer Name, Phone, and optional Email, and confirms the customer has **consented** to enrolment and to processing of their personal data for the loyalty program (BR-71). Clicks "Register". |
 | 2 | Portal | Validates phone syntax format and checks for duplicates. |
-| 3 | Portal | Saves new customer record with 0 starting points, returning to list view. |
+| 3 | Portal | Saves new customer record with 0 starting points, stamping `consent_at` and `consent_version`, and returning to list view. |
 #### Alternative Flows
 ##### AT1: Phone Number Duplicate
 - **Trigger**: At step 2, phone number is already registered.
@@ -113,6 +113,19 @@ This section details specifications for loyalty membership profiles search, enro
 | Sub-step | Actor | Action |
 |---|---|---|
 | 2.1 | Portal | Displays warning message: `"Please enter a valid phone number (10-11 digits)."` |
+
+##### AT3: Consent Not Given
+- **Trigger**: At step 1, the consent confirmation is not checked.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Disables "Register" and displays: `"Customer consent is required to enrol a member and store their personal data."` |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-71 | **Customer PII Consent (PDPA / Decree 13/2023)**: Enrolling a customer requires recorded consent to process their personal data (phone, optional email, purchase history) for the loyalty program. The system stamps `consent_at` (timestamp) and `consent_version` on the `CUSTOMER` record at registration. A customer may later withdraw consent, which triggers the erasure/anonymisation flow in BR-72. |
+| BR-72 | **Personal Data Retention & Erasure**: Customer PII is retained for **24 months from the last transaction**, after which the record is **anonymised** (phone/email/name irreversibly hashed or nulled; aggregate sales history retained without PII). Attendance camera snapshots (`photo_url`) are auto-deleted **90 days** after capture (`photo_purge_at`), with the attendance row preserved for payroll. The system supports an **on-request erasure/anonymisation** action for a specific customer (data-subject request) ahead of the 24-month window. Erasure must preserve legally mandated financial records (orders/payments per §4.2.6) by detaching PII rather than deleting the transaction. |
 
 ---
 

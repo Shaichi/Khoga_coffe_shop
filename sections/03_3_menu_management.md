@@ -183,10 +183,18 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|
 | 2.1 | Portal | Displays error message: `"Price must be a positive number greater than zero."` or `"A menu item with this name already exists."` |
 
+##### AT2: Recipe Unit Mismatch
+- **Trigger**: At step 2, a recipe line specifies a measurement unit that differs from the referenced `RAW_MATERIAL`'s master stock-keeping unit (BR-73).
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Rejects the save and displays: `"Recipe quantity for {material} must be entered in its master unit ({master_unit}). Unit conversion is not supported."` |
+
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified name (e.g. "Cà phê đá" -> "cfd") and updates if name is modified. |
+| BR-73 | **Recipe Unit Consistency**: Every recipe line (base item recipe via UC-18/19 **and** topping recipe via §3.3.6) must express its quantity in the **exact master stock-keeping unit** of the referenced `RAW_MATERIAL` (UC-74). The system performs no kg↔g / l↔ml conversion: a unit other than the master unit is rejected at save. This guarantees deduction (UC-62) and standard-cost COGS (BR-66) operate on like units and prevents silent count corruption (e.g. subtracting "18 g" from a kg balance). |
 
 ---
 
@@ -266,6 +274,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|
 | BR-27 | [RESERVED / DELETED] |
 | BR-26 | Abbreviation is automatically created based on first letters of words in the unsignified (diacritic-removed) name (e.g. "Cà phê đá" → "cfd") and updates if name is modified. **Collision handling:** If the generated abbreviation already exists in the catalog, a numeric suffix is appended incrementally (e.g. "cfd2", "cfd3") until a unique value is found. |
+| BR-68 | *(Applies — defined in §3.12.5)* Every change to a menu item's **selling price** is written to the immutable `AUDIT_LOG` (actor, timestamp, before/after) and is reviewable by `ceoviewer` via the Price & Voucher Change History report (UC-77). |
 
 ---
 
@@ -328,12 +337,14 @@ This section details specifications for viewing, adding, updating, and deactivat
 | HQ Admin Portal > Menu Management > Manage Toppings                             |
 +---------------------------------------------------------------------------------+
 |  + Add New Topping:                                                             |
-|  Name: [ Tapioca Pearls     ]  Price: [ 5,000 VND    ]  [ Add Topping ]         |
+|  Name: [ Tapioca Pearls     ]  Price: [ 5,000 VND    ]                          |
+|  Recipe: [ Tapioca (STK-07) v   Qty: 30 g ]  [ + add ingredient ]               |
+|                                                       [ Add Topping ]           |
 |                                                                                 |
 |  Active Modifier list:                                                          |
-|  1. Extra Espresso Shot (Price: 10,000 VND)                         [ Delete ]  |
-|  2. Oat Milk (Price: 10,000 VND)                                    [ Delete ]  |
-|  3. Tapioca Pearls (Price: 5,000 VND)                               [ Delete ]  |
+|  1. Extra Espresso Shot (Price: 10,000 VND | Recipe: 9g beans)      [ Delete ]  |
+|  2. Oat Milk (Price: 10,000 VND | Recipe: 120ml oat milk)           [ Delete ]  |
+|  3. Tapioca Pearls (Price: 5,000 VND | Recipe: 30g tapioca)         [ Delete ]  |
 +---------------------------------------------------------------------------------+
 ```
 
@@ -342,8 +353,9 @@ This section details specifications for viewing, adding, updating, and deactivat
 |---|---|---|---|---|---|
 | 1 | Name | Text | Yes | 100 | Name of the topping option. |
 | 2 | Price | Decimal | Yes | | Price of the topping modifier in VND. |
-| 3 | Add Topping | Button | | | Saves topping modifier. |
-| 4 | Delete | Button | | | Soft deletes specific topping modifier. |
+| 3 | Recipe / Ingredients | Grid | No | | One or more `RAW_MATERIAL` + quantity consumed per topping unit. Feeds automatic stock deduction (UC-62) and standard-cost COGS (BR-66). Quantities use the material's master unit. May be empty for zero-material options (e.g. "No Ice"). |
+| 4 | Add Topping | Button | | | Saves topping modifier and its recipe. |
+| 5 | Delete | Button | | | Soft deletes specific topping modifier. |
 
 ### 3.3.6.2 Use Case Description
 
@@ -363,14 +375,15 @@ This section details specifications for viewing, adding, updating, and deactivat
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Business Admin | Enters Name and Price, and clicks "Add Topping". |
-| 2 | Portal | Validates inputs (non-negative price, non-empty name). |
-| 3 | Portal | Saves new topping and updates grid list. |
+| 1 | Business Admin | Enters Name, Price, and (optionally) the recipe ingredients (raw material + quantity), then clicks "Add Topping". |
+| 2 | Portal | Validates inputs (non-negative price, non-empty name; each recipe line references an active raw material with quantity in its **master unit** — a mismatched unit is rejected per BR-73). |
+| 3 | Portal | Saves the topping with its recipe and updates grid list. |
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
+| BR-65 | **Topping Recipe & Deduction**: A topping/option may carry its own recipe (`RECIPE_ITEM` linked via `option_topping_id` → `RAW_MATERIAL`). When an order enters `PREPARING`, UC-62 deducts the recipes of the base item **and** of every selected topping. Toppings with material cost therefore consume stock and contribute to COGS (BR-66); only truly material-free options (e.g. "No Ice") may have an empty recipe. |
 
 ---
 

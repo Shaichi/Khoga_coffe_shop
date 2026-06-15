@@ -45,14 +45,17 @@ This section includes all requirements affecting usability, user productivity, t
 Requirements for system reliability, availability, fault tolerance, and bug rates.
 
 - **Availability**:
-  - **System Availability**: The cloud system and APIs must maintain at least **99.9% uptime** over a 24/7/365 operational schedule.
-  - **Maintenance Access**: System maintenance must be scheduled during low-traffic periods (02:00 AM to 04:00 AM on Sundays) and must not exceed **2 hours** per month.
-  - **Degraded Mode Operations (Offline POS)**:
+  - **System Availability**: The cloud system and APIs must maintain at least **99.9% uptime**, **measured excluding the scheduled maintenance window** below (so planned maintenance does not consume the error budget). This reconciles the SLA with the maintenance allowance — the two no longer contradict (RV-C17).
+  - **Maintenance Access**: System maintenance is scheduled during low-traffic periods (02:00 AM to 04:00 AM on Sundays), must not exceed **2 hours per month**, and is announced in advance; downtime inside this window is excluded from the 99.9% measurement.
+  - **Degraded Mode Operations (Offline POS — cash-only)** *(RV-C19, aligns with BR-86)*:
     > [!IMPORTANT]
-    > If the local store internet connection drops, the POS cashier terminal must continue to function. It will store orders locally in secure local storage.
-    - Offline operations allow cash and card checkouts. Live VietQR transfers are suspended.
-    - Loyalty points redemptions and online voucher verifications are suspended; only preloaded local vouchers can be verified.
-    - Synchronizing queued offline orders to the cloud database must trigger automatically within **60 seconds** after internet connection recovery.
+    > If the local store internet connection or the payment gateway drops, the POS cashier terminal must continue to function in a **cash-only** degraded mode, storing orders in secure local storage.
+    - **Tender**: **Cash only.** `CARD` and `VIETQR` are disabled while offline — there is **no offline card authorisation** (avoids decline/chargeback risk).
+    - **Promotions**: Loyalty accrual/redemption and online voucher verification are suspended; only preloaded local vouchers verify, flagged for reconciliation/clawback on reconnect (e.g. single-use voucher spent twice offline is detected and reversed).
+    - **Identifier strategy**: Offline orders/payments are keyed by **client-generated UUIDs** so they never collide with server IDs; the server accepts them idempotently on sync (no renumbering, no duplicates).
+    - **Conflict resolution**: On reconnect, queued transactions sync **append-only** in client-timestamp order; server-authoritative records (stock balances, voucher usage counters) are recomputed centrally, and any conflict (e.g. voucher over-use, negative stock per BR-89) is surfaced to the Store Manager rather than silently merged.
+    - **Max offline duration**: The terminal may operate offline for up to `MAX_OFFLINE_HOURS` (configurable); beyond it, the terminal warns and requires reconnection/manual reconciliation before continuing.
+    - **Sync**: Queued offline orders sync to the cloud automatically within **60 seconds** of connectivity recovery.
 - **Mean Time Between Failures (MTBF)**:
   - The MTBF for POS client applications must be at least **8,000 hours** of continuous run-time.
   - The MTBF for server-side components must be at least **10,000 hours**.
@@ -80,9 +83,9 @@ The system's performance characteristics, transaction response times, and capaci
   - **UC-28 View Consolidated Business Reports**: Central report compilation and display must load in **under 2.0 seconds** average, **under 5.0 seconds** maximum.
 - **Throughput**:
   - The backend APIs must handle a minimum throughput of **100 transactions per second (TPS)** globally without degradation.
-- **Capacity**:
-  - The system must accommodate up to the configured `MAX_ACTIVE_BRANCHES` branches and **100 concurrent active cashier POS sessions**.
-  - The central database must handle up to **10,000 daily order transactions**.
+- **Capacity** *(expressed per-branch × `MAX_ACTIVE_BRANCHES`, not as fixed totals — RV-C16)*:
+  - **Per branch**: at least **50 concurrent active POS/staff sessions** and **2,000 order transactions per day** (consistent with the §4.2.5 single-branch floor).
+  - **Chain total**: scales as `per-branch capacity × MAX_ACTIVE_BRANCHES`. The architecture must scale with `MAX_ACTIVE_BRANCHES` without redesign — there is **no hardcoded chain-wide ceiling** (the former fixed "100 sessions / 10,000 orders" figures are removed).
 - **Resource Utilization**:
   - **POS client memory**: The active application must consume **less than 512MB RAM** on terminal devices.
   - **Local storage disk footprint**: Local cached orders and master catalog data must require **less than 2GB of disk storage**.
@@ -97,13 +100,20 @@ The system's performance characteristics, transaction response times, and capaci
 
 ### 4.2.5 Scalability
 - The system architecture must support horizontal scaling to accommodate a dynamic number of branches (configured via `MAX_ACTIVE_BRANCHES`) without requiring architectural redesign.
-- A single branch deployment must handle a minimum of **500 transactions per day** and **50 concurrent active users** without performance degradation.
+- A single branch deployment must handle at least **2,000 transactions per day** and **50 concurrent active users** without performance degradation; chain-wide capacity scales as this per-branch figure × `MAX_ACTIVE_BRANCHES` (per §4.2.3, RV-C16).
 
 ### 4.2.6 Data Retention & Archival
 - **Transaction Records** (Orders, Payments): Retained for a minimum of **5 years** to comply with financial audit requirements.
 - **Audit Logs**: Retained for a minimum of **2 years**.
 - **Shift Sessions**: Retained for **1 year**, then archived to cold storage.
+- **Customer PII** (phone, email, name): Retained for **24 months from the customer's last transaction**, then irreversibly anonymised; aggregate sales history is preserved without PII (BR-72).
+- **Attendance camera snapshots** (`attendance_logs.photo_url`): Auto-deleted **90 days** after capture via the `photo_purge_at` job (BR-72); the attendance row (times, lateness inputs) is retained for payroll with `photo_url` nulled.
 - Data older than retention limits may be archived to a read-only cold storage tier and will not appear in active reports.
+
+#### 4.2.6.1 Personal Data Protection (PDPA / Decree 13/2023)
+- **Consent**: Customer enrolment captures explicit consent (`consent_at`, `consent_version`) before any PII is stored (BR-71). Attendance biometrics-adjacent photos are collected solely for clock-in fraud prevention and are subject to the 90-day purge above.
+- **Right to erasure**: The system must support a data-subject erasure/anonymisation request for a specific customer ahead of the 24-month window (BR-72). Erasure detaches PII from legally mandated financial records (5-year orders/payments) rather than deleting the transaction itself.
+- **Lawful basis & minimisation**: Only the data fields specified in §3.8 (customer) and §3.9 (attendance) are collected; `ceoviewer` exports are restricted to aggregate, non-row-level PII (see RV-S12 backlog).
 
 ### 4.2.7 Backup & Disaster Recovery
 - **Recovery Point Objective (RPO)**: Maximum data loss tolerance is **1 hour**. Automated database backups must run every 60 minutes.

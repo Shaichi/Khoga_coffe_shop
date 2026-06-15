@@ -25,6 +25,9 @@ This section details specifications for system settings, store branding profiles
 |  Accrual Rate:  [ 1.0          ] %   Redeem Value:  [ 100          ] VND/point  |
 |  Max Redeem:    [ 50           ] %   Max Discount:  [ 100,000      ] VND/order  |
 |                                                                                 |
+|  Security & Fraud Settings:                                                     |
+|  HQ MFA Required: [x]   Cancel/Refund Alert Threshold: [ 5.0 ] % of orders      |
+|                                                                                 |
 |                                                     [ Save Settings ] [ Cancel ] |
 +---------------------------------------------------------------------------------+
 ```
@@ -43,8 +46,10 @@ This section details specifications for system settings, store branding profiles
 | 9 | Redeem Value | Number | Yes | 6 | Cash value per point in VND (must be > 0). |
 | 10 | Max Redeem | Decimal | Yes | 5 | Max percentage of order subtotal paid via points (0% to 100%). |
 | 11 | Max Discount | Number | Yes | 8 | Max absolute discount amount in VND via points per order (must be >= 0). |
-| 12 | Save Settings | Button | | | Commits and saves global brand changes. |
-| 13 | Cancel | Button | | | Discards edits and returns to dashboard home. |
+| 12 | HQ MFA Required | Toggle | Yes | | `HQ_MFA_REQUIRED` — when on, HQ-role logins (ceoviewer/businessadmin/ssadmin) require a second factor (BR-83). Default on. |
+| 13 | Cancel/Refund Alert Threshold | Decimal | Yes | 5 | `CANCEL_REFUND_ALERT_THRESHOLD` — per-cashier cancel/refund rate (% of orders) above which the anomaly report flags the cashier (BR-79). |
+| 14 | Save Settings | Button | | | Commits and saves global brand changes. |
+| 15 | Cancel | Button | | | Discards edits and returns to dashboard home. |
 
 ### 3.13.1.2 Use Case Description
 
@@ -87,7 +92,7 @@ This section details specifications for system settings, store branding profiles
 |---|---|
 | BR-45 | Default VAT rate must be between 0% and 20%. |
 | BR-46 | Saving changes updates the receipt calculation engine and template layouts immediately. **VAT rate changes and loyalty config changes apply to new orders created after the save action. Orders already in progress (PENDING, PREPARING, READY) within the current shift session retain the parameters that were active when they were created.** |
-| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE` (Redeem Value), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
+| BR-57 | **Loyalty Config Parameters**: The loyalty engine must use central system parameters: `LOYALTY_ACCRUAL_PERCENTAGE` (Accrual Rate), `LOYALTY_REDEMPTION_VALUE_PER_POINT` (Redeem Value per Point, default 100 VND/point — see BR-74), `LOYALTY_MAX_REDEMPTION_PERCENT` (Max Redeem), and `LOYALTY_MAX_REDEMPTION_LIMIT` (Max Discount) for calculations at checkout. |
 
 ---
 
@@ -222,7 +227,7 @@ This section specifies the branch lifecycle management functionality available e
 |  | 002 | Coffee Zone - Dist 7   | 45 Nguyen Thi Thap, D7   | 02839301 | Active| |
 |  | 003 | Coffee Zone - Thu Duc  | 78 Vo Van Ngan, Thu Duc   | 02839302 | Closed| |
 |  +-----+------------------------+--------------------------+----------+-------+ |
-|  Active: 2 / 5 Max                                        [ + Add Branch ]     |
+|  Active: 2 / MAX_ACTIVE_BRANCHES                          [ + Add Branch ]     |
 +---------------------------------------------------------------------------------+
 ```
 
@@ -232,8 +237,8 @@ This section specifies the branch lifecycle management functionality available e
 | 1 | Search | Text | No | 100 | Filter branches by name or address. |
 | 2 | Status | Dropdown | No | | Filter by status: `Active`, `Inactive`, `All`. |
 | 3 | Branch Grid | Grid | | | Displays branch listings including ID, name, address, phone, and status. |
-| 4 | Active Counter | Label | | | Shows `Active: X / 5 Max` to indicate capacity utilization. |
-| 5 | Add Branch | Button | | | Navigates to Add Branch form. Disabled when 5 active branches already exist. |
+| 4 | Active Counter | Label | | | Shows `Active: X / MAX_ACTIVE_BRANCHES` to indicate capacity utilization. |
+| 5 | Add Branch | Button | | | Navigates to Add Branch form. Disabled when `MAX_ACTIVE_BRANCHES` active branches already exist. |
 
 #### Use Case Description
 
@@ -254,7 +259,7 @@ This section specifies the branch lifecycle management functionality available e
 | Step | Actor | Action |
 |---|---|---|
 | 1 | System Admin | Navigates to Branch Management. |
-| 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. maximum capacity (5). |
+| 2 | Portal | Retrieves all branches from STORE table and displays grid with name, address, phone, and `is_active` status. Shows count of active branches vs. the configured maximum capacity (`MAX_ACTIVE_BRANCHES`). |
 | 3 | System Admin | Optionally filters by status or searches by keyword. |
 
 ---
@@ -402,8 +407,8 @@ This section specifies the branch lifecycle management functionality available e
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 1.1 | Portal | Checks that total active branches after reactivation does not exceed 5 (BR-54). |
-| 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (5) reached. Please deactivate another branch first."` (MSG16) |
+| 1.1 | Portal | Checks that total active branches after reactivation does not exceed `MAX_ACTIVE_BRANCHES` (BR-54). |
+| 1.2 | Portal | If limit would be exceeded, displays error: `"Maximum branch capacity (MAX_ACTIVE_BRANCHES) reached. Please deactivate another branch first."` (MSG16) |
 | 1.3 | Portal | If within capacity, sets `STORE.is_active = true`. |
 | 1.4 | Portal | Displays info message: `"Branch reactivated. Note: Staff accounts for this branch remain inactive and must be individually reactivated by the System Admin."` |
 
@@ -417,7 +422,7 @@ This section specifies the branch lifecycle management functionality available e
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-54 | **Maximum Active Branch Capacity**: The system supports a maximum of 5 active branches simultaneously. Deactivated branches do not count toward this limit. |
+| BR-54 | **Maximum Active Branch Capacity**: The system supports a dynamic number of active branches simultaneously, configured via the system parameter `MAX_ACTIVE_BRANCHES`. Deactivated branches do not count toward this limit. |
 | BR-55 | **Branch Deactivation Preconditions**: A branch cannot be deactivated if it has any open shift sessions (`SHIFT_SESSION.status = OPEN`) or any orders in non-terminal states (`PENDING`, `PREPARING`, `HOLD`, `READY`). All shifts must be closed and all orders must reach terminal states (`COMPLETED` or `CANCELLED`) before deactivation is permitted. |
 | BR-56 | **Branch Deactivation Cascade Effects**: When a branch is deactivated: (1) All `USER` accounts with matching `store_id` are set to `is_active = false` and their session tokens are terminated (per BR-18); (2) All future `STAFF_SCHEDULE` entries (`shift_date > current_date`) for the branch are deleted and notification alerts are sent to affected employees (per BR-37); (3) Existing historical data (`ORDER`, `STOCK_ITEM`, `ATTENDANCE`, `SHIFT_SESSION`) is preserved as read-only for reporting purposes. |
 

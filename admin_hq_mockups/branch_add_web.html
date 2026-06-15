@@ -44,15 +44,13 @@
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h2>Khoga Café Admin</h2>
+            <h2>Khoga Café HQ</h2>
+            <div class="role-tag">System Admin</div>
                                                 <div class="sidebar-menu">
-                <a href="dashboard_web.html">Trang chủ</a>
-                <a href="users_web.html">Nhân sự</a>
-                <a href="menu_web.html">Thực đơn</a>
-                <a href="vouchers_web.html">Vouchers</a>
-                <a href="customers.html">Khách hàng</a>
-                <a href="reports_web.html">Báo cáo</a>
-                <a href="settings_web.html">Cấu hình</a>
+                <a href="dashboard_ssadmin_web.html">Trang chủ</a>
+                <a href="users_web.html">Nhân sự &amp; Tài khoản</a>
+                <a href="branches_web.html" class="active">Chi nhánh</a>
+                <a href="settings_web.html">Cấu hình hệ thống</a>
             </div>
         </div>
         <div class="main-content">
@@ -102,10 +100,11 @@
 
             let hasError = false;
 
-            // Kiểm tra số lượng chi nhánh hoạt động tối đa (BR-54)
+            // Kiểm tra số lượng chi nhánh hoạt động tối đa ≤ MAX_ACTIVE_BRANCHES (BR-54)
+            const MAX_ACTIVE_BRANCHES = 5; // demo value (configured in Central System Settings)
             const activeBranchesCount = branches.filter(b => b.is_active).length;
-            if (activeBranchesCount >= 5) {
-                alert('Maximum branch capacity (5) reached. Please deactivate an existing branch before adding a new one. (MSG16)');
+            if (activeBranchesCount >= MAX_ACTIVE_BRANCHES) {
+                alert(`Maximum branch capacity (${MAX_ACTIVE_BRANCHES}) reached. Please deactivate an existing branch before adding a new one. (MSG16)`);
                 return;
             }
 

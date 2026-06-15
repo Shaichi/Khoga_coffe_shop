@@ -219,7 +219,7 @@
 
                 <div class="form-group">
                     <label>Tên đăng nhập</label>
-                    <input type="text" id="username" placeholder="admin01" value="admin01">
+                    <input type="text" id="username" placeholder="businessadmin" value="businessadmin">
                 </div>
                 <div class="form-group">
                     <label>Mật khẩu</label>
@@ -231,18 +231,32 @@
                 <div class="links">
                     <a href="forgot_password_web.html">Quên mật khẩu quản trị?</a>
                 </div>
+
+                <p class="demo-hint" style="margin-top:18px; font-size:12px; color:#9c8579; line-height:1.6;">
+                    Tài khoản demo (mật khẩu <code>admin123</code>) — vai trò do System Admin cấp quyết định màn hình vào:<br>
+                    <code>ceoviewer</code> → Báo cáo &nbsp;·&nbsp; <code>businessadmin</code> → Thực đơn/Voucher/CRM &nbsp;·&nbsp; <code>ssadmin</code> → Nhân sự/Chi nhánh/Cấu hình
+                </p>
             </div>
         </div>
     </div>
 
     <script>
+        // Demo HQ accounts → role-specific dashboard. The role assigned by the
+        // System Admin (ssadmin) determines which dashboard the account lands on.
+        const HQ_ROLE_DASHBOARDS = {
+            "ceoviewer": "dashboard_ceoviewer_web.html",
+            "businessadmin": "dashboard_businessadmin_web.html",
+            "ssadmin": "dashboard_ssadmin_web.html"
+        };
+
         function handleLogin() {
+            const user = document.getElementById('username').value.trim().toLowerCase();
             const pass = document.getElementById('password').value;
-            if (pass !== "admin123" && pass !== "12345678") {
+            const target = HQ_ROLE_DASHBOARDS[user];
+            if ((pass !== "admin123" && pass !== "12345678") || !target) {
                 document.getElementById('login-alert').style.display = 'block';
             } else {
-                alert("Đăng nhập quản trị thành công!");
-                window.location.href = "dashboard_web.html";
+                window.location.href = target;
             }
         }
     </script>

@@ -46,15 +46,13 @@
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h2>Khoga Café Admin</h2>
+            <h2>Khoga Café HQ</h2>
+            <div class="role-tag">System Admin</div>
                                                 <div class="sidebar-menu">
-                <a href="dashboard_web.html">Trang chủ</a>
-                <a href="users_web.html">Nhân sự</a>
-                <a href="menu_web.html">Thực đơn</a>
-                <a href="vouchers_web.html">Vouchers</a>
-                <a href="customers.html">Khách hàng</a>
-                <a href="reports_web.html">Báo cáo</a>
-                <a href="settings_web.html">Cấu hình</a>
+                <a href="dashboard_ssadmin_web.html">Trang chủ</a>
+                <a href="users_web.html">Nhân sự &amp; Tài khoản</a>
+                <a href="branches_web.html" class="active">Chi nhánh</a>
+                <a href="settings_web.html">Cấu hình hệ thống</a>
             </div>
         </div>
         <div class="main-content">
@@ -73,7 +71,7 @@
                     </select>
                 </div>
                 <div class="capacity-indicator" id="capacityLabel">
-                    Số chi nhánh đang hoạt động: 2 / 5 (Tối đa)
+                    Số chi nhánh đang hoạt động: 2 / MAX_ACTIVE_BRANCHES (Tối đa)
                 </div>
             </div>
 
@@ -125,6 +123,8 @@
     </div>
 
     <script>
+        const MAX_ACTIVE_BRANCHES = 5; // demo value
+
         // Lấy danh sách chi nhánh lưu trong localStorage nếu có, nếu chưa có thì khởi tạo mặc định
         let branches = JSON.parse(localStorage.getItem('coffee_branches'));
         if (!branches) {
@@ -161,14 +161,14 @@
                 tbody.appendChild(tr);
             });
 
-            // Cập nhật thông số tối đa 5 chi nhánh (BR-54)
+            // Cập nhật thông số ≤ MAX_ACTIVE_BRANCHES (BR-54)
             const capacityLabel = document.getElementById('capacityLabel');
-            capacityLabel.innerText = `Số chi nhánh đang hoạt động: ${activeCount} / 5 (Tối đa)`;
-            
+            capacityLabel.innerText = `Số chi nhánh đang hoạt động: ${activeCount} / ${MAX_ACTIVE_BRANCHES} (Tối đa)`;
+
             const btnAddBranch = document.getElementById('btnAddBranch');
-            if (activeCount >= 5) {
+            if (activeCount >= MAX_ACTIVE_BRANCHES) {
                 btnAddBranch.className = 'btn disabled';
-                btnAddBranch.title = 'Đã đạt giới hạn tối đa 5 chi nhánh hoạt động cùng lúc (BR-54).';
+                btnAddBranch.title = `Đã đạt giới hạn tối đa ${MAX_ACTIVE_BRANCHES} chi nhánh hoạt động cùng lúc (BR-54).`;
                 capacityLabel.style.color = '#c62828';
             } else {
                 btnAddBranch.className = 'btn';

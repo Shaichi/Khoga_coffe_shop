@@ -178,7 +178,7 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 50 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
+The table below specifies access control policies across all 60 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
 
 | Screen Name | ceoviewer | businessadmin | ssadmin | Store Manager | Cashier | Barista |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -238,6 +238,16 @@ The table below specifies access control policies across all 50 screens. The sin
 | 48. Manager Order History Screen | No | No | No | **Yes** | No | No |
 | 49. Order Detail Screen | No | No | No | **Yes** | **Yes** | **Yes** |
 | 50. Raw Material Master | No | **Yes** | No | No | No | No |
+| 51. Refund / Comp Modal (post-PENDING) | No | No | No | **Yes** | **Yes** | No |
+| 52. COGS / Margin & Shrinkage Report | **Yes** | No | No | **Yes** | No | No |
+| 53. Price & Voucher Change History | **Yes** | No | No | No | No | No |
+| 54. Loyalty Liability & Movement Report | **Yes** | No | No | No | No | No |
+| 55. Labour Hours vs Revenue Report | **Yes** | No | No | **Yes** | No | No |
+| 56. Worked-Hours Export | No | No | No | **Yes** | No | No |
+| 57. Daily Z-Report | No | No | No | **Yes** | No | No |
+| 58. HQ MFA Challenge (login step) | **Yes** | **Yes** | **Yes** | No | No | No |
+| 59. Cashier Void/Refund Anomaly Report | **Yes** | No | No | **Yes** | No | No |
+| 60. User Account Change & Access Review Report | **Yes** | No | No | No | No | No |
 
 > **Note on inventory access (two layers):** **Branch stock quantities** (Stock List/History/Import/Export/Audit, screens 26–29) are owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens; chain-wide stock visibility reaches `ceoviewer` only through consolidated HQ reports. Separately, the **Raw Material Master** (screen 50, UC-74) is a chain-wide *catalog* — defining which materials exist — owned by the `businessadmin`; it carries no per-branch quantities. There is no central warehouse.
 
@@ -267,6 +277,7 @@ erDiagram
     STORE ||--o{ SHIFT_SESSION : hosts
     STORE ||--o{ ORDER : receives
     STORE ||--o{ STOCK_ITEM : holds
+    RAW_MATERIAL ||--o{ STOCK_ITEM : "stocked per branch as"
     STORE ||--o{ STAFF_SCHEDULE : schedules
     STORE ||--o{ ATTENDANCE : tracks
     STORE ||--o{ BRANCH_MENU_STATUS : "manages availability in"
@@ -282,6 +293,8 @@ erDiagram
     MENU_ITEM ||--o{ BRANCH_MENU_STATUS : "has local status at"
     ORDER ||--o{ ORDER_ITEM : contains
     ORDER ||--o| ORDER_CANCELLATION : "is cancelled by"
+    ORDER ||--o{ ORDER_REFUND : "is refunded/comped by"
+    USER ||--o{ ORDER_REFUND : "authorises"
     ORDER_ITEM ||--o{ ORDER_ITEM_TOPPING : customized-with
     OPTION_TOPPING ||--o{ ORDER_ITEM_TOPPING : applied
     CUSTOMER ||--o{ ORDER : places
@@ -290,7 +303,7 @@ erDiagram
     VOUCHER ||--o{ ORDER : discounts
     MENU_ITEM ||--o{ RECIPE_ITEM : formulated-with
     OPTION_TOPPING ||--o{ RECIPE_ITEM : formulated-with
-    STOCK_ITEM ||--o{ RECIPE_ITEM : consumed-by
+    RAW_MATERIAL ||--o{ RECIPE_ITEM : consumed-by
 ```
 
 ---
@@ -309,7 +322,8 @@ erDiagram
 | 7 | orders | Represents sales transactions, linking customers, shifts, payment statuses, and fulfillment statuses. |
 | 8 | order_items | Line items detailing the specific menu products and quantities purchased in an order. |
 | 9 | order_item_toppings | Tracks specific toppings applied to ordered menu items. |
-| 10 | stock_items | Raw materials and shop supplies inventory quantities scoped per branch. |
+| 10 | raw_materials | Chain-wide master catalog of raw materials/ingredients owned by Business Admin (UC-74); the canonical source for recipe formulations (§3.3) and for the item dropdowns on every branch's Import/Export Stock screens. |
+| 10a | stock_items | Branch-level on-hand quantities of a master raw material (references `raw_materials` by FK); scoped per branch. |
 | 11 | stock_transactions | Historical ledger recording inventory imports, exports, physical audits, and wastage logs. |
 | 12 | vouchers | Stores promotional discount rules, coupon codes, validation dates, and customer usage limits. |
 | 13 | recipe_items | Defines the raw stock ingredient quantity consumed to produce one unit of a menu item or topping. |
@@ -447,6 +461,22 @@ Fulfillment cancellation and refund audits logs.
 | 5 | notes | | Long Text | Yes | Detailed comments. |
 | 6 | created_at | | Date & Time | Yes | Timestamp of cancellation. |
 
+### 7b. `ORDER_REFUND`
+Post-`PENDING` refund / comp audit log, Store-Manager authorised (UC-75 / BR-67).
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the refund/comp record. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | sm_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The Store Manager who authorised. |
+| 4 | cashier_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who initiated. |
+| 5 | shift_session_id | | Unique ID (UUID) | No | FK - the open shift drawer charged for cash refunds (BR-09). |
+| 6 | refund_type | | Selection (`REFUND`, `COMP_REMAKE`) | Yes | Refund (money returned) or Comp/Remake (zero-charge replacement). |
+| 7 | amount | | Decimal (Currency/VND) | Yes | Refunded amount (0 for comp/remake). Supports partial refunds. |
+| 8 | reason | | Text (Max 100 characters) | Yes | Reason string. |
+| 9 | notes | | Long Text | Yes | Detailed comments. |
+| 10 | created_at | | Date & Time | Yes | Timestamp of the refund/comp. |
+
 ### 8. `ORDER_ITEM`
 Line items in an order.
 
@@ -469,18 +499,30 @@ Toppings attached to a specific order line item.
 | 4 | quantity | | Whole Number | Yes | Quantity of the topping applied. |
 | 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the topping at the time of purchase. |
 
-### 10. `STOCK_ITEM`
-Raw inventory tracking (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
+### 10. `RAW_MATERIAL`
+Chain-wide master catalog of raw materials/ingredients, owned exclusively by the Business Admin (UC-74 / §3.5.0). The canonical source for recipe formulations (§3.3) and for branch Import/Export stock dropdowns (UC-32/33). See BR-63/BR-64.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the raw material. |
+| 2 | code | | Text (Max 20 characters) | Yes | Unique chain-wide material code (e.g., "STK-01"). Immutable after creation. |
+| 3 | name | | Text (Max 100 characters) | Yes | Display name of the raw material (e.g., "Coffee Beans", "Fresh Milk"). |
+| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "ml", "piece"). Locked once any stock transaction references the material. |
+| 5 | suggested_min_threshold | | Decimal (Quantity) | No | Default low-stock threshold proposed to branches (each branch may override locally). |
+| 6 | standard_cost | | Decimal (Currency/VND) | No | Standard unit cost per master unit, maintained by Business Admin; basis for chain-wide COGS & margin (BR-66). |
+| 7 | is_active | | Yes/No (Boolean) | Yes | Active status flag. Soft-delete: `Inactive` hides the material from new recipe/import selections (BR-64). |
+
+### 10a. `STOCK_ITEM`
+Branch-level on-hand quantity of a master raw material (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock item. |
 | 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
-| 3 | name | | Text (Max 100 characters) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
-| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
-| 5 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
-| 6 | min_alert_threshold | | Decimal (Quantity) | Yes | Threshold triggering low stock alert. |
-| 7 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
+| 3 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id). Name and unit derive from the master (BR-63). |
+| 4 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
+| 5 | min_alert_threshold | | Decimal (Quantity) | Yes | Branch-local threshold triggering low stock alert (defaults from the master's suggested minimum). |
+| 6 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
 
 ### 11. `STOCK_TRANSACTION`
 Historical ledger of stock modifications.
@@ -521,7 +563,7 @@ Defines the ingredients/stock consumed to produce menu items and toppings.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the recipe item. |
 | 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
 | 3 | option_topping_id | | Unique ID (UUID) | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
-| 4 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
+| 4 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id) being consumed. Recipes reference the chain-wide master, not branch stock (BR-63). |
 | 5 | quantity_required | | Decimal (Quantity) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
 
 ### 14. `STORE`
