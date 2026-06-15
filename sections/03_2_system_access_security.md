@@ -4,6 +4,39 @@ This section details the functional requirements for authentication, user profil
 
 ---
 
+## 3.2.0 Role-Based Access Control (RBAC) Overview
+
+The system defines six user roles with strictly separated permissions. The table below is the authoritative reference for all access decisions.
+
+| Role Identifier | Display Name | Scope | Permitted Actions |
+|---|---|---|---|
+| `ceoviewer` | CEO / Executive Viewer | HQ | **Read-only** access to HQ Dashboard and all chain-wide reports. Cannot create, edit, or delete any data (menu items, vouchers, user accounts, etc.). |
+| `businessadmin` | Ops & Marketing Admin | HQ | Full CRUD on chain-wide menu, recipe formulas, categories, vouchers, and CRM customer data. Cannot access system configuration or user account provisioning. |
+| `ssadmin` | IT System Admin | HQ | System configuration (hardware, VietQR/OTP integration, license, `MAX_ACTIVE_BRANCHES`). Cannot access sales or CRM data. |
+| `storemanager` | Store Manager | Branch | Inventory import/export/audit for own branch, staff schedule management, shift close approval, temporary item deactivation via `branch_menu_status`. |
+| `cashier` | POS Cashier | Branch | POS checkout, open/close shift (own user session only), customer lookup, order history for own branch. |
+| `barista` | Barista | Branch | Barista KDS queue view, START PREP, READY (one-touch), REPORT ISSUE, print cup stickers. |
+
+### Permission Matrix Summary
+
+| Feature | ceoviewer | businessadmin | ssadmin | storemanager | cashier | barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| HQ Dashboard / Chain Reports | Read | — | — | — | — | — |
+| Menu & Recipe Management | — | CRUD | — | — | — | — |
+| Voucher & CRM Management | — | CRUD | — | — | — | — |
+| System Configuration | — | — | CRUD | — | — | — |
+| User Account Provisioning | — | — | — | — | — | — |
+| Branch Inventory | — | — | — | CRUD | — | — |
+| Branch Menu Status (temp. disable) | — | — | — | Write | — | — |
+| Staff Scheduling | — | — | — | CRUD | — | — |
+| Shift Close Approval | — | — | — | Approve | — | — |
+| POS Checkout / Shift Open | — | — | — | — | Write | — |
+| Barista KDS / Cup Stickers | — | — | — | — | — | Write |
+
+> **Note**: User account provisioning (create/edit employee accounts, assign roles) is restricted to `ssadmin` for HQ-level accounts and to `ssadmin` + `storemanager` (read-only view) for branch accounts. `businessadmin` does **not** have user management access.
+
+---
+
 ## 3.2.1 F01 - Login / UC-01 Login
 
 ### 3.2.1.1 Screen Mock-up (Mobile Portrait)
@@ -43,7 +76,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows authorized staff members to authenticate and access their specific operational portals. |
 | **Precondition** | User account is active and user is not currently logged in. |
 | **Trigger** | User opens the application and lands on the Login screen. |
@@ -54,7 +87,8 @@ This section details the functional requirements for authentication, user profil
 |---|---|---|
 | 1 | User | Enters Username and Password, and clicks the "Login" button. |
 | 2 | Portal | Verifies the credentials and checks account status. |
-| 3 | Portal | Validates successful login and redirects the user to the interface matching their role. |
+| 2a | Portal | **If the account is an HQ role** (`ceoviewer` / `businessadmin` / `ssadmin`) and `HQ_MFA_REQUIRED` is on, challenges for a second factor before establishing the session (BR-83 — see AT4). |
+| 3 | Portal | Validates successful login (and MFA if required) and redirects the user to the interface matching their role. |
 
 #### Alternative Flows
 ##### AT1: Invalid Credentials
@@ -76,7 +110,16 @@ This section details the functional requirements for authentication, user profil
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Suspends the user account from login attempts for 15 minutes, unless manually unlocked by a Store Manager (for branch staff) or HQ Admin (for any user). |
+| 2.1 | Portal | Suspends the user account from login attempts for 15 minutes, unless manually unlocked by a Store Manager (for branch staff) or System Admin (for any user). |
+
+##### AT4: HQ Multi-Factor Authentication (MFA)
+- **Trigger**: At step 2a, password is valid for an HQ-role account (`ceoviewer` / `businessadmin` / `ssadmin`) and `HQ_MFA_REQUIRED` is on.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2a.1 | Portal | Sends a 6-digit MFA code to the account's registered email (reusing the OTP channel) **or** prompts for the current TOTP authenticator code, and shows the MFA Challenge screen (screen 58). |
+| 2a.2 | User | Enters the second-factor code and submits. |
+| 2a.3 | Portal | On match, establishes the session (step 3). On 3 failed attempts, applies the same lockout as AT3 (BR-17 reuse) and does **not** establish the session. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -84,6 +127,7 @@ This section details the functional requirements for authentication, user profil
 | BR-10 | Accounts with `is_active = false` must be blocked from logging in. |
 | BR-11 | Account suspension lasts exactly 15 minutes after 5 consecutive failed attempts. |
 | BR-12 | Mandatory password change flag blocks navigation to any other module. |
+| BR-83 | **Mandatory MFA for HQ Roles**: Login by an HQ role (`ceoviewer` / `businessadmin` / `ssadmin`) requires a **second factor** after the password — a 6-digit email OTP (reusing the UC-03/04 OTP infrastructure) or a TOTP authenticator code — governed by the parameter `HQ_MFA_REQUIRED` (default **true**). Branch/POS roles (`storemanager`, `cashier`, `barista`) are **exempt** to avoid interrupting shared-terminal shift operations (they rely on password + attendance PIN per BR-53). Three failed MFA attempts trigger the standard lockout (BR-17) and block the session. (RV-S05) |
 
 ---
 
@@ -119,7 +163,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Safely terminates the active user session. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User clicks the "Logout" button/link. |
@@ -134,18 +178,21 @@ This section details the functional requirements for authentication, user profil
 | 4 | Portal | Terminates active session, records timestamp, and redirects to Login screen. |
 
 #### Alternative Flows
-##### AT1: Active Shift Check
-- **Trigger**: At step 2, Cashier has an active POS shift session open.
+##### AT1: Logout With Active Shift Session
+- **Trigger**: At step 2, Cashier has an active POS shift session open on the terminal.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"You have an active shift session open. You must close your shift (UC-53) before logging out."` (MSG17) |
-| 2.2 | Cashier | Acknowledges the error, and the logout flow is aborted. The cashier is redirected to the active shift page. |
+| 2.1 | Portal | Displays confirmation: `"Your personal session will be closed. The POS shift session on this terminal will remain open so another cashier can continue."` |
+| 2.2 | Cashier | Confirms logout. Portal terminates the **User Session** token only. The **Shift Session** on the POS register remains active and unaffected. |
+
+> **Design Note**: User Session and Shift Session are independent lifecycle objects. A cashier may log out of their personal account (e.g. short break, mid-shift role change) without triggering cash-drawer reconciliation. The shift remains open on the terminal register under its assigned POS register ID until explicitly closed via UC-53.
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-13 | Logout time must be logged upon termination of user session. |
+| BR-60 | **User Session / Shift Session Independence**: Terminating a cashier's User Session does not close the active Shift Session on the POS terminal. The Shift Session persists until explicitly closed by a cashier (UC-53) and approved by the Store Manager. |
 
 ---
 
@@ -187,7 +234,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows logged-in users to update their password. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User navigates to Change Password screen in settings. |
@@ -265,7 +312,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Initiates password recovery when a user forgets their credentials. |
 | **Precondition** | User is not logged in. |
 | **Trigger** | User clicks the "Forgot Password" link on the Login screen. |
@@ -328,7 +375,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Validates the 6-digit verification code sent during password recovery. |
 | **Precondition** | Forgot password request has been initiated. |
 | **Trigger** | Redirected from Forgot Password view. |
@@ -400,7 +447,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Finalizes password recovery flow by configuring a new password. |
 | **Precondition** | User session has a validated recovery status. |
 | **Trigger** | Redirected from OTP Verification page. |
@@ -532,7 +579,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows logged-in staff to view their personal detail cards. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User selects the "Profile" option in settings/menu. |
@@ -582,7 +629,7 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin, Store Manager, Cashier, Barista |
+| **Actor** | CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista |
 | **Description** | Allows staff to modify their personal contact details. |
 | **Precondition** | User is authenticated. |
 | **Trigger** | User clicks the "Edit Profile" button. |
@@ -613,7 +660,7 @@ This section details the functional requirements for authentication, user profil
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-19 | Cashiers and Baristas can only change their contact email and phone. Admins and Managers can update administrative parameters (e.g. roles) via admin tools. |
+| BR-19 | Cashiers and Baristas can only change their own contact email and phone. The System Admin (`ssadmin`) updates administrative parameters (e.g. roles, branch assignment) via the account management tools; no other role can change roles. |
 
 ---
 
@@ -622,7 +669,7 @@ This section details the functional requirements for authentication, user profil
 ### 3.2.10.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management                                      |
+| HQ Portal > Employee Account Management                                      |
 +---------------------------------------------------------------------------------+
 |  Search: [ nva_cashier          ]   Role: [ All Roles ] [v]   Status: [Active]v |
 |                                                                                 |
@@ -630,7 +677,7 @@ This section details the functional requirements for authentication, user profil
 |  | ID  | Username   | Full Name     | Role    | Email              | Status  |  |
 |  +-----+------------+---------------+---------+--------------------+---------+  |
 |  | 001 | nva_cashier| Nguyen Van A  | Cashier | nva@coffeezone.com | Active  |  |
-|  | 002 | admin_hq   | Tran Thi B    | Admin   | admin@coffee.com   | Active  |  |
+|  | 002 | ssadmin_hq | Tran Thi B    | System Admin | admin@coffee.com | Active |  |
 |  +-----+------------+---------------+---------+--------------------+---------+  |
 |  [Page 1 of 5]                                              [ + Add Account ]  |
 +---------------------------------------------------------------------------------+
@@ -653,18 +700,18 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Provides an administrative directory of all system accounts. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin opens the Employee Account Management menu. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin opens the Employee Account Management menu. |
 | **Post-Condition** | Active grid of employee accounts is displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Accesses Employee Account Management panel. |
+| 1 | System Admin | Accesses Employee Account Management panel. |
 | 2 | Portal | Displays filters and user listing grid (defaults to active accounts). |
-| 3 | Admin | Enters query or filter selection to search profiles. |
+| 3 | System Admin | Enters query or filter selection to search profiles. |
 
 #### Business Rules
 | ID | Rule Description |
@@ -678,7 +725,7 @@ This section details the functional requirements for authentication, user profil
 ### 3.2.11.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management > View Account Details               |
+| HQ Portal > Employee Account Management > View Account Details               |
 +---------------------------------------------------------------------------------+
 |  ID: EMP-001          Full Name: Nguyen Van A          Role: Cashier            |
 |  Username: nva        Email: nva@coffeezone.com        Phone: 0987654321        |
@@ -707,16 +754,16 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Displays full account profile details and operational history of a selected user. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin selects a user account from the grid. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin selects a user account from the grid. |
 | **Post-Condition** | Selected user's profile card and action history are displayed. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Selects an employee row. |
+| 1 | System Admin | Selects an employee row. |
 | 2 | Portal | Displays detailed profile information and activity history log. |
 
 #### Business Rules
@@ -731,7 +778,7 @@ This section details the functional requirements for authentication, user profil
 ### 3.2.12.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management > Add Account                        |
+| HQ Portal > Employee Account Management > Add Account                        |
 +---------------------------------------------------------------------------------+
 |  Username: [ nva_cashier      ]   Full Name:   [ Nguyen Van A             ]     |
 |  Email:    [ nva@coffee.com   ]   Phone:       [ 0987654321               ]     |
@@ -748,9 +795,9 @@ This section details the functional requirements for authentication, user profil
 | 2 | Full Name | Text | Yes | 100 | Employee's full name. |
 | 3 | Email | Text | Yes | 100 | Contact work email address (unique). |
 | 4 | Phone | Text | Yes | 20 | Contact phone number. |
-| 5 | Role | Dropdown | Yes | | Selects role (`ADMIN`, `STORE_MANAGER`, `CASHIER`, `BARISTA`). |
-| 6 | Branch Store | Dropdown | No | | Scopes cashier/barista/manager to branch (Null for HQ Admins). |
-| 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by Admin). |
+| 5 | Role | Dropdown | Yes | | Selects role: `ceoviewer` (CEO / Executive Viewer), `businessadmin` (Ops & Marketing), `ssadmin` (IT System Admin), `storemanager` (Store Manager), `cashier` (POS Cashier), `barista`. |
+| 6 | Branch Store | Dropdown | Conditional | | Scopes storemanager / cashier / barista to a branch. **Leave blank (NULL) for HQ roles** (`ceoviewer`, `businessadmin`, `ssadmin`). |
+| 7 | (None) | | | | Temporary password is auto-generated by the system (not entered by the System Admin). |
 | 8 | Save Account | Button | | | Submits details to create account. |
 | 9 | Cancel | Button | | | Discards details and returns to Employee list. |
 
@@ -763,18 +810,18 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Provisions a new employee account. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "+ Add Account" on user list view. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin clicks "+ Add Account" on user list view. |
 | **Post-Condition** | New user account created and login activation email is sent. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Fills out employee fields, assigns role and branch, and clicks "Save Account". |
+| 1 | System Admin | Fills out employee fields, assigns role and branch, and clicks "Save Account". |
 | 2 | Portal | Validates constraints (username uniqueness, email uniqueness, phone uniqueness, and syntax format). |
-| 3 | Portal | Registers account as active, auto-generates a secure random temporary password, sets the `must_change_password` flag to true, sends an activation welcome email with these credentials to the user, and returns to list view. |
+| 3 | Portal | Registers account as active, auto-generates a secure random temporary password, sets the `must_change_password` flag to true, sends an activation welcome email with these credentials to the user, **writes a create-account entry to the immutable `AUDIT_LOG` (actor `ssadmin_id`, target user, assigned role, timestamp — BR-81)**, and returns to list view. |
 
 #### Alternative Flows
 ##### AT1: Validation Errors
@@ -788,8 +835,10 @@ This section details the functional requirements for authentication, user profil
 | ID | Rule Description |
 |---|---|
 | BR-22 | Created accounts default status to active, and force a password change on next login. |
+| BR-81 | **User Account Change Audit & Access Review**: Every account **create** (UC-11), **role / status change or deactivation** (UC-12/14), and **PIN/credential reset** writes an immutable `AUDIT_LOG` entry (actor `ssadmin_id`, target user, before/after role + status, timestamp). Because `ssadmin` (IT) can provision business-role accounts without a second approver (no maker-checker, consistent with BR-68), this audit trail plus the periodic **Access Review report** (UC-83, surfaced read-only to `ceoviewer`) is the compensating Segregation-of-Duties control. (RV-S03) |
+| BR-82 | **Privilege Bootstrap & Self-Escalation Prevention**: (a) The **first** `ssadmin` account is provisioned via a secure one-time installation/seed process — never through the in-app user-management UI (resolves the chicken-and-egg bootstrap). (b) **No user may change their own role, permissions, or active status**; any role/status change to an account (especially HQ roles) must be performed by a *different* `ssadmin`. (c) All such changes are audit-logged per BR-81. Extends the last-admin protection (BR-23). (RV-S04) |
 | BR-57 | **Employee ID Auto-Allocation**: When creating a new employee, the system must automatically allocate a unique sequential Employee ID with the format `EMP-{Sequence}` (e.g. `EMP-043` for the 43rd employee record). |
-| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. The first letter of the main name must be lowercase (e.g. "Nguyễn Văn An" with sequence ID 43 -> "anNV43"). |
+| BR-58 | **Real-time Username Generation**: The system must automatically generate a proposed username when the System Admin enters the employee's full name. The generation algorithm uses the formula: `[Normalized Main Name in Lowercase][Initials of Middle & Family Names][Clean Sequence ID]`. Vietnamese characters must be converted to plain English alphabet. The first letter of the main name must be lowercase (e.g. "Nguyễn Văn An" with sequence ID 43 -> "anNV43"). |
 
 
 ---
@@ -799,7 +848,7 @@ This section details the functional requirements for authentication, user profil
 ### 3.2.13.1 Screen Mock-up (Desktop Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Admin Portal > Employee Account Management > Edit Account                       |
+| HQ Portal > Employee Account Management > Edit Account                       |
 +---------------------------------------------------------------------------------+
 |  Username: nva_cashier (Read-only)  Full Name:   [ Nguyen Van A             ]   |
 |  Email:    [ nva@coffee.com   ]     Phone:       [ 0987654321               ]   |
@@ -832,29 +881,36 @@ This section details the functional requirements for authentication, user profil
 
 | Field | Description |
 |---|---|
-| **Actor** | Admin |
+| **Actor** | System Admin |
 | **Description** | Modifies employee account details or deactivates them to revoke access. |
-| **Precondition** | Admin is logged in. |
-| **Trigger** | Admin clicks "Edit User" on details page. |
+| **Precondition** | System Admin is logged in. |
+| **Trigger** | System Admin clicks "Edit User" on details page. |
 | **Post-Condition** | Account parameters are updated and active tokens invalidated if deactivated. |
 
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | Admin | Modifies employee parameters (name, contact, role) or sets status to Inactive (deactivating account), and clicks "Save Changes". |
+| 1 | System Admin | Modifies employee parameters (name, contact, role) or sets status to Inactive (deactivating account), and clicks "Save Changes". |
 | 2 | Portal | Validates inputs and flags. |
-| 3 | Portal | Saves changes to USER registry. If deactivated, terminates active session tokens on all devices immediately (BR-18). |
+| 3 | Portal | Saves changes to USER registry, **writes a change entry to the immutable `AUDIT_LOG` (actor, target, before/after role + status, timestamp — BR-81)**. If deactivated, terminates active session tokens on all devices immediately (BR-18). |
 
 #### Alternative Flows
-##### AT1: Attempting to Deactivate Last Admin
-- **Trigger**: At step 2, Admin attempts to set status of last Admin to `Inactive` or change role.
+##### AT1: Attempting to Deactivate Last System Admin
+- **Trigger**: At step 2, the System Admin attempts to set the status of the last active `ssadmin` account to `Inactive` or to change its role.
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Cannot deactivate the last remaining Admin account."` |
+| 2.1 | Portal | Displays error message: `"Cannot deactivate the last remaining System Admin account."` |
+
+##### AT3: Self-Escalation Blocked
+- **Trigger**: At step 2, the System Admin attempts to change **their own** role, permissions, or active status.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Blocks the change and displays: `"You cannot change your own role or status. Another System Admin must perform this action."` (BR-82) |
 
 ##### AT2: Unlock Suspended User
-- **Trigger**: Admin (via Edit User) or Store Manager (via Branch Staff Details) views a user account currently suspended due to 5 failed login attempts.
+- **Trigger**: System Admin (via Edit User) or Store Manager (via Branch Staff Details) views a user account currently suspended due to 5 failed login attempts.
 
 | Sub-step | Actor | Action |
 |---|---|---|
@@ -864,9 +920,98 @@ This section details the functional requirements for authentication, user profil
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-23 | System must block any attempt to deactivate or change the role of the last active Admin account. |
+| BR-23 | System must block any attempt to deactivate or change the role of the last active System Admin (`ssadmin`) account. |
 | BR-18 | Password change or setting status to Inactive terminates active session tokens on all other devices immediately. |
 
+---
 
+## 3.2.14 F12.1 - HQ Multi-Factor Authentication Challenge / (part of UC-01)
+
+### 3.2.14.1 Screen Mock-up (Desktop / Mobile)
+```
++------------------------------------+
+|        Verify It's You (MFA)       |
+|                                    |
+|  HQ account: biz_an                |
+|  A 6-digit code was sent to your   |
+|  registered email. Enter it below: |
+|                                    |
+|  Code: [ _ _ _ _ _ _ ]             |
+|                                    |
+|        [   VERIFY   ]              |
+|   _Resend code (60s cooldown)_     |
++------------------------------------+
+```
+
+#### Table 3-70: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | HQ account | Label | | | The HQ-role username being authenticated. |
+| 2 | Code | Text | Yes | 6 | Second-factor code: email OTP (UC-03/04 channel) or TOTP authenticator code. |
+| 3 | Verify | Button | | | Submits the second factor; on match the session is established (UC-01 step 3). |
+| 4 | Resend code | Link | | | Resends the email OTP (60-second cooldown); hidden for TOTP. |
+
+> This screen appears only for HQ roles (`ceoviewer` / `businessadmin` / `ssadmin`) when `HQ_MFA_REQUIRED` is on (BR-83). It is part of the UC-01 login flow (AT4), not a standalone use case. Three failed attempts trigger the BR-17 lockout.
+
+---
+
+## 3.2.15 F12.2 - User Account Change & Access Review Report / UC-83 View Access Review Report
+
+### 3.2.15.1 Screen Mock-up (Desktop Landscape)
+```
++---------------------------------------------------------------------------------+
+| HQ Admin Portal > Reports > User Account Change & Access Review                 |
++---------------------------------------------------------------------------------+
+|  Period: [ 2026-04-01 ] to [ 2026-06-30 ]   Role: [ All v ]      [ Export ]     |
+|                                                                                 |
+|  -- Current HQ-role accounts (for attestation) --                               |
+|  +-----------+----------------+----------+----------+                           |
+|  | Username  | Role           | Status   | Created  |                           |
+|  | biz_an    | businessadmin  | Active   | 2026-01  |                           |
+|  | ss_root   | ssadmin        | Active   | 2026-01  |                           |
+|  | ceo_v     | ceoviewer      | Active   | 2026-02  |                           |
+|  +-----------+----------------+----------+----------+                           |
+|                                                                                 |
+|  -- Account changes in period (AUDIT_LOG) --                                    |
+|  | 2026-05-12 | ss_root created biz_lan (businessadmin)                         |
+|  | 2026-05-20 | ss_root changed mgr_d1 role: cashier -> storemanager            |
+|  | 2026-06-02 | ss_root deactivated bar_07 (barista)                            |
++---------------------------------------------------------------------------------+
+```
+
+#### Table 3-71: Screen Definition
+| # | Field Name | Type | Mandatory | Max Length | Description |
+|---|---|---|---|---|---|
+| 1 | Period | Date Picker | Yes | | Reporting window for account changes. |
+| 2 | Role | Dropdown | No | | Filter by role, or `All`. |
+| 3 | Current HQ accounts grid | Grid | | | Read-only list of active `ceoviewer` / `businessadmin` / `ssadmin` accounts for periodic attestation. |
+| 4 | Account changes grid | Grid | | | Read-only `AUDIT_LOG` entries for create / role-change / status-change / deactivate / credential-reset (BR-81). |
+
+### 3.2.15.2 Use Case Description
+
+| Use Case ID | UC-83 | Use Case Name | View User Account Change & Access Review Report |
+|---|---|---|---|
+| **Author** | Antigravity | **Version** | 1.0 |
+| **Date** | 2026-06-14 | | |
+
+| Field | Description |
+|---|---|
+| **Actor** | CEO Viewer (read-only) |
+| **Description** | A read-only Segregation-of-Duties control: lists current HQ-role accounts for **periodic attestation** and every account create / role-change / deactivation / credential-reset from `AUDIT_LOG` (BR-81). Because `ssadmin` (IT) can provision business-role accounts unilaterally, this report lets the CEO detect inappropriate provisioning or privilege drift. |
+| **Precondition** | CEO Viewer is logged in. |
+| **Trigger** | CEO Viewer opens the Access Review report (e.g. quarterly attestation). |
+| **Post-Condition** | Current HQ accounts and the account-change log are displayed; exportable via UC-29. |
+
+#### Main Flows
+| Step | Actor | Action |
+|---|---|---|
+| 1 | CEO Viewer | Selects a period and optional role filter. |
+| 2 | Portal | Retrieves current HQ-role accounts and matching `AUDIT_LOG` account-change entries. |
+| 3 | Portal | Displays the attestation list and the change log. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-81 | **User Account Change Audit & Access Review** (defined in §3.2.12): account create/role-change/deactivate/credential-reset are immutably logged; this report is the read-only attestation surface for `ceoviewer`. |
 
 

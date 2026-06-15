@@ -304,7 +304,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 1 | Cashier | Enters quantity of points to redeem (e.g. 100) and clicks "Apply Discount". |
 | 2 | Portal | Validates point balance is sufficient and value is a multiple of 100. |
-| 3 | Portal | Computes equivalent cash discount based on `LOYALTY_REDEMPTION_VALUE` (default: 100 VND per point) and deducts points from active totals. |
+| 3 | Portal | Computes equivalent cash discount based on `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default: 100 VND per point) and deducts points from active totals. |
 
 #### Alternative Flows
 ##### AT1: Insufficient Points
@@ -324,7 +324,8 @@ This section details specifications for cashier POS checkout sessions, order pro
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
+| BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE_PER_POINT`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
+| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the system parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND per point**), maintained in Central System Settings (UC-30). Redeemed points must be a whole **multiple of 100** (MSG14). The raw discount `Redeemed Points × LOYALTY_REDEMPTION_VALUE_PER_POINT` is then **floored to the nearest whole VND** before the %/absolute caps in §3.6.7 step 3 are applied. This is the single definition of redemption value used by checkout (§3.6.7) and the loyalty-liability report (UC-78). |
 
 ---
 
@@ -379,7 +380,8 @@ This section details specifications for cashier POS checkout sessions, order pro
 | Step | Actor | Action |
 |---|---|---|
 | 1 | Cashier | Selects payment method and initiates transaction. |
-| 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) or registers Cash drawer float logic. |
+| 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) bound to the `order_id`, or registers Cash drawer float logic. |
+| 2a | Portal | **VietQR auto-confirm**: on receiving the gateway settlement callback for that `order_id`, the Portal **automatically** marks the payment confirmed (no manual cashier confirmation needed) — the 60-second timeout (AT1) is the error fallback, not the normal path (BR-84). |
 | 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.7 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
 
 #### Alternative Flows
@@ -390,21 +392,49 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 2.1 | Portal | Displays warning message: `"Payment gateway timeout. Please check customer transaction status or retry."` |
 
+##### AT2: Retry QR (idempotency)
+- **Trigger**: Cashier taps "RETRY QR" after a timeout/no-show callback.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 2.1 | Portal | Voids the previous QR request and issues a new one for the **same `order_id`**. The gateway accepts **at most one settlement per `order_id`** — if both the old and new QR are paid, the second is auto-flagged for refund/reconciliation (BR-84/BR-85). No double-charge is recorded against the order. |
+
+##### AT3: Late Callback (payment after cancel/timeout)
+- **Trigger**: A VietQR settlement callback arrives for an `order_id` that was already cancelled or timed-out.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 3.1 | Portal | Does **not** revive the order. It records the funds in a **payment-reconciliation queue**, marks them for **refund**, and alerts the Store Manager (BR-85). |
+
+##### AT4: Offline / Gateway Down (cash-only degraded mode)
+- **Trigger**: At step 1, the network or payment gateway is unreachable.
+
+| Sub-step | Actor | Action |
+|---|---|---|
+| 1.1 | Portal | Disables `CARD` and `VIETQR`, allowing **cash only**. Orders and cash transactions are queued locally and synced when connectivity returns; loyalty accrual/redemption and online voucher checks are suspended (only preloaded local vouchers verify). Banner: `"Offline mode — cash only. Card/QR resume when online."` (BR-86, §4.2.2) |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-84 | **VietQR Settlement Idempotency & Auto-Confirm**: A VietQR request is bound to its `order_id`; the gateway settles **at most once per `order_id`** (auto-confirmed on callback — the 60s timeout is only the error fallback). "RETRY QR" voids the prior QR and reissues for the same order; any duplicate settlement is auto-flagged for refund (BR-85), so a retry can never double-charge the order. (RV-O02/O06) |
+| BR-85 | **VietQR Late-Callback Reconciliation**: A settlement callback for an already-cancelled / timed-out `order_id` does **not** revive the order. The funds are placed in a payment-reconciliation queue, flagged for refund, and surfaced to the Store Manager. No order is silently resurrected and no money lands on a void order unreconciled. (RV-O01) |
+| BR-86 | **Offline Degraded Mode (Cash-Only)**: When the branch is offline or the gateway is down, the POS operates **cash-only** — `CARD`/`VIETQR` are disabled (no offline card auth). Orders + cash sales are recorded to a local queue and synced on reconnect; loyalty accrual/redemption and online voucher verification are suspended, only preloaded local vouchers verify (subject to later reconciliation/clawback). Full offline behaviour (ID strategy, conflict resolution, max duration) is specified in §4.2.2. (RV-C19/O05/O11) |
+
 ---
 
 ## 3.6.7 Discount Priority & Stacking Rules
 
-This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap.
+This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap. The fixed evaluation order below is authoritative and is codified as **BR-70** (Discount & Tax Stacking Order); the **Net Total Payable** it produces is the single accrual base defined in **BR-69**.
 
 ### 1. Stacking Rules & Restrictions
-- **Voucher and Loyalty Point Redemption Stackability**: Percentage-based or flat-rate **Voucher discounts** and **Loyalty Point Redemption discounts** can stack together directly.
-- **Order of Calculations**:
+- **Voucher and Loyalty Point Redemption Stackability**: Percentage-based or flat-rate **Voucher discounts** and **Loyalty Point Redemption discounts** can stack together directly. **At most one voucher per order** may be applied; the voucher is evaluated before point redemption (BR-70), and the **combined** voucher + point discount is capped so Net Total Payable ≥ 0 VND (BR-50). _(This is the authoritative answer to whether points and vouchers may be combined — RV-F04.)_
+- **Order of Calculations** (BR-70 — applied strictly in this sequence: **Voucher → Loyalty redemption → VAT extraction → accrual**):
   1. **Gross Subtotal**: Sum of the base prices of all selected menu items plus any applied custom toppings or option modifiers.
   2. **Voucher Discount**:
      - If a voucher is applied, compute: `Voucher Discount (VND) = (type == PERCENT) ? Gross Subtotal × Value / 100 : Flat VND Amount`.
      - `Discounted Subtotal = Gross Subtotal - Voucher Discount (VND)`.
   3. **Loyalty Point Redemption**:
-     - Compute redemption value: `Raw Point Discount = Redeemed Points * LOYALTY_REDEMPTION_VALUE` (where `LOYALTY_REDEMPTION_VALUE` is configured globally, e.g. 100 VND per point).
+     - Compute redemption value: `Raw Point Discount = floor(Redeemed Points * LOYALTY_REDEMPTION_VALUE_PER_POINT)` to the nearest whole VND (where `LOYALTY_REDEMPTION_VALUE_PER_POINT` is configured globally, default 100 VND per point — BR-74; redeemed points are a multiple of 100).
      - Apply config-based limits:
        - Limit by maximum percentage: `Max Point Discount % = Discounted Subtotal * (LOYALTY_MAX_REDEMPTION_PERCENT / 100)`.
        - `Point Discount Value = Min(Raw Point Discount, Max Point Discount %)`
@@ -417,7 +447,10 @@ This section outlines the business logic for calculating and applying discounts 
        - For standard 10% VAT: `tax_amount = Final Taxable Subtotal * 10/110`
        - `Net Total Payable = Final Taxable Subtotal` (representing the total cash/card/QR amount collected).
   5. **Discount Cap (BR-50)**: Net Total Payable cannot be negative. If the combined discounts exceed Gross Subtotal, Net Total Payable is set to 0 VND.
-  6. **Loyalty Point Accrual (BR-01)**: If a customer membership is linked to the order, loyalty points are earned on the net total paid: `points_earned = floor(Net Total Payable * (LOYALTY_ACCRUAL_PERCENTAGE / 100))`. Point accruals do not apply to the portion of the order covered by loyalty points redemption.
+  6. **Loyalty Point Accrual (BR-01 / BR-69)**: If a customer membership is linked to the order, loyalty points are earned on the **Net Total Payable** — i.e. the VAT-**inclusive** amount actually collected, *after* the voucher discount and *after* loyalty-point redemption (steps 2–3): `points_earned = floor(Net Total Payable * (LOYALTY_ACCRUAL_PERCENTAGE / 100))`. Because Net Total Payable is already net of the redeemed value, accrual does not apply to the portion of the order covered by loyalty-point redemption (BR-01). The result is then capped per the per-order accrual limit (§3.10).
+
+### 2. Checkout Discount Audit (BR-80)
+Every **voucher application** and every **loyalty-point redemption** applied at checkout is written to the immutable `AUDIT_LOG` with `cashier_id`, `order_id`, timestamp, the voucher code / redeemed points, and the resulting discount amount (BR-80). This closes the gap where `order_cancellations` was the only POS-side audit: voucher/comp abuse for acquaintances is now traceable per cashier, and the records feed the Cashier Void/Refund Anomaly report (UC-82).
 
 ---
 

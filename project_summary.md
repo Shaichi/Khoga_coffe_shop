@@ -1,114 +1,103 @@
-# Tóm Tắt Dự Án Coffee Shop Management System (Khoga Café)
+# Khoga Café — Bản Tổng hợp Dự án (Team Review)
 
-Tài liệu này tóm tắt toàn bộ Đặc tả Yêu cầu Phần mềm (SRS) của dự án **Hệ thống Quản lý Quán Cà phê (Khoga Café)**, bao gồm mục tiêu, phân hệ chức năng, các luồng quy trình cốt lõi và các ràng buộc phi chức năng quan trọng.
-
----
-
-## 1. Mục Tiêu & Phạm Vi Dự Án
-
-### 1.1 Mục tiêu
-*   **Vận hành hiệu quả (Operational Efficiency)**: Đẩy nhanh tốc độ gọi món, xử lý đơn và thanh toán tại quầy POS.
-*   **Kiểm soát kho chặt chẽ (Inventory Control)**: Theo dõi nguyên vật liệu theo thời gian thực, tự động trừ kho dựa trên định lượng công thức món, cấu hình cảnh báo tồn kho thấp.
-*   **Phân quyền rõ ràng (Role-based Security)**: Định hình ranh giới chức năng rõ rệt cho Admin, Quản lý cửa hàng (Store Manager), Thu ngân (Cashier) và Nhân viên pha chế (Barista).
-*   **Báo cáo tập trung**: Cung cấp cái nhìn tài chính toàn diện qua các báo cáo doanh thu chi tiết theo chi nhánh và toàn chuỗi.
-
-### 1.2 Phạm vi dự án
-*   **Trong phạm vi (In-Scope)**:
-    *   Xác thực & Bảo mật (Đăng nhập, OTP phục hồi mật khẩu, Force Password Change lần đầu đăng nhập).
-    *   Quản lý danh mục & thực đơn (Menu, Categories, Toppings & Options).
-    *   Logistics kho hàng (Nhập kho, Xuất kho, Kiểm kho điều chỉnh lệch, lịch sử giao dịch kho).
-    *   Bán hàng POS tại quầy (Quản lý ca làm việc, giỏ hàng, VietQR động, thẻ hội viên, voucher).
-    *   Nhân sự chi nhánh (Lịch phân ca, chấm công tự động qua đăng nhập/đăng xuất).
-    *   Chương trình Hội viên Loyalty (Tích lũy & khấu trừ điểm thành viên).
-    *   Dashboards báo cáo doanh thu cấp chi nhánh và cấp tổng công ty (HQ).
-*   **Ngoài phạm vi (Out-of-Scope)**:
-    *   Không tính toán bảng lương chi tiết hay trực tiếp thực hiện thanh toán lương (chỉ xuất báo cáo chấm công & số phút đi muộn sang hệ thống kế toán).
+> Tài liệu này tổng hợp hiện trạng dự án **đặc tả hệ thống quản lý chuỗi cà phê tự phục vụ Khoga Café** để cả team cùng đánh giá, kèm phần nhận định **điểm nên giữ** và **điểm cần thay đổi/cải thiện** xét theo mô hình kinh doanh và cấu trúc tổ chức.
+>
+> _Cập nhật: 2026-06-09. Nguồn authoritative: `srs_document_full.md` (compile từ `sections/`), `system_architecture_and_operations.md`, `CLAUDE.md`._
 
 ---
 
-## 2. Hệ Thống Vai Trò & Tác Nhân (Actors)
+## 1. Dự án là gì
 
-Tất cả tài khoản hệ thống kế thừa quyền hạn cơ bản từ một Base Actor gọi là `User`. Các vai trò chuyên biệt bao gồm:
+- **Bản chất:** Repo **tài liệu đặc tả (SRS) + mockup UI**, không phải ứng dụng chạy được. Sản phẩm bàn giao: tài liệu SRS theo module, sơ đồ Mermaid, và mockup HTML tĩnh.
+- **Đối tượng hệ thống:** Chuỗi cà phê **tự phục vụ** (self-service), quản lý phân cấp Tổng công ty (HQ) → Chi nhánh (Branch).
+- **Quy mô tài liệu:** 17 section SRS · ~70 use case (UC-XX) · ~62 business rule (BR-XX) · ~73 mockup HTML trên 5 phân hệ.
 
-```mermaid
-graph TD
-    User[User - Base Staff]
-    Admin[HQ Admin]
-    Manager[Store Manager]
-    Cashier[Cashier]
-    Barista[Barista]
-
-    Admin --> |"inherits from"| User
-    Manager --> |"inherits from"| User
-    Cashier --> |"inherits from"| User
-    Barista --> |"inherits from"| User
-```
-
-*   **HQ Admin (Quản trị viên Trung tâm)**: Quản lý danh mục thực đơn toàn hệ thống, cấu hình chuỗi chi nhánh, điều hành chiến dịch khuyến mãi (Vouchers), cấp phát tài khoản nhân sự và xem báo cáo hợp nhất toàn chuỗi.
-*   **Store Manager (Quản lý Cửa hàng)**: Phụ trách một chi nhánh. Quản lý kho, điều chỉnh kiểm kê, xếp ca làm việc tuần cho nhân viên, xem báo cáo doanh thu nội bộ và chấm công.
-*   **Cashier (Thu ngân)**: Thao tác chính trên POS bán hàng. Thực hiện mở/đóng ca, chọn món, tra cứu thông tin khách hàng, áp dụng giảm giá, in hóa đơn và xử lý hủy/hoàn trả đơn hàng.
-*   **Barista (Nhân viên Pha chế)**: Sử dụng màn hình tablet ngang để theo dõi hàng chờ đơn hàng, cập nhật trạng thái chế biến, in tem dán cốc và báo cáo lỗi thiết bị/nguyên liệu.
+### Năm phân hệ ứng dụng
+| Phân hệ | Thiết bị | Vai trò chính |
+|---|---|---|
+| HQ Admin Portal (`admin_hq_mockups/`) | Web desktop | `ceoviewer`, `businessadmin`, `ssadmin` (dùng chung portal) |
+| Store Manager Web (`store_manager_mockups/`) | Web | `storemanager` |
+| Cashier POS (`cashier_pos_mockups/`) | Cảm ứng | `cashier` |
+| Barista KDS (`barista_monitor_mockups/`) | Tablet ngang | `barista` |
+| Mobile Auth (`mobile_auth_mockups/`) | Mobile | tất cả (đăng nhập/hồ sơ) |
 
 ---
 
-## 3. Các Luồng Nghiệp Vụ Cốt Lõi
+## 2. Trạng thái hiện tại
 
-### 3.1 Quy trình Trừ Kho tự động dựa trên công thức (Recipe Deduction)
-1.  Đơn hàng được Cashier thanh toán thành công và chuyển sang hàng đợi ở trạng thái **PENDING**.
-2.  Barista bấm **START PREP** (Bắt đầu pha chế) chuyển trạng thái đơn hàng sang **PREPARING**.
-3.  Hệ thống tự động tra cứu bảng Công thức (`recipe_items`) của các món trong đơn hàng và trừ trực tiếp số lượng nguyên liệu tương ứng trong kho chi nhánh (`stock_items`).
-4.  Nếu nguyên liệu chạm ngưỡng tối thiểu (`min_alert_threshold`), hệ thống lập tức hiển thị cảnh báo tồn kho thấp và gửi email tổng hợp hàng đêm lúc 22:00.
+### ✅ Đã hoàn tất
+- **Migration RBAC 4 vai trò → 6 vai trò** trên **toàn bộ section SRS**: tách "HQ Admin" thành `ceoviewer` / `businessadmin` / `ssadmin`; remap toàn bộ trường Actor, business rule, bảng phân quyền.
+- **§3.2.0** bảng RBAC authoritative 6 vai trò; **§3.1** bảng phân quyền 49 màn hình × 6 cột; **§5.4** Feature-Actor Matrix 6 cột.
+- Các quyết định nghiệp vụ đã chốt: bỏ hạng thành viên loyalty, hủy đơn không cần PIN (chỉ PENDING), menu 2 cấp (`is_active` chain-wide vs `branch_menu_status` branch-level), KDS 1-chạm.
+- `srs_document_full.md` đã recompile mới nhất.
 
-### 3.2 Quy trình Đóng/Mở ca và Đối chiếu két tiền
-*   **Mở ca (Open Shift)**: Thu ngân bắt buộc nhập mã két POS và số tiền mặt ban đầu trong két (starting cash float).
-*   **Đóng ca (Close Shift)**: Thu ngân kiểm đếm tiền mặt thực tế và nhập vào hệ thống.
-*   **Tách biệt Logout & Active Shift**: Thu ngân được phép đăng xuất (User Session) mà không bắt buộc phải Đóng ca (Close Shift). Ca làm việc (Shift Session) của két POS vẫn được duy trì mở để người khác đăng nhập bán tiếp.
-    *   Hệ thống tính toán số tiền mặt lý thuyết dựa trên doanh số thanh toán bằng tiền mặt trừ đi tiền hoàn trả trong ca.
-    *   Nếu phát hiện chênh lệch giữa số tiền đếm thực tế và lý thuyết **vượt quá 100.000 VND**, hệ thống sẽ ghi nhận log chênh lệch và tự động gửi email cảnh báo tới Quản lý cửa hàng (hoặc đẩy thông báo về Admin Portal nếu gửi mail lỗi).
-    *   Ca làm việc chỉ được đóng khi tất cả đơn hàng thuộc ca đó đã đạt trạng thái cuối cùng (**COMPLETED** hoặc **CANCELLED**).
-
-### 3.3 Quy trình Khách hàng thân thiết (CRM) & Voucher
-*   **Quy tắc tích lũy điểm**: Tích lũy điểm hội viên theo % Net Total Payable (có giới hạn tích lũy tối đa/đơn). Points are not accrued for the portion covered by point redemption.
-*   **Quy tắc tiêu điểm**: Chỉ những khách hàng đạt tối thiểu hạng **Silver** mới được phép quy đổi điểm thưởng để giảm giá hóa đơn, giới hạn tối đa % hóa đơn được giảm và số tiền giảm tối đa/đơn.
-*   **Phân hạng hội viên cập nhật thời gian thực**:
-    *   **Bronze**: 0 - 99 điểm (Ưu đãi 0%).
-    *   **Silver**: 100 - 499 điểm (Giảm giá 5% hóa đơn).
-    *   **Gold**: 500 - 999 điểm (Giảm giá 10% hóa đơn).
-    *   **Diamond**: 1000+ điểm (Giảm giá 15% hóa đơn).
-*   **Quy tắc xếp chồng ưu đãi (Discount Stacking Rules)**:
-    1. Áp dụng Chiết khấu theo hạng thành viên (Tier Discount) trước.
-    2. Áp dụng Mã giảm giá (Voucher) sau đó.
-    3. Áp dụng khấu trừ điểm Loyalty tích lũy cuối cùng.
-    *Lưu ý*: Tổng số tiền thanh toán cuối cùng không bao giờ được âm (tối thiểu là 0 VND).
-
-### 3.4 Quy trình Hủy Đơn & Hoàn Tiền (Order Cancellation)
-*   **Quy tắc hủy**: Chỉ cho phép hủy đơn khi đang ở trạng thái **PENDING** (Chờ chế biến/Chưa thanh toán). Khi đã chuyển sang chế biến (**PREPARING** trở đi), chức năng hủy đơn bị vô hiệu hóa hoàn toàn đối với mọi vai trò.
-*   **Vận hành**: Thu ngân tự bấm hủy trực tiếp trên màn hình chi tiết đơn hàng POS, không cần mã PIN phê duyệt của Quản lý cửa hàng.
-*   **Tác động kho hàng khi hủy**:
-    *   Vì đơn bị hủy ở trạng thái **PENDING** nên các sản phẩm tự chế biến chưa trừ kho (chỉ trừ khi sang **PREPARING**). Các sản phẩm đóng gói/bán sẵn (đã trừ lúc thanh toán) sẽ được tự động hoàn trả lại vào kho.
-*   **Hoàn tiền**: Hoàn tiền mặt lấy từ két thu ngân. Hoàn thanh toán thẻ/VietQR sẽ gọi API hoàn trả của cổng thanh toán. Hạn mức hoàn tiền tối đa trong vòng **7 ngày** từ khi mua.
-
-### 3.5 Chế độ Ngoại tuyến (Offline POS Resilience Mode)
-*   Khi chi nhánh mất kết nối internet, máy POS của Thu ngân chuyển sang chế độ ngoại tuyến:
-    *   Cho phép thực hiện gọi món và thanh toán bằng tiền mặt/thẻ vật lý bình thường.
-    *   Tạm khóa các tính năng cần kết nối trực tuyến như: Quét mã VietQR động, tra cứu/tiêu điểm Loyalty, xác thực voucher trực tuyến (chỉ cho phép xác thực voucher lưu cục bộ).
-    *   Đơn hàng ngoại tuyến được mã hóa và lưu trữ an toàn trong bộ nhớ máy POS (`local storage`).
-    *   Khi khôi phục kết nối internet, hệ thống tự động đồng bộ tất cả đơn hàng ngoại tuyến lên máy chủ trong vòng **60 giây**.
+### ⬜ Còn lại (khoảng trống đã biết)
+- **Audit mockup HTML** chưa thực hiện — chưa kiểm nhãn vai trò/portal so với mô hình 6 vai trò. **Đây là rủi ro lớn nhất còn lại.**
+- 3 file index/kế hoạch (`mockup_mapping.md`, `feature_function_matrix.md`, `group_division_plan.md`) đang ở trạng thái **deleted** (git) nhưng CLAUDE.md vẫn tham chiếu → cần khôi phục hoặc bỏ tham chiếu.
 
 ---
 
-## 4. Các Ràng Buộc & Yêu Cầu Phi Chức Năng (NFRs)
+## 3. Cấu trúc tổ chức ↔ Vai trò hệ thống
 
-*   **Quy mô tối đa**: Hệ thống hỗ trợ giới hạn số lượng chi nhánh hoạt động đồng thời một cách linh hoạt thông qua cấu hình tham số hệ thống `MAX_ACTIVE_BRANCHES`. Các chi nhánh bị ngắt hoạt động (`is_active = false`) không tính vào giới hạn này.
-*   **Uptime**: Cam kết dịch vụ máy chủ hoạt động liên tục đạt **99.9% uptime**.
-*   **Thời gian phản hồi**:
-    *   Thêm món vào giỏ hàng POS: dưới **100ms**.
-    *   Xác nhận thanh toán / tạo QR: dưới **1.5s**.
-    *   Tải báo cáo tài chính/doanh thu: dưới **2s**.
-*   **Bảo mật**:
-    *   Mã hóa toàn bộ lưu lượng qua HTTPS với giao thức TLS 1.3.
-    *   Khóa đăng nhập tài khoản 15 phút nếu nhập sai mật khẩu 5 lần liên tiếp.
-    *   Token phiên làm việc tự động thu hồi sau 30 phút nếu người dùng không có hoạt động tương tác.
-*   **Sao lưu dữ liệu**:
-    *   RPO (Recovery Point Objective): Tối đa mất mát dữ liệu trong **1 giờ** (tự động backup DB mỗi 60 phút).
-    *   RTO (Recovery Time Objective): Phục hồi hoàn toàn hệ thống sau thảm họa trong vòng **4 giờ**.
+| Cấu trúc tổ chức (org doc) | Vai trò RBAC | Phạm vi |
+|---|---|---|
+| Ban Giám đốc / Chủ chuỗi | `ceoviewer` | HQ — chỉ đọc báo cáo tổng hợp |
+| Bộ phận Vận hành & Cung ứng **+** Marketing & CRM | `businessadmin` | HQ — menu/recipe/voucher/CRM |
+| Bộ phận IT / Hệ thống | `ssadmin` | HQ — config, VietQR/OTP, user, branch |
+| Quản lý cửa hàng | `storemanager` | Branch — kho, ca, lịch, đối soát |
+| Thu ngân | `cashier` | Branch — POS, mở/đóng ca |
+| Pha chế | `barista` | Branch — KDS |
+
+---
+
+## 4. Đánh giá độ phù hợp với mô hình kinh doanh & tổ chức
+
+### 4.1 Điểm NÊN GIỮ (đang khớp tốt)
+
+1. **6-role RBAC ánh xạ sát cấu trúc tổ chức 3 phòng HQ + 3 vai trò branch.** Tách bạch quyền giúp separation of duties: IT cấu hình nhưng không đụng giá menu; Ban Giám đốc xem nhưng không sửa.
+2. **Trừ kho tự động theo công thức (recipe-based auto-deduction)** — giải quyết bài toán thất thoát NVL, "đau đầu" lớn nhất của ngành F&B. Đây là giá trị cốt lõi của hệ thống.
+3. **Đối soát ca & két tiền tự động** với ngưỡng cảnh báo 100.000 VND — kiểm soát tài chính từ xa, chống gian lận tiền mặt tại branch.
+4. **KDS START PREP / READY + tem dán ly tự động + buzzer** — tối ưu tốc độ phục vụ giờ cao điểm, đúng tinh thần mô hình tự phục vụ.
+5. **Menu 2 cấp** (`is_active` toàn chuỗi do HQ + `branch_menu_status` do branch) — vừa chuẩn hóa danh mục toàn chuỗi vừa cho branch chủ động tắt món khi hết NVL. Rất đúng nhu cầu chuỗi.
+6. **VietQR động auto-confirm < 1.5s** — bỏ bước thu ngân chụp màn hình chuyển khoản, giảm sai sót & gian lận.
+7. **Tách User Session khỏi Shift Session (BR-60)** — cho phép đổi ca/đổi người mà không đóng ca, hợp với vận hành quầy nhiều nhân viên.
+8. **Loyalty bỏ hạng thành viên** — đơn giản hóa, giảm phức tạp không cần thiết cho mô hình chuỗi nhỏ.
+
+### 4.2 Quyết định đã chốt (product owner) & hành động
+
+> Các điểm dưới đây đã được product owner quyết và phản ánh vào tài liệu trong đợt cập nhật 2026-06-09.
+
+**✅ P1 — Không có Kho tổng. `businessadmin` sở hữu danh mục nguyên liệu master.**
+Quyết định: hệ thống **không** có kho tổng nhập từ bên thứ 3 ở cấp HQ. Bộ phận Cung ứng (`businessadmin`) **khai báo danh mục nguyên liệu dùng chung toàn chuỗi** (master list: tên, đơn vị, hạn mức gợi ý) — là nguồn cho công thức món và dropdown nhập/xuất kho. Chi nhánh nhập **trực tiếp từ NCC** (UC-32) và tự quản số lượng. _Đã làm:_ cập nhật org doc; tạo skeleton `admin_hq_mockups/materials_web.html`; **thêm UC-74 "Manage Raw Material Master" vào §3.5.0** + cross-ref ở §3.3; thêm **màn hình 50** vào bảng phân quyền §3.1 (owner `businessadmin`); đăng ký **BR-63/BR-64** và một dòng trong ma trận §5.4.
+
+**✅ P2 — Tách portal HQ thành 3 dashboard theo vai trò (skeleton).**
+_Đã làm (chỉ tạo file, chưa code logic):_ `dashboard_ceoviewer_web.html` (chỉ Báo cáo), `dashboard_businessadmin_web.html` (Thực đơn / Nguyên liệu / Voucher / CRM), `dashboard_ssadmin_web.html` (Nhân sự / Chi nhánh / Cấu hình) — mỗi dashboard chỉ hiện nav đúng vai trò theo §3.1. _Còn lại:_ điều hướng login → đúng dashboard; gỡ/deprecate `dashboard_web.html` gộp cũ; rà soát các màn module còn lại.
+
+**✅ P3 — GIỮ một role `businessadmin` duy nhất.**
+Quyết định: gộp Ops & Supply + Marketing & CRM trong một role. Chấp nhận đánh đổi (người Marketing có thể sửa giá menu); việc phân tách xử lý ở cấp tổ chức/quy trình, không bằng RBAC. _Không thay đổi hệ thống._
+
+**✅ P4 — Xóa số cứng "5", chỉ tham chiếu `MAX_ACTIVE_BRANCHES`.**
+_Đã làm:_ sửa UC-64 (precondition, AT1 trigger, message MSG16) trong `03_13` — bỏ "(5)", dùng tham số.
+
+**✅ P5 — 1 Store Manager phụ trách 1 quán. (Đánh giá: phù hợp.)**
+Mô hình 1-1 khớp data model hiện tại (`USER.store_id` là FK đơn) và quy mô chuỗi hiện tại; **không cần** tầng Regional/Area Manager lúc này — HQ giám sát mọi chi nhánh qua báo cáo tổng hợp (`ceoviewer`). Lưu ý vận hành: (a) nếu một người thực tế quản 2 quán → cấp 2 tài khoản; (b) khi SM vắng, `ssadmin` đổi phân công tạm thời; (c) cân nhắc lại tầng vùng khi số branch vượt khả năng giám sát trực tiếp của HQ. _Kết luận: giữ mô hình 1-1, gỡ khuyến nghị "Regional Manager"._
+
+**✅ P6 — Giải pháp cho 2 edge case (đã codify):**
+- **Refund vs ca (BR-09 cập nhật):** hoàn tiền mặt ghi vào **ca đang mở tại terminal lúc hoàn** (két thực chi), giảm expected cash của ca đó, **bất kể đơn gốc thuộc ca nào**; nếu không có ca mở thì hoãn tới khi mở ca; card/VietQR hoàn qua gateway, không đụng két nên độc lập với ca.
+- **Chấm công cross-branch (thêm BR-53a):** mỗi log lưu cả `employee_id` + `store_id` của terminal nơi chấm. **Lương/tổng giờ** tính theo `employee_id` (cộng mọi chi nhánh); **chi phí nhân công chi nhánh** tính theo `store_id` terminal (nơi thực sự làm việc).
+
+**🟢 P7 — (còn mở) Vệ sinh tài liệu.** Khôi phục `mockup_mapping.md` (cần cho audit và để map 3 dashboard mới + `materials_web.html`); xử lý 2 file kế hoạch đã xóa.
+
+---
+
+## 5. Khuyến nghị bước tiếp theo
+
+1. ~~Downstream của P1: thêm UC Nguyên liệu Master.~~ ✅ Đã làm (UC-74 / §3.5.0, màn hình 50 §3.1, BR-63/64, §5.4). _Còn lại (tùy chọn):_ bổ sung UC-74 vào danh sách use case tổng ở §2.3 và `00_record_of_changes.md`; cân nhắc thêm thực thể `RAW_MATERIAL` vào ERD §3.1.
+2. **Hoàn thiện P2:** khôi phục `mockup_mapping.md`, map 3 dashboard vai trò + `materials_web.html`; điều hướng login → đúng dashboard; rà soát các màn module còn lại theo §3.1.
+3. **Dọn P7** và recompile SRS sau mỗi đợt sửa section.
+
+---
+
+## 6. Tóm tắt một dòng
+
+> Lõi nghiệp vụ (trừ kho theo công thức, đối soát ca, KDS, menu 2 cấp, VietQR) **vững và khớp mô hình tự phục vụ**. Sau đợt 2026-06-09: đã chốt **không có kho tổng** (businessadmin sở hữu danh mục NVL master), **tách portal HQ thành 3 dashboard vai trò** (skeleton), **giữ 1 role businessadmin**, xóa số chi nhánh cứng, và giải quyết edge case refund/chấm công. Việc lớn còn lại: bổ sung UC Nguyên liệu Master và hoàn thiện tầng UI theo vai trò.

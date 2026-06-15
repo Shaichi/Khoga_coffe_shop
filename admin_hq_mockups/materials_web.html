@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguyên liệu (Master) - HQ Portal</title>
+    <!-- Skeleton only (no functional code). New screen from P1 decision: businessadmin owns the chain-wide raw-material master list.
+         Branches do NOT define materials; they only import/export quantities (UC-32/33) choosing from this master. No central warehouse. -->
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #fcfaf7; color: #2c1a11; margin: 0; padding: 0; }
+        .wrapper { display: flex; min-height: 100vh; flex-direction: row; }
+        .sidebar { width: 240px; background: #3d2314; color: white; padding: 25px 15px; box-sizing: border-box; }
+        .sidebar h2 { font-size: 20px; margin-bottom: 8px; text-align: center; color: #c89d7c; }
+        .sidebar .role-tag { text-align:center; font-size:12px; color:#9c8579; margin-bottom: 25px; }
+        .sidebar a { display: block; color: #d1c4b9; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-bottom: 5px; }
+        .sidebar a.active, .sidebar a:hover { background: #5c3826; color: white; }
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eaddd3; padding-bottom: 15px; }
+        .header h1 { font-size: 24px; margin: 0; }
+        .note { background:#fff8ec; border:1px solid #f0dcbb; color:#8a5a12; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:20px; }
+        table { width:100%; border-collapse: collapse; background:white; border:1px solid #eaddd3; border-radius:12px; overflow:hidden; }
+        th, td { text-align:left; padding:12px 15px; border-bottom:1px solid #f5ece1; font-size:14px; }
+        th { background:#f7efe6; color:#5c3826; text-transform:uppercase; font-size:12px; }
+        .btn { background:#5c3826; color:white; border:none; padding:10px 16px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; }
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; padding: 15px; }
+            .main-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h2>Khoga Café HQ</h2>
+            <div class="role-tag">Business Admin (Ops &amp; Marketing)</div>
+            <div class="sidebar-menu">
+                <a href="dashboard_businessadmin_web.html">Trang chủ</a>
+                <a href="menu_web.html">Thực đơn &amp; Danh mục</a>
+                <a href="materials_web.html" class="active">Nguyên liệu (master)</a>
+                <a href="vouchers_web.html">Vouchers</a>
+                <a href="customers.html">Khách hàng (CRM)</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1>Danh mục Nguyên liệu (Toàn chuỗi)</h1>
+                <a href="#" class="btn">+ Thêm nguyên liệu</a>
+            </div>
+
+            <div class="note">
+                <b>Phạm vi:</b> Business Admin khai báo danh mục nguyên liệu dùng chung toàn chuỗi (tên, đơn vị tính, mã, hạn mức tối thiểu gợi ý). Đây là nguồn cho công thức món (Recipe) và cho dropdown Nhập/Xuất kho của chi nhánh. <b>Hệ thống không có kho tổng</b> — chi nhánh nhập trực tiếp từ nhà cung cấp và tự quản lý số lượng tồn của mình.
+            </div>
+
+            <table>
+                <thead>
+                    <tr><th>Mã NVL</th><th>Tên nguyên liệu</th><th>Đơn vị</th><th>Hạn mức tối thiểu (gợi ý)</th><th>Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>STK-01</td><td>Cà phê hạt</td><td>kg</td><td>5.0</td><td>Đang dùng</td></tr>
+                    <tr><td>STK-02</td><td>Sữa tươi tiệt trùng</td><td>liter</td><td>6.0</td><td>Đang dùng</td></tr>
+                    <tr><td>STK-03</td><td>Syrup đào</td><td>ml</td><td>500</td><td>Đang dùng</td></tr>
+                    <tr><td>STK-04</td><td>Cốc giấy size M</td><td>cái</td><td>200</td><td>Đang dùng</td></tr>
+                </tbody>
+            </table>
+
+            <p style="color:#8c766c; font-size:13px; margin-top:16px;">* Skeleton mockup — chưa gắn logic. Cần bổ sung Use Case &amp; đưa màn hình này vào bảng phân quyền §3.1 (chủ sở hữu: <code>businessadmin</code>).</p>
+        </div>
+    </div>
+</body>
+</html>

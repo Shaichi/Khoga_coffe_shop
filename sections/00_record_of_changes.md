@@ -15,6 +15,14 @@ This section tracks the revision history and modifications made to the Software 
 | **1.8** | 2026-06-03 | Simplified cancellation to PENDING only (no manager PIN), popup-based 4-digit PIN + camera snapshot attendance, team-based barista KPI, branch menu status table, dynamic branch limit (MAX_ACTIVE_BRANCHES), bulk stock import invoice grid, custom loyalty cap fields, and removed all ShopeeFood/Grab integrations. | Software Engineering Team | Store Management / Product Owner |
 | **1.8.1** | 2026-06-03 | Patched discrepancies in v1.8: aligned BR-07/BR-09 with BR-05 (restricting cancellation/refund to PENDING only), added missing use cases (UC-68 to UC-72, UC-61, UC-73) to diagrams, resolved loyalty point config conflict and restored MSG14, authorized Barista for Order Detail screen, and fixed screen numbering gaps. | Software Engineering Team | Store Management / Product Owner |
 | **1.8.2** | 2026-06-03 | Integrated Central Loyalty configurations (Accrual rate, Redeem value, Max redeem %, Max discount limit) under Admin system settings. Completely removed customer membership tiers (Bronze/Silver/Gold/Diamond) and their automatic discounts. Simplified checkout stacking and discount priority rules. | Software Engineering Team | Store Management / Product Owner |
+| **1.9** | 2026-06-09 | Migrated from the legacy 4-role model to a 6-role RBAC model: the HQ "Admin" umbrella was split into `ceoviewer` (read-only reports), `businessadmin` (menu/recipe/voucher/CRM), and `ssadmin` (users/config/branches). Updated actors, use-case diagrams (§2.2.2–2.2.4), Screen Authorization matrix (§3.1, 6 columns), USER role enum, and Feature-Actor Mapping (§5.4). | Software Engineering Team | Store Management / Product Owner |
+| **1.10** | 2026-06-11 | Added UC-74 Manage Raw Material Master (§3.5.0): a chain-wide raw-material master catalog owned by `businessadmin`, source for recipe formulations and branch Import/Export dropdowns. Added screen 50, BR-63/BR-64, the `RAW_MATERIAL` entity to the ERD (with `STOCK_ITEM` and `RECIPE_ITEM` re-pointed to the master), and §2.3 / §2.2.3 use-case entries. | Software Engineering Team | Store Management / Product Owner |
+| **1.11** | 2026-06-13 | CEO-review resolutions. **P0 consistency:** finished the 6-role migration in §3.2 (use-case bodies were still 4-role), fixed BR-54 / hardcoded "5" in §3.13, unified inventory-deduction timing to `PREPARING` (UC-62/BR-07), and cleaned stale "central warehouse"/membership-tier wording in the architecture doc. **New capabilities:** (1) UC-75 Store-Manager Refund/Comp for post-`PENDING` complaints + BR-67 + `ORDER_REFUND` entity; (2) topping recipes that deduct stock (BR-65, UC-62 + §3.3.6); (3) standard-cost COGS via `RAW_MATERIAL.standard_cost` (BR-66) + UC-76 COGS/Margin & Shrinkage report; (4) mandatory audit-log of price/voucher changes (BR-68) + UC-77 Change-History report. Screens 51–53 added to §3.1; UC-75/76/77 added to §2.3. | Software Engineering Team | Store Management / Product Owner |
+| **1.12** | 2026-06-14 | Cleared the 6 CEO-review **P0** backlog items (`srs_review_findings.md`). **RV-C02/C03:** rebuilt the `attendance_logs` schema — replaced the broken `lateness_minutes` GENERATED column (referenced a non-existent `scheduled_start`) with a real `scheduled_start` column snapshotted at check-in; lateness is now derived at the reporting layer in **branch-local** time, fixing the ±7h UTC error (BR-38/BR-39). **RV-F01/F02:** defined the loyalty accrual base "Net Total Payable" (VAT-inclusive, after voucher & point redemption) as **BR-69** and the fixed Voucher→Points→VAT→accrual stacking order as **BR-70** (§3.6.7). **RV-C01:** added PDPA / Decree 13/2023 compliance — customer-consent capture at UC-25 (`consent_at`/`consent_version`, BR-71), 24-month PII retention + on-request erasure and 90-day attendance-photo purge (BR-72), and §4.2.6.1 Personal Data Protection. **RV-O17:** recipe lines must use the raw material's exact master unit — no kg↔g conversion, rejected at save (BR-73, UC-18 AT2). | Software Engineering Team | Store Management / Product Owner |
+| **1.16** | 2026-06-15 | **Consistency pass** (pre-merge QA, no spec changes): fixed a duplicate business-rule ID — the §3.13 "Loyalty Config Parameters" rule was mis-numbered `BR-57` (which canonically denotes Employee ID Auto-Allocation) and is renumbered **BR-94** (added to §5.1); fixed a duplicate subsection heading — the pre-existing "Cashier Shift Sessions & Multi-Store Attendance Tracking" was renumbered **§3.7.8** (its children 3.7.8.1/3.7.8.2) so it no longer collides with the new §3.7.7 "Fulfilment Resilience & Queue Lifecycle"; and refreshed the Table of Contents to list the §3.2.14/15, §3.7.5a–3.7.8, §3.9.6, and §3.12.4–3.12.9 subsections added in v1.10–v1.15. | Software Engineering Team | Store Management / Product Owner |
+| **1.15** | 2026-06-14 | Cleared the **remaining P1** backlog (operations/inventory + compliance/people/NFR) — **all P0 and P1 findings are now resolved**. **VietQR/payment (RV-O01/O02/O06):** UC-51 auto-confirm on callback, RETRY-QR idempotency (one settlement per `order_id`), and late-callback reconciliation (auto-flag refund, no order revival) — BR-84/BR-85, UC-51 AT2/AT3. **Offline (RV-O05/C19):** cash-only degraded mode (no offline card auth) with client-UUID identifiers, append-only sync, conflict surfacing, and `MAX_OFFLINE_HOURS` — BR-86, UC-51 AT4, §4.2.2 rewritten. **Order lifecycle (RV-O03/O04):** new terminal `ABANDONED` state + `READY_ABANDON_TIMEOUT` auto-expiry + SM force-close at shift close (BR-88); KDS/printer offline fallback (BR-87, §3.7.7). **Inventory (RV-O16):** negative-stock / `phantom_usage` ledger instead of clamping to 0 (BR-89, UC-62 AT1). **Staff (RV-C04/C05/C06/C07/C08):** cross-branch assignment by home SM + audit + BR-59 host-visibility exception (BR-90, UC-36 AT3); consolidated the duplicate BR-38; absence/OT/early-leave derivation (BR-91); labour-budget & max-hours/rest scheduling validation (BR-92, UC-36 AT2); attendance PIN uniqueness + mandatory photo (BR-93). **NFR (RV-C16/C17):** capacity expressed per-branch × `MAX_ACTIVE_BRANCHES`; 99.9% uptime measured excluding the scheduled maintenance window (§4.2.2/§4.2.3/§4.2.5). New BRs **BR-84…BR-93**. | Software Engineering Team | Store Management / Product Owner |
+| **1.14** | 2026-06-14 | Cleared the **RV-S (fraud & security) P1** backlog cluster, applying the project's "audit-log instead of maker-checker" philosophy consistently. **RV-S05:** mandatory **MFA for HQ roles** (`ceoviewer`/`businessadmin`/`ssadmin`) via email OTP (reusing UC-03/04) or TOTP, parameter `HQ_MFA_REQUIRED` (default on); POS/branch roles exempt — added UC-01 AT4, §3.2.14 MFA Challenge (screen 58), **BR-83**. **RV-S04:** **BR-82** — first `ssadmin` seeded at install (no in-app bootstrap), self-escalation blocked (own role/status change requires a different ssadmin); added UC-12/14 AT3. **RV-S03:** **BR-81** + **UC-83** User Account Change & Access Review report (CEO Viewer, §3.2.15, screen 60) — audits every account create/role-change/deactivate as the SoD compensating control. **RV-S02:** **BR-80** — every checkout voucher application & point redemption written to immutable `AUDIT_LOG` (§3.6.7). **RV-S01:** **UC-82** Cashier Void/Refund Anomaly report (Store Manager + CEO Viewer, §3.12.9, screen 59) + **BR-79** flagging cancel/refund outliers against `CANCEL_REFUND_ALERT_THRESHOLD`; PENDING cancel stays no-PIN (BR-05) and refunds stay SM-authorised (BR-67). Added screens 58–60 to §3.1, UC-82/83 to §2.3, two matrix rows to §5.4, and two security params to §3.13. | Software Engineering Team | Store Management / Product Owner |
+| **1.13** | 2026-06-14 | Cleared the **RV-F (financial/reporting) P1** backlog cluster. **RV-F03:** standardised the point-to-cash parameter to `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point), redemption in multiples of 100, floor-to-VND rounding (**BR-74**; §3.6.5/§3.6.7/§3.13). **RV-F04:** confirmed voucher + point stacking (≤1 voucher, points after voucher, combined cap = Gross Subtotal) via cross-reference to BR-70/BR-50 (§3.6.7). **RV-F05:** added **UC-78** Loyalty Liability & Movement report (CEO Viewer) reporting outstanding points + issued/redeemed/expired movement in points (**BR-75**, §3.12.6). **RV-F06:** added **UC-79** Labour Hours vs Revenue report (CEO Viewer + Store Manager) — a non-monetary staffing-efficiency KPI that stores no wage data, keeping payroll external per §1.2 (**BR-76**, §3.12.7). **RV-F07:** added **UC-80** Worked-Hours Export (Store Manager, own branch) — paired CHECK_IN/CHECK_OUT hours with missing-checkout flagging, feeding external payroll (**BR-77**, §3.9.6). **RV-F08:** added **UC-81** Daily Z-Report (Store Manager) consolidating all of a day's shifts into one branch statement (**BR-78**, §3.12.8). Added screens 54–57 to §3.1, UC-78/79/80/81 to §2.3, four matrix rows to §5.4. | Software Engineering Team | Store Management / Product Owner |
 
 
 
@@ -29,10 +37,12 @@ This section tracks the revision history and modifications made to the Software 
    - 2.1 Actors
    - 2.2 Use Cases
      - 2.2.1 General User & Authentication Use Cases
-     - 2.2.2 Admin Use Cases
-     - 2.2.3 Store Manager Use Cases
-     - 2.2.4 Cashier Use Cases
-     - 2.2.5 Barista Use Cases
+     - 2.2.2 CEO / Executive Viewer Use Cases
+     - 2.2.3 Business Admin Use Cases
+     - 2.2.4 System Admin Use Cases
+     - 2.2.5 Store Manager Use Cases
+     - 2.2.6 Cashier Use Cases
+     - 2.2.7 Barista Use Cases
 
 3. [Software Features](#31-functional-overview)
 
@@ -58,6 +68,8 @@ This section tracks the revision history and modifications made to the Software 
      - 3.2.11 View User Details & History
      - 3.2.12 Add User Account
      - 3.2.13 Update/Deactivate User Account
+     - 3.2.14 HQ Multi-Factor Authentication Challenge
+     - 3.2.15 User Account Change & Access Review Report (UC-83)
 
    - **3.3 Menu Management**
      - 3.3.1 View Menu Item List
@@ -74,13 +86,13 @@ This section tracks the revision history and modifications made to the Software 
      - 3.4.4 Delete Category
 
    - **3.5 Inventory & Stock Management**
+     - 3.5.0 Manage Raw Material Master (Chain-wide)
      - 3.5.1 View Stock List
      - 3.5.2 Import Stock (Nhập kho)
      - 3.5.3 Export Stock (Xuất kho)
      - 3.5.4 View Import/Export History
      - 3.5.5 Perform Inventory Audit (Kiểm kho)
-     - 3.5.6 Low Stock Alert
-     - 3.5.7 Automated Recipe-Based Stock Deduction
+     - 3.5.6 Auto-Deduct Stock on Prep Start (incl. Low Stock Alert)
 
     - **3.6 POS Transaction**
       - 3.6.1 Open Shift
@@ -96,11 +108,13 @@ This section tracks the revision history and modifications made to the Software 
    - **3.7 Order Management**
      - 3.7.1 View Order List
      - 3.7.2 View Order Detail
-     - 3.7.3 Update Order Status
+     - 3.7.3 View Order Queue Display
      - 3.7.4 Print Drink Label (Sticker)
-     - 3.7.5 View Order Queue Display
-     - 3.7.6 Cancel Order
-     - 3.7.7 Export Order List
+     - 3.7.5 Cancel Order
+     - 3.7.5a Refund / Comp After Preparation (UC-75)
+     - 3.7.6 Void & Cancellation Audit Logging
+     - 3.7.7 Fulfilment Resilience & Queue Lifecycle
+     - 3.7.8 Cashier Shift Sessions & Multi-Store Attendance Tracking
 
    - **3.8 Customer & Membership Management**
      - 3.8.1 List Customer
@@ -114,6 +128,7 @@ This section tracks the revision history and modifications made to the Software 
      - 3.9.3 Update/Delete Staff Schedule
      - 3.9.4 View Staff Attendance Report
      - 3.9.5 View Branch Staff List
+     - 3.9.6 Export Worked-Hours Report (UC-80)
 
    - **3.10 Promotion & Campaign Management**
      - 3.10.1 List Voucher / Promotion
@@ -124,6 +139,12 @@ This section tracks the revision history and modifications made to the Software 
      - 3.12.1 HQ Revenue Dashboard
      - 3.12.2 Export Report
      - 3.12.3 Store Revenue Reports
+     - 3.12.4 COGS / Margin & Ingredient Shrinkage Report (UC-76)
+     - 3.12.5 Price & Voucher Change History (UC-77)
+     - 3.12.6 Loyalty Liability & Movement Report (UC-78)
+     - 3.12.7 Labour Hours vs Revenue Report (UC-79)
+     - 3.12.8 Daily Z-Report (UC-81)
+     - 3.12.9 Cashier Void/Refund Anomaly Report (UC-82)
 
    - **3.13 System Configuration**
      - 3.13.1 Central System Settings

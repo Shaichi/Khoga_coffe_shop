@@ -25,7 +25,7 @@ graph LR
 ```
 
 ### 2. HQ Admin Portal Screen Flow
-A desktop portal enabling administrative personnel to manage employees, global menus, vouchers, customer records, global settings, and view brand-wide reports.
+A desktop portal enabling administrative personnel to manage employees, global menus, vouchers, customer records, global settings, and view brand-wide reports. The portal is shared by the three HQ roles, each seeing only its permitted modules: `ceoviewer` (read-only HQ reports), `businessadmin` (menu, category, voucher, and CRM management), and `ssadmin` (user provisioning, central system settings, and branch lifecycle).
 
 ```mermaid
 graph LR
@@ -129,10 +129,10 @@ The system comprises the following screens across its user portals:
 | | | View Profile Screen | Allow users to view personal information. |
 | | | Edit Profile Screen | Allow users to update personal information. |
 | | | Change Password Screen | Allows users to change their password. |
-| 2 | User Account Management | Admin Dashboard Home | HQ Admin portal home screen with navigation to all administrative modules. |
-| | | Account Management List Screen | Allows Admin to view all employee accounts. |
-| | | Add User Account Form | Enables Admin to create and register new employee profiles. |
-| | | Edit User Account Form | Allows Admin to edit employee details and roles. |
+| 2 | User Account Management | Admin Dashboard Home | Shared HQ portal home screen; each HQ role (ceoviewer, businessadmin, ssadmin) sees navigation to only its permitted modules. |
+| | | Account Management List Screen | Allows System Admin to view all employee accounts. |
+| | | Add User Account Form | Enables System Admin to create and register new employee profiles. |
+| | | Edit User Account Form | Allows System Admin to edit employee details and roles. |
 | | | User Detail & Audit Logs Screen | Displays profile details and historical activity records. |
 | 3 | Menu & Category Management | Menu & Categories Management Screen | Main catalog panel to review product categories and menu listings. |
 | | | Add Category Screen | Form to add a new category to the menu structure. |
@@ -148,8 +148,8 @@ The system comprises the following screens across its user portals:
 | | | Reports Export Modal | Modal to export branch sales and inventory reports to PDF/Excel. |
 | 7 | System Configuration | Central System Settings Screen | Central configuration screen for tax rates and brand settings. |
 | | | Branch Local Settings Screen | Local settings screen for branch hardware and POS registers. |
-| | | Branch Management List Screen | Lists all store branches with status indicators for Admin management. |
-| | | Add Branch Form | Form for Admin to register a new store branch with name, address, and phone. |
+| | | Branch Management List Screen | Lists all store branches with status indicators for System Admin management. |
+| | | Add Branch Form | Form for System Admin to register a new store branch with name, address, and phone. |
 | | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
 | 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
 | | | Stock List Screen | Displays branch inventory quantities and alert flags. |
@@ -178,65 +178,78 @@ The system comprises the following screens across its user portals:
 ---
 
 ## 3.1.3 Screen Authorization
-The table below specifies access control policies across all 48 screens:
+The table below specifies access control policies across all 60 screens. The single former "Admin" column is split into the three HQ roles (`ceoviewer`, `businessadmin`, `ssadmin`) per the authoritative RBAC matrix in §3.2.0 of [03_2 System Access & Security](03_2_system_access_security.md):
 
-| Screen Name | Admin | Store Manager | Cashier | Barista |
-|---|:---:|:---:|:---:|:---:|
-| 1. Login Screen | Yes | Yes | Yes | Yes |
-| 2. Forgot Password Screen | Yes | Yes | Yes | Yes |
-| 3. OTP Verification Screen | Yes | Yes | Yes | Yes |
-| 4. Set New Password Screen | Yes | Yes | Yes | Yes |
-| 5. Force Password Change Screen | Yes | Yes | Yes | Yes |
-| 6. View Profile Screen | Yes | Yes | Yes | Yes |
-| 7. Edit Profile Screen | Yes | Yes | Yes | Yes |
-| 8. Change Password Screen | Yes | Yes | Yes | Yes |
-| Logout Screen/Action | Yes | Yes | Yes | Yes |
-| 9. Admin Dashboard Home | **Yes** | No | No | No |
-| 10. Account Management List | **Yes** | No | No | No |
-| 11. Add User Account Form | **Yes** | No | No | No |
-| 12. Edit User Account Form | **Yes** | No | No | No |
-| 13. User Detail & Audit Logs | **Yes** | No | No | No |
-| 14. Menu & Categories Management | **Yes** | No | No | No |
-| 15. Add Category Screen | **Yes** | No | No | No |
-| 16. Edit Category Screen | **Yes** | No | No | No |
-| 17. Add Menu Item Form | **Yes** | No | No | No |
-| 18. Edit Menu Item Form | **Yes** | No | No | No |
-| 19. Vouchers & Promotions List | **Yes** | No | No | No |
-| 20. Add Voucher Form | **Yes** | No | No | No |
-| 21. Edit Voucher Form | **Yes** | No | No | No |
-| 22. Customer List & Loyalty History | **Yes** | **Yes** | **Yes** | No |
-| 23. HQ Business Reports | **Yes** | No | No | No |
-| 24. Central System Settings | **Yes** | No | No | No |
-| 25. Manager Dashboard Home | No | **Yes** | No | No |
-| 26. Stock List Screen | **Yes** | **Yes** | No | No |
-| 26a. Stock History Log Screen | **Yes** | **Yes** | No | No |
-| 27. Stock Import Form | No | **Yes** | No | No |
-| 28. Stock Export Form | No | **Yes** | No | No |
-| 29. Stock Audit Screen | No | **Yes** | No | No |
-| 30. Staff Shift Scheduler | No | **Yes** | No | No |
-| 30a. Add Shift Screen | No | **Yes** | No | No |
-| 30b. Edit Shift Screen | No | **Yes** | No | No |
-| 31. Staff Attendance Report | No | **Yes** | No | No |
-| 32. Store Revenue Reports Screen | No | **Yes** | No | No |
-| 32a. Reports Export Modal | No | **Yes** | No | No |
-| 33. Branch Local Settings | No | **Yes** | No | No |
-| 34. Shift Initiation Open Shift | No | No | **Yes** | No |
-| 35. POS Checkout Grid & Cart | No | No | **Yes** | No |
-| 36. Membership Search & Add | No | No | **Yes** | No |
-| 37. Apply Voucher Modal | No | No | **Yes** | No |
-| 37a. Redeem Loyalty Points Modal | No | No | **Yes** | No |
-| 38. Payment Checkout Modal | No | No | **Yes** | No |
-| 39. Payment Retry & Cancel Modal | No | No | **Yes** | No |
-| 40. Order History & Refund Request | No | No | **Yes** | No |
-| 41. Shift Reconciliation Close Shift | No | No | **Yes** | No |
-| 42. Barista Queue Monitor | No | Yes | Yes | **Yes** |
-| 43. Report Issue & Hold Order | No | No | No | **Yes** |
-| 44. Branch Management List | **Yes** | No | No | No |
-| 45. Add Branch Form | **Yes** | No | No | No |
-| 46. Edit / Deactivate Branch | **Yes** | No | No | No |
-| 47. View Branch Staff List Screen | No | **Yes** | No | No |
-| 48. Manager Order History Screen | No | **Yes** | No | No |
-| 49. Order Detail Screen | No | **Yes** | **Yes** | **Yes** |
+| Screen Name | ceoviewer | businessadmin | ssadmin | Store Manager | Cashier | Barista |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1. Login Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 2. Forgot Password Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 3. OTP Verification Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 4. Set New Password Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 5. Force Password Change Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 6. View Profile Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 7. Edit Profile Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| 8. Change Password Screen | Yes | Yes | Yes | Yes | Yes | Yes |
+| Logout Screen/Action | Yes | Yes | Yes | Yes | Yes | Yes |
+| 9. Admin Dashboard Home | **Yes** | **Yes** | **Yes** | No | No | No |
+| 10. Account Management List | No | No | **Yes** | No | No | No |
+| 11. Add User Account Form | No | No | **Yes** | No | No | No |
+| 12. Edit User Account Form | No | No | **Yes** | No | No | No |
+| 13. User Detail & Audit Logs | No | No | **Yes** | No | No | No |
+| 14. Menu & Categories Management | No | **Yes** | No | No | No | No |
+| 15. Add Category Screen | No | **Yes** | No | No | No | No |
+| 16. Edit Category Screen | No | **Yes** | No | No | No | No |
+| 17. Add Menu Item Form | No | **Yes** | No | No | No | No |
+| 18. Edit Menu Item Form | No | **Yes** | No | No | No | No |
+| 19. Vouchers & Promotions List | No | **Yes** | No | No | No | No |
+| 20. Add Voucher Form | No | **Yes** | No | No | No | No |
+| 21. Edit Voucher Form | No | **Yes** | No | No | No | No |
+| 22. Customer List & Loyalty History | No | **Yes** | No | **Yes** | **Yes** | No |
+| 23. HQ Business Reports | **Yes** | No | No | No | No | No |
+| 24. Central System Settings | No | No | **Yes** | No | No | No |
+| 25. Manager Dashboard Home | No | No | No | **Yes** | No | No |
+| 26. Stock List Screen | No | No | No | **Yes** | No | No |
+| 26a. Stock History Log Screen | No | No | No | **Yes** | No | No |
+| 27. Stock Import Form | No | No | No | **Yes** | No | No |
+| 28. Stock Export Form | No | No | No | **Yes** | No | No |
+| 29. Stock Audit Screen | No | No | No | **Yes** | No | No |
+| 30. Staff Shift Scheduler | No | No | No | **Yes** | No | No |
+| 30a. Add Shift Screen | No | No | No | **Yes** | No | No |
+| 30b. Edit Shift Screen | No | No | No | **Yes** | No | No |
+| 31. Staff Attendance Report | No | No | No | **Yes** | No | No |
+| 32. Store Revenue Reports Screen | No | No | No | **Yes** | No | No |
+| 32a. Reports Export Modal | No | No | No | **Yes** | No | No |
+| 33. Branch Local Settings | No | No | No | **Yes** | No | No |
+| 34. Shift Initiation Open Shift | No | No | No | No | **Yes** | No |
+| 35. POS Checkout Grid & Cart | No | No | No | No | **Yes** | No |
+| 36. Membership Search & Add | No | No | No | No | **Yes** | No |
+| 37. Apply Voucher Modal | No | No | No | No | **Yes** | No |
+| 37a. Redeem Loyalty Points Modal | No | No | No | No | **Yes** | No |
+| 38. Payment Checkout Modal | No | No | No | No | **Yes** | No |
+| 39. Payment Retry & Cancel Modal | No | No | No | No | **Yes** | No |
+| 40. Order History & Refund Request | No | No | No | No | **Yes** | No |
+| 41. Shift Reconciliation Close Shift | No | No | No | No | **Yes** | No |
+| 42. Barista Queue Monitor | No | No | No | Yes | Yes | **Yes** |
+| 43. Report Issue & Hold Order | No | No | No | No | No | **Yes** |
+| 44. Branch Management List | No | No | **Yes** | No | No | No |
+| 45. Add Branch Form | No | No | **Yes** | No | No | No |
+| 46. Edit / Deactivate Branch | No | No | **Yes** | No | No | No |
+| 47. View Branch Staff List Screen | No | No | No | **Yes** | No | No |
+| 48. Manager Order History Screen | No | No | No | **Yes** | No | No |
+| 49. Order Detail Screen | No | No | No | **Yes** | **Yes** | **Yes** |
+| 50. Raw Material Master | No | **Yes** | No | No | No | No |
+| 51. Refund / Comp Modal (post-PENDING) | No | No | No | **Yes** | **Yes** | No |
+| 52. COGS / Margin & Shrinkage Report | **Yes** | No | No | **Yes** | No | No |
+| 53. Price & Voucher Change History | **Yes** | No | No | No | No | No |
+| 54. Loyalty Liability & Movement Report | **Yes** | No | No | No | No | No |
+| 55. Labour Hours vs Revenue Report | **Yes** | No | No | **Yes** | No | No |
+| 56. Worked-Hours Export | No | No | No | **Yes** | No | No |
+| 57. Daily Z-Report | No | No | No | **Yes** | No | No |
+| 58. HQ MFA Challenge (login step) | **Yes** | **Yes** | **Yes** | No | No | No |
+| 59. Cashier Void/Refund Anomaly Report | **Yes** | No | No | **Yes** | No | No |
+| 60. User Account Change & Access Review Report | **Yes** | No | No | No | No | No |
+
+> **Note on inventory access (two layers):** **Branch stock quantities** (Stock List/History/Import/Export/Audit, screens 26–29) are owned exclusively by the `storemanager`. The previous "Admin = Read (auditing)" access on Stock List/History (screens 26/26a) is removed — no HQ role has direct access to branch stock screens; chain-wide stock visibility reaches `ceoviewer` only through consolidated HQ reports. Separately, the **Raw Material Master** (screen 50, UC-74) is a chain-wide *catalog* — defining which materials exist — owned by the `businessadmin`; it carries no per-branch quantities. There is no central warehouse.
 
 ---
 
@@ -264,6 +277,7 @@ erDiagram
     STORE ||--o{ SHIFT_SESSION : hosts
     STORE ||--o{ ORDER : receives
     STORE ||--o{ STOCK_ITEM : holds
+    RAW_MATERIAL ||--o{ STOCK_ITEM : "stocked per branch as"
     STORE ||--o{ STAFF_SCHEDULE : schedules
     STORE ||--o{ ATTENDANCE : tracks
     STORE ||--o{ BRANCH_MENU_STATUS : "manages availability in"
@@ -279,6 +293,8 @@ erDiagram
     MENU_ITEM ||--o{ BRANCH_MENU_STATUS : "has local status at"
     ORDER ||--o{ ORDER_ITEM : contains
     ORDER ||--o| ORDER_CANCELLATION : "is cancelled by"
+    ORDER ||--o{ ORDER_REFUND : "is refunded/comped by"
+    USER ||--o{ ORDER_REFUND : "authorises"
     ORDER_ITEM ||--o{ ORDER_ITEM_TOPPING : customized-with
     OPTION_TOPPING ||--o{ ORDER_ITEM_TOPPING : applied
     CUSTOMER ||--o{ ORDER : places
@@ -287,7 +303,7 @@ erDiagram
     VOUCHER ||--o{ ORDER : discounts
     MENU_ITEM ||--o{ RECIPE_ITEM : formulated-with
     OPTION_TOPPING ||--o{ RECIPE_ITEM : formulated-with
-    STOCK_ITEM ||--o{ RECIPE_ITEM : consumed-by
+    RAW_MATERIAL ||--o{ RECIPE_ITEM : consumed-by
 ```
 
 ---
@@ -296,7 +312,7 @@ erDiagram
 
 | # | Entity | Description |
 |---|---|---|
-| 1 | users | Stores login credentials and role-based permissions for employees (Admin, Manager, Cashier, Barista) within the system. |
+| 1 | users | Stores login credentials and role-based permissions for employees (CEO Viewer, Business Admin, System Admin, Store Manager, Cashier, Barista) within the system. |
 | 2 | categories | Represents main food and beverage groups to organize the product catalog. |
 | 3 | menu_items | Holds individual beverage and food listings, including catalog pricing, barcodes, chain-wide active status, and image references. |
 | 3a | branch_menu_status | Manages item availability status independently per branch store. |
@@ -306,7 +322,8 @@ erDiagram
 | 7 | orders | Represents sales transactions, linking customers, shifts, payment statuses, and fulfillment statuses. |
 | 8 | order_items | Line items detailing the specific menu products and quantities purchased in an order. |
 | 9 | order_item_toppings | Tracks specific toppings applied to ordered menu items. |
-| 10 | stock_items | Raw materials and shop supplies inventory quantities scoped per branch. |
+| 10 | raw_materials | Chain-wide master catalog of raw materials/ingredients owned by Business Admin (UC-74); the canonical source for recipe formulations (§3.3) and for the item dropdowns on every branch's Import/Export Stock screens. |
+| 10a | stock_items | Branch-level on-hand quantities of a master raw material (references `raw_materials` by FK); scoped per branch. |
 | 11 | stock_transactions | Historical ledger recording inventory imports, exports, physical audits, and wastage logs. |
 | 12 | vouchers | Stores promotional discount rules, coupon codes, validation dates, and customer usage limits. |
 | 13 | recipe_items | Defines the raw stock ingredient quantity consumed to produce one unit of a menu item or topping. |
@@ -327,12 +344,12 @@ Represents employees and system administrators.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the user. |
 | 2 | username | | Text (Max 50 characters) | Yes | Account login name, unique. |
 | 3 | password_hash | | Text (Max 255 characters) | Yes | Securely hashed password. |
-| 4 | role | | Selection (Role: ADMIN, STORE_MANAGER, CASHIER, BARISTA) | Yes | User role. |
+| 4 | role | | Selection (Role: CEOVIEWER, BUSINESSADMIN, SSADMIN, STOREMANAGER, CASHIER, BARISTA) | Yes | User role. |
 | 5 | full_name | | Text (Max 100 characters) | Yes | Employee full name. |
 | 6 | is_active | | Yes/No (Boolean) | Yes | Current status of the account. |
 | 7 | email | | Text (Max 100 characters) | Yes | Employee contact email address, unique. |
 | 8 | phone | | Text (Max 20 characters) | Yes | Employee contact phone number, unique. |
-| 9 | store_id | | Unique ID (UUID) | No | Foreign Key (FK) - references store/branch. Null for HQ Admin. |
+| 9 | store_id | | Unique ID (UUID) | No | Foreign Key (FK) - references store/branch. Null for HQ roles (ceoviewer / businessadmin / ssadmin). |
 | 10 | created_at | | Date & Time | Yes | Account creation timestamp. |
 | 11 | last_login_at | | Date & Time | No | Timestamp of the most recent successful login. |
 | 12 | must_change_password | | Yes/No (Boolean) | Yes | Flag indicating if the user must reset their password upon next login. Default: true. |
@@ -357,7 +374,7 @@ Individual food/beverage listings.
 | 3 | name | | Text (Max 100 characters) | Yes | Name of the food or beverage (e.g., "Espresso", "Peach Tea"). |
 | 4 | price | | Decimal (Currency/VND) | Yes | Base price. |
 | 5 | description | | Long Text | No | Description of the item. |
-| 6 | is_active | | Yes/No (Boolean) | Yes | Visibility flag for entire chain, decided by HQ Admin (default: true). |
+| 6 | is_active | | Yes/No (Boolean) | Yes | Visibility flag for entire chain, decided by Business Admin at HQ (default: true). |
 | 7 | image_url | | Text (Max 255 characters) | No | URL path to the product image file. |
 | 8 | barcode | | Text (Max 50 characters) | No | Barcode or SKU for POS barcode scanner lookup (unique). |
 | 9 | abbreviation | | Text (Max 50 characters) | Yes | Auto-generated abbreviation (e.g. cfd). |
@@ -444,6 +461,22 @@ Fulfillment cancellation and refund audits logs.
 | 5 | notes | | Long Text | Yes | Detailed comments. |
 | 6 | created_at | | Date & Time | Yes | Timestamp of cancellation. |
 
+### 7b. `ORDER_REFUND`
+Post-`PENDING` refund / comp audit log, Store-Manager authorised (UC-75 / BR-67).
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the refund/comp record. |
+| 2 | order_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references ORDER(id). |
+| 3 | sm_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The Store Manager who authorised. |
+| 4 | cashier_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references USER(id). The cashier who initiated. |
+| 5 | shift_session_id | | Unique ID (UUID) | No | FK - the open shift drawer charged for cash refunds (BR-09). |
+| 6 | refund_type | | Selection (`REFUND`, `COMP_REMAKE`) | Yes | Refund (money returned) or Comp/Remake (zero-charge replacement). |
+| 7 | amount | | Decimal (Currency/VND) | Yes | Refunded amount (0 for comp/remake). Supports partial refunds. |
+| 8 | reason | | Text (Max 100 characters) | Yes | Reason string. |
+| 9 | notes | | Long Text | Yes | Detailed comments. |
+| 10 | created_at | | Date & Time | Yes | Timestamp of the refund/comp. |
+
 ### 8. `ORDER_ITEM`
 Line items in an order.
 
@@ -466,18 +499,30 @@ Toppings attached to a specific order line item.
 | 4 | quantity | | Whole Number | Yes | Quantity of the topping applied. |
 | 5 | unit_price | | Decimal (Currency/VND) | Yes | Price of the topping at the time of purchase. |
 
-### 10. `STOCK_ITEM`
-Raw inventory tracking (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
+### 10. `RAW_MATERIAL`
+Chain-wide master catalog of raw materials/ingredients, owned exclusively by the Business Admin (UC-74 / §3.5.0). The canonical source for recipe formulations (§3.3) and for branch Import/Export stock dropdowns (UC-32/33). See BR-63/BR-64.
+
+| # | Attribute name | PK | Type | Mandatory | Description |
+|---|---|---|---|---|---|
+| 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the raw material. |
+| 2 | code | | Text (Max 20 characters) | Yes | Unique chain-wide material code (e.g., "STK-01"). Immutable after creation. |
+| 3 | name | | Text (Max 100 characters) | Yes | Display name of the raw material (e.g., "Coffee Beans", "Fresh Milk"). |
+| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "ml", "piece"). Locked once any stock transaction references the material. |
+| 5 | suggested_min_threshold | | Decimal (Quantity) | No | Default low-stock threshold proposed to branches (each branch may override locally). |
+| 6 | standard_cost | | Decimal (Currency/VND) | No | Standard unit cost per master unit, maintained by Business Admin; basis for chain-wide COGS & margin (BR-66). |
+| 7 | is_active | | Yes/No (Boolean) | Yes | Active status flag. Soft-delete: `Inactive` hides the material from new recipe/import selections (BR-64). |
+
+### 10a. `STOCK_ITEM`
+Branch-level on-hand quantity of a master raw material (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
 
 | # | Attribute name | PK | Type | Mandatory | Description |
 |---|---|---|---|---|---|
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the stock item. |
 | 2 | store_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references store branch. |
-| 3 | name | | Text (Max 100 characters) | Yes | Item name (e.g., "Coffee Beans", "Milk"). |
-| 4 | unit | | Text (Max 20 characters) | Yes | Unit of measurement (e.g., "kg", "liter", "piece"). |
-| 5 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
-| 6 | min_alert_threshold | | Decimal (Quantity) | Yes | Threshold triggering low stock alert. |
-| 7 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
+| 3 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id). Name and unit derive from the master (BR-63). |
+| 4 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
+| 5 | min_alert_threshold | | Decimal (Quantity) | Yes | Branch-local threshold triggering low stock alert (defaults from the master's suggested minimum). |
+| 6 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
 
 ### 11. `STOCK_TRANSACTION`
 Historical ledger of stock modifications.
@@ -518,7 +563,7 @@ Defines the ingredients/stock consumed to produce menu items and toppings.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the recipe item. |
 | 2 | menu_item_id | | Unique ID (UUID) | No | Foreign Key (FK) - references MENU_ITEM(id). Nullable if linked to topping instead. |
 | 3 | option_topping_id | | Unique ID (UUID) | No | Foreign Key (FK) - references OPTION_TOPPING(id). Nullable if linked to menu item instead. |
-| 4 | stock_item_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references STOCK_ITEM(id) being consumed. |
+| 4 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id) being consumed. Recipes reference the chain-wide master, not branch stock (BR-63). |
 | 5 | quantity_required | | Decimal (Quantity) | Yes | Ingredient quantity required to produce one unit of menu item or topping. |
 
 ### 14. `STORE`
