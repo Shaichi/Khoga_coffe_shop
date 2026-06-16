@@ -28,6 +28,7 @@ This section tracks the revision history and modifications made to the Software 
 | **1.15** | 2026-06-14 | Cleared the **remaining P1** backlog (operations/inventory + compliance/people/NFR) — **all P0 and P1 findings are now resolved**. **VietQR/payment (RV-O01/O02/O06):** UC-51 auto-confirm on callback, RETRY-QR idempotency (one settlement per `order_id`), and late-callback reconciliation (auto-flag refund, no order revival) — BR-84/BR-85, UC-51 AT2/AT3. **Offline (RV-O05/C19):** cash-only degraded mode (no offline card auth) with client-UUID identifiers, append-only sync, conflict surfacing, and `MAX_OFFLINE_HOURS` — BR-86, UC-51 AT4, §4.2.2 rewritten. **Order lifecycle (RV-O03/O04):** new terminal `ABANDONED` state + `READY_ABANDON_TIMEOUT` auto-expiry + SM force-close at shift close (BR-88); KDS/printer offline fallback (BR-87, §3.7.7). **Inventory (RV-O16):** negative-stock / `phantom_usage` ledger instead of clamping to 0 (BR-89, UC-62 AT1). **Staff (RV-C04/C05/C06/C07/C08):** cross-branch assignment by home SM + audit + BR-59 host-visibility exception (BR-90, UC-36 AT3); consolidated the duplicate BR-38; absence/OT/early-leave derivation (BR-91); labour-budget & max-hours/rest scheduling validation (BR-92, UC-36 AT2); attendance PIN uniqueness + mandatory photo (BR-93). **NFR (RV-C16/C17):** capacity expressed per-branch × `MAX_ACTIVE_BRANCHES`; 99.9% uptime measured excluding the scheduled maintenance window (§4.2.2/§4.2.3/§4.2.5). New BRs **BR-84…BR-93**. | Software Engineering Team | Store Management / Product Owner |
 | **1.14** | 2026-06-14 | Cleared the **RV-S (fraud & security) P1** backlog cluster, applying the project's "audit-log instead of maker-checker" philosophy consistently. **RV-S05:** mandatory **MFA for HQ roles** (`ceoviewer`/`businessadmin`/`ssadmin`) via email OTP (reusing UC-03/04) or TOTP, parameter `HQ_MFA_REQUIRED` (default on); POS/branch roles exempt — added UC-01 AT4, §3.2.14 MFA Challenge (screen 58), **BR-83**. **RV-S04:** **BR-82** — first `ssadmin` seeded at install (no in-app bootstrap), self-escalation blocked (own role/status change requires a different ssadmin); added UC-12/14 AT3. **RV-S03:** **BR-81** + **UC-83** User Account Change & Access Review report (CEO Viewer, §3.2.15, screen 60) — audits every account create/role-change/deactivate as the SoD compensating control. **RV-S02:** **BR-80** — every checkout voucher application & point redemption written to immutable `AUDIT_LOG` (§3.6.7). **RV-S01:** **UC-82** Cashier Void/Refund Anomaly report (Store Manager + CEO Viewer, §3.12.9, screen 59) + **BR-79** flagging cancel/refund outliers against `CANCEL_REFUND_ALERT_THRESHOLD`; PENDING cancel stays no-PIN (BR-05) and refunds stay SM-authorised (BR-67). Added screens 58–60 to §3.1, UC-82/83 to §2.3, two matrix rows to §5.4, and two security params to §3.13. | Software Engineering Team | Store Management / Product Owner |
 | **1.13** | 2026-06-14 | Cleared the **RV-F (financial/reporting) P1** backlog cluster. **RV-F03:** standardised the point-to-cash parameter to `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point), redemption in multiples of 100, floor-to-VND rounding (**BR-74**; §3.6.5/§3.6.7/§3.13). **RV-F04:** confirmed voucher + point stacking (≤1 voucher, points after voucher, combined cap = Gross Subtotal) via cross-reference to BR-70/BR-50 (§3.6.7). **RV-F05:** added **UC-78** Loyalty Liability & Movement report (CEO Viewer) reporting outstanding points + issued/redeemed/expired movement in points (**BR-75**, §3.12.6). **RV-F06:** added **UC-79** Labour Hours vs Revenue report (CEO Viewer + Store Manager) — a non-monetary staffing-efficiency KPI that stores no wage data, keeping payroll external per §1.2 (**BR-76**, §3.12.7). **RV-F07:** added **UC-80** Worked-Hours Export (Store Manager, own branch) — paired CHECK_IN/CHECK_OUT hours with missing-checkout flagging, feeding external payroll (**BR-77**, §3.9.6). **RV-F08:** added **UC-81** Daily Z-Report (Store Manager) consolidating all of a day's shifts into one branch statement (**BR-78**, §3.12.8). Added screens 54–57 to §3.1, UC-78/79/80/81 to §2.3, four matrix rows to §5.4. | Software Engineering Team | Store Management / Product Owner |
+| **1.17** | 2026-06-16 | Removed Section 3.3.7 (Two-Level Item Availability Model) as it does not represent a standalone screen. Consolidated its availability logic into the functional overview of §3.3 Menu Management and relocated BR-62 definition to §3.4.4.2 Delete Category. | Software Engineering Team | Store Management / Product Owner |
 
 
 
@@ -2397,6 +2398,14 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 > **Recipe ingredients source:** When a menu item's recipe (UC-18) is defined, its ingredients are selected from the chain-wide **Raw Material Master** maintained by the Business Admin (see §3.5.0 / UC-74). Recipes reference master materials by code; they do not define new materials.
 
+### Two-Level Item Availability Model
+
+Menu item availability is controlled at two independent levels to separate HQ chain decisions from branch-level operational reality:
+- **Chain-wide Status**: An active status flag on each menu item representing its general availability in the global catalog (managed by the Business Admin). If set to inactive, the item is hidden from all POS registers and online ordering channels in the chain.
+- **Branch-specific Status**: A mapping between branches and menu items indicating local availability (managed by the local Store Manager). If marked unavailable at a branch, the item is shown as "Out of Stock" at that branch only. The system also tracks the identity of the manager who last updated this status and the timestamp of the modification.
+
+An item is only available for sale at a specific branch if **both** the chain-wide status is active and the branch-specific status is available. If either flag is false, the item is considered unavailable (Out of Stock) at that branch. The menu catalog does not maintain a central availability flag.
+
 ---
 
 ## 3.3.1 F13 - View Menu Item List / UC-15 View Menu & Categories List
@@ -2452,7 +2461,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | ID | Rule Description |
 |---|---|
 | BR-24 | Items list shows search autocomplete results and real-time category filtering. |
-| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on the two-level model: `menu_items.is_active` (chain-wide) AND `branch_menu_status.is_available` (branch-level). An item appears as `Out of Stock` at a branch if either flag is false. See §3.3.7 for schema details. |
+| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on the two-level model: Chain-wide active status AND Branch-specific availability status. An item appears as `Out of Stock` at a branch if either status is false. See Two-Level Item Availability Model under §3.3 for details. |
 
 ---
 
@@ -2778,32 +2787,6 @@ This section details specifications for viewing, adding, updating, and deactivat
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
 | BR-65 | **Topping Recipe & Deduction**: A topping/option may carry its own recipe (`RECIPE_ITEM` linked via `option_topping_id` → `RAW_MATERIAL`). When an order enters `PREPARING`, UC-62 deducts the recipes of the base item **and** of every selected topping. Toppings with material cost therefore consume stock and contribute to COGS (BR-66); only truly material-free options (e.g. "No Ice") may have an empty recipe. |
 
----
-
-## 3.3.7 Two-Level Item Availability Model
-
-Menu item availability is controlled at two independent levels to separate HQ chain decisions from branch-level operational reality.
-
-### Availability Levels
-
-| Level | Field | Owner | Scope | Meaning when `false` |
-|---|---|---|---|---|
-| Chain-wide visibility | `menu_items.is_active` | Business Admin | All branches | Item is hidden from every POS in the chain. Use for permanent removal or seasonal deactivation. |
-| Branch-level availability | `branch_menu_status.is_available` | Store Manager | Single branch | Item is temporarily unavailable at that branch (e.g. out of stock, equipment issue). Other branches are unaffected. |
-
-> **Rule**: The menu catalog does **not** maintain a central availability flag. Per-branch availability is managed exclusively through a separate branch-menu mapping.
-
-### Data Requirements
-
-To support the two-level availability model, the system must maintain:
-- **Chain-wide Status**: An active status flag on each menu item representing its general availability in the global catalog (managed by the Business Admin).
-- **Branch-specific Status**: A mapping between branches and menu items indicating local availability (managed by the local Store Manager), along with the identity of the manager who last updated it and the timestamp of the modification.
-
-### Category Deletion Cascade Rule
-
-| ID | Rule Description |
-|---|---|
-| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted/archived, all menu items belonging to it have their category association removed (become uncategorized) to preserve historical sales data and prevent catalog issues. Uncategorized items appear as "Uncategorized" in the HQ menu management view and POS catalogs. |
 
 
 ---
@@ -3030,6 +3013,7 @@ This section details specifications for managing product categories.
 | ID | Rule Description |
 |---|---|
 | BR-31 | Cannot delete a category if it contains active menu items. A category can only be deleted if it is empty or all its items are soft-deleted. Upon deletion, any menu items previously belonging to this category will automatically become uncategorized (per BR-62). |
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted/archived, all menu items belonging to it have their category association removed (become uncategorized) to preserve historical sales data and prevent catalog issues. Uncategorized items appear as "Uncategorized" in the HQ menu management view and POS catalogs. |
 
 
 

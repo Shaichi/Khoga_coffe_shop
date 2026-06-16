@@ -220,6 +220,7 @@ This section details specifications for managing product categories.
 | ID | Rule Description |
 |---|---|
 | BR-31 | Cannot delete a category if it contains active menu items. A category can only be deleted if it is empty or all its items are soft-deleted. Upon deletion, any menu items previously belonging to this category will automatically become uncategorized (per BR-62). |
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted/archived, all menu items belonging to it have their category association removed (become uncategorized) to preserve historical sales data and prevent catalog issues. Uncategorized items appear as "Uncategorized" in the HQ menu management view and POS catalogs. |
 
 
 

@@ -4,6 +4,14 @@ This section details specifications for viewing, adding, updating, and deactivat
 
 > **Recipe ingredients source:** When a menu item's recipe (UC-18) is defined, its ingredients are selected from the chain-wide **Raw Material Master** maintained by the Business Admin (see §3.5.0 / UC-74). Recipes reference master materials by code; they do not define new materials.
 
+### Two-Level Item Availability Model
+
+Menu item availability is controlled at two independent levels to separate HQ chain decisions from branch-level operational reality:
+- **Chain-wide Status**: An active status flag on each menu item representing its general availability in the global catalog (managed by the Business Admin). If set to inactive, the item is hidden from all POS registers and online ordering channels in the chain.
+- **Branch-specific Status**: A mapping between branches and menu items indicating local availability (managed by the local Store Manager). If marked unavailable at a branch, the item is shown as "Out of Stock" at that branch only. The system also tracks the identity of the manager who last updated this status and the timestamp of the modification.
+
+An item is only available for sale at a specific branch if **both** the chain-wide status is active and the branch-specific status is available. If either flag is false, the item is considered unavailable (Out of Stock) at that branch. The menu catalog does not maintain a central availability flag.
+
 ---
 
 ## 3.3.1 F13 - View Menu Item List / UC-15 View Menu & Categories List
@@ -59,7 +67,7 @@ This section details specifications for viewing, adding, updating, and deactivat
 | ID | Rule Description |
 |---|---|
 | BR-24 | Items list shows search autocomplete results and real-time category filtering. |
-| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on the two-level model: `menu_items.is_active` (chain-wide) AND `branch_menu_status.is_available` (branch-level). An item appears as `Out of Stock` at a branch if either flag is false. See §3.3.7 for schema details. |
+| BR-25 | Availability states must indicate `Available` or `Out of Stock` based on the two-level model: Chain-wide active status AND Branch-specific availability status. An item appears as `Out of Stock` at a branch if either status is false. See Two-Level Item Availability Model under §3.3 for details. |
 
 ---
 
@@ -385,29 +393,3 @@ This section details specifications for viewing, adding, updating, and deactivat
 | BR-29 | Price can be 0 for standard options (e.g. "No Ice", "No Sugar"). Toppings can be linked globally or selectively to drinks. |
 | BR-65 | **Topping Recipe & Deduction**: A topping/option may carry its own recipe (`RECIPE_ITEM` linked via `option_topping_id` → `RAW_MATERIAL`). When an order enters `PREPARING`, UC-62 deducts the recipes of the base item **and** of every selected topping. Toppings with material cost therefore consume stock and contribute to COGS (BR-66); only truly material-free options (e.g. "No Ice") may have an empty recipe. |
 
----
-
-## 3.3.7 Two-Level Item Availability Model
-
-Menu item availability is controlled at two independent levels to separate HQ chain decisions from branch-level operational reality.
-
-### Availability Levels
-
-| Level | Field | Owner | Scope | Meaning when `false` |
-|---|---|---|---|---|
-| Chain-wide visibility | `menu_items.is_active` | Business Admin | All branches | Item is hidden from every POS in the chain. Use for permanent removal or seasonal deactivation. |
-| Branch-level availability | `branch_menu_status.is_available` | Store Manager | Single branch | Item is temporarily unavailable at that branch (e.g. out of stock, equipment issue). Other branches are unaffected. |
-
-> **Rule**: The menu catalog does **not** maintain a central availability flag. Per-branch availability is managed exclusively through a separate branch-menu mapping.
-
-### Data Requirements
-
-To support the two-level availability model, the system must maintain:
-- **Chain-wide Status**: An active status flag on each menu item representing its general availability in the global catalog (managed by the Business Admin).
-- **Branch-specific Status**: A mapping between branches and menu items indicating local availability (managed by the local Store Manager), along with the identity of the manager who last updated it and the timestamp of the modification.
-
-### Category Deletion Cascade Rule
-
-| ID | Rule Description |
-|---|---|
-| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted/archived, all menu items belonging to it have their category association removed (become uncategorized) to preserve historical sales data and prevent catalog issues. Uncategorized items appear as "Uncategorized" in the HQ menu management view and POS catalogs. |
