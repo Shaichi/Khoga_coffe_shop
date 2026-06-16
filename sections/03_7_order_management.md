@@ -79,6 +79,11 @@ All orders follow the state transitions below:
 | 1 | User | Opens Order History screen. |
 | 2 | Portal | Displays current branch orders list. |
 
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected for longer than the configurable `READY_ABANDON_TIMEOUT` is auto-transitioned to the terminal state `ABANDONED`. At shift close, BR-03 still forbids closing while non-terminal orders exist, but the Store Manager may **force-close** any remaining `READY` orders to `ABANDONED` (logged with the approving manager). Because stock was deducted at `PREPARING` (UC-62/BR-07), no stock reversal occurs; `ABANDONED` orders are reported separately as uncollected and excluded from net sales. |
+
 ---
 
 ## 3.7.2 F36 - View Order Detail / UC-73 View Order Detail
@@ -177,6 +182,12 @@ All orders follow the state transitions below:
 |---|---|---|
 | 1 | Barista | Opens the queue display. |
 | 2 | Portal | Displays pending, preparing, and ready orders. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the branch and shift session level. No performance metric is recorded per individual barista user ID for each beverage item. Reports expose aggregate throughput only. |
+| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the Kitchen Display System or sticker printer is unreachable, orders are **not** lost — new tickets queue locally and are (re)dispatched on reconnect, and the POS exposes a **manual fallback** (on-screen ticket list + reprint, UC-56/UC-57) so the Barista can keep working during peak hours. A printer/KDS outage never blocks taking or preparing orders. |
 
 ---
 
@@ -280,6 +291,10 @@ All orders follow the state transitions below:
 | BR-07 | **Inventory Deduction Timing**: Recipe-based stock for an order is deducted exactly once, when the order transitions from `PENDING` to `PREPARING` (UC-62, Barista taps "START PREP"). Every saleable item in the catalog is a prepared beverage/item that passes through the Barista queue, so this single trigger covers all stock movement — the chain sells no packaged/ready-to-serve goods that bypass preparation. Because cancellation is only permitted while the order is still `PENDING` (BR-05), no deduction has occurred at cancellation time, so no replenishment is ever required. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
+#### Data Requirements
+To support cancellation auditing, the system must record:
+- **Order Cancellation Logs**: Capturing the canceled order, the cashier who executed the cancellation, a mandatory cancellation reason, detailed notes, and the timestamp.
+
 ---
 
 ## 3.7.5a F39.1 - Refund / Comp After Preparation / UC-75 Store-Manager Refund or Comp
@@ -345,56 +360,10 @@ All orders follow the state transitions below:
 | 5 | Portal | Writes an `order_refunds` audit record (`order_id`, `sm_id`, `cashier_id`, type, amount, reason, notes) and surfaces it on the Store Manager dashboard. |
 
 #### Business Rules
-| ID | Rule Description |
-|---|---|
-| BR-67 | **Store-Manager Refund / Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or SM PIN), always logged with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09); card/VietQR refunds go through the payment gateway. A refund reverses accrued loyalty points and restores redeemed points proportionally to the refunded amount (per BR-08). **Partial / single-line-item refunds are permitted.** A Comp / Remake issues a zero-charge replacement that re-enters the prep queue and deducts stock again (UC-62). The original order's prep/sales history is preserved (not voided). |
+| BR-67 | **Store-Manager Refund / Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or SM PIN), always logged with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09; card/VietQR refunds go through the payment gateway. A refund reverses accrued loyalty points and restores redeemed points proportionally to the refunded amount (per BR-08). **Partial / single-line-item refunds are permitted.** A Comp / Remake issues a zero-charge replacement that re-enters the prep queue and deducts stock again (UC-62). The original order's prep/sales history is preserved (not voided). |
 
----
-
-## 3.7.5.1 KDS Barista Performance KPI
-
-Preparation throughput metrics are aggregated at the **shift and branch level**, not attributed to individual baristas or individual drink preparations. This reflects the shared-station model where multiple baristas may contribute to the same order queue within a single shift.
-
-### Business Rule
-
-| ID | Rule Description |
-|---|---|
-| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the `store_id + shift_session_id` level. No performance metric is recorded per individual `user_id` for each beverage item. Reports expose aggregate throughput only. |
-
----
-
-## 3.7.6 Void & Cancellation Audit Logging
-
-All order cancellation actions are recorded in the central database to prevent fraud, track waste, and support financial bookkeeping.
-
-### 3.7.6.1 Cancellation & Refund Data Requirements
-
-To support cancellation and refund auditing, the system must record:
-- **Order Cancellation Logs**: Capturing the canceled order, the cashier who executed the cancellation, a mandatory cancellation reason, detailed notes, and the timestamp.
+#### Data Requirements
+To support refund/comp auditing, the system must record:
 - **Order Refund/Comp Logs**: For Store-Manager authorized refunds or comps past the PENDING state, capturing the order, the authorizing Store Manager, the initiating cashier, the active shift session (for cash refunds), the refund type (standard refund or comp remake), the refund amount, the reason, notes, and the timestamp.
-
----
-
-## 3.7.7 Fulfilment Resilience & Queue Lifecycle
-
-### Business Rules
-| ID | Rule Description |
-|---|---|
-| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the Kitchen Display System or sticker printer is unreachable, orders are **not** lost — new tickets queue locally and are (re)dispatched on reconnect, and the POS exposes a **manual fallback** (on-screen ticket list + reprint, UC-56/UC-57) so the Barista can keep working during peak hours. A printer/KDS outage never blocks taking or preparing orders. (RV-O04) |
-| BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected for longer than the configurable `READY_ABANDON_TIMEOUT` is auto-transitioned to the terminal state `ABANDONED`. At shift close, BR-03 still forbids closing while non-terminal orders exist, but the Store Manager may **force-close** any remaining `READY` orders to `ABANDONED` (logged with `sm_id`). Because stock was deducted at `PREPARING` (UC-62/BR-07), no stock reversal occurs; `ABANDONED` orders are reported separately as uncollected and excluded from net sales. (RV-O03) |
-
----
-
-## 3.7.8 Cashier Shift Sessions & Multi-Store Attendance Tracking
-
-This section specifies operational guidelines for cash register shifts, session management, and employee cross-branch deployments.
-
-### 3.7.8.1 Separation of User Session & Shift Session
-- **Rule**: Cashiers are allowed to log out of their personal user account session (terminating their `User Session` token) without being forced to close the POS cash drawer ca làm việc (`Shift Session`).
-- **Operation**: The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. This bypasses the mandatory cash counting and closing float reconciliation when a cashier takes a short break or switches duties mid-shift.
-
-### 3.7.8.2 Cross-Branch Staff Mobility Support
-- **Rule**: Employees (Cashiers, Baristas) are permitted to log in, check-in for attendance, or open POS shifts at any active branch store in the chain when they are assigned as cross-branch support.
-- **Data Association**: The system dynamically identifies the active POS register terminal's `store_id` where the login or attendance popup action occurs. All resulting sales revenue, cash floats, and attendance logs are automatically recorded under that physical branch store's ID rather than the employee's default home branch.
 
 

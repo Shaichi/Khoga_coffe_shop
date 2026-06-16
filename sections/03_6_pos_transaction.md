@@ -63,6 +63,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | ID | Rule Description |
 |---|---|
 | BR-33 | Starting cash float must be greater than or equal to zero. |
+| BR-95 | **Separation of User and Shift Sessions**: A cashier is allowed to log out of their personal user account session (terminating their User Session token) without being forced to close the POS cash drawer ca làm việc (Shift Session). The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. |
 
 ---
 
@@ -325,7 +326,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | ID | Rule Description |
 |---|---|
 | BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE_PER_POINT`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
-| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the system parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND per point**), maintained in Central System Settings (UC-30). Redeemed points must be a whole **multiple of 100** (MSG14). The raw discount `Redeemed Points × LOYALTY_REDEMPTION_VALUE_PER_POINT` is then **floored to the nearest whole VND** before the %/absolute caps in §3.6.7 step 3 are applied. This is the single definition of redemption value used by checkout (§3.6.7) and the loyalty-liability report (UC-78). |
+| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the system parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND per point**), maintained in Central System Settings (UC-30). Redeemed points must be a whole **multiple of 100** (MSG14). The raw discount `Redeemed Points × LOYALTY_REDEMPTION_VALUE_PER_POINT` is then **floored to the nearest whole VND** before the %/absolute caps in §3.6.6.3 step 3 are applied. This is the single definition of redemption value used by checkout (§3.6.6.3) and the loyalty-liability report (UC-78). |
 
 ---
 
@@ -382,7 +383,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | 1 | Cashier | Selects payment method and initiates transaction. |
 | 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) bound to the `order_id`, or registers Cash drawer float logic. |
 | 2a | Portal | **VietQR auto-confirm**: on receiving the gateway settlement callback for that `order_id`, the Portal **automatically** marks the payment confirmed (no manual cashier confirmation needed) — the 60-second timeout (AT1) is the error fallback, not the normal path (BR-84). |
-| 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.7 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
+| 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.6.3 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
 
 #### Alternative Flows
 ##### AT1: Gateway Timeout
@@ -422,7 +423,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 
 ---
 
-## 3.6.7 Discount Priority & Stacking Rules
+### 3.6.6.3 Discount Priority & Stacking Rules
 
 This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap. The fixed evaluation order below is authoritative and is codified as **BR-70** (Discount & Tax Stacking Order); the **Net Total Payable** it produces is the single accrual base defined in **BR-69**.
 

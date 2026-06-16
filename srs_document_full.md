@@ -23,12 +23,12 @@ This section tracks the revision history and modifications made to the Software 
 | **1.9** | 2026-06-09 | Migrated from the legacy 4-role model to a 6-role RBAC model: the HQ "Admin" umbrella was split into `ceoviewer` (read-only reports), `businessadmin` (menu/recipe/voucher/CRM), and `ssadmin` (users/config/branches). Updated actors, use-case diagrams (§2.2.2–2.2.4), Screen Authorization matrix (§3.1, 6 columns), USER role enum, and Feature-Actor Mapping (§5.4). | Software Engineering Team | Store Management / Product Owner |
 | **1.10** | 2026-06-11 | Added UC-74 Manage Raw Material Master (§3.5.0): a chain-wide raw-material master catalog owned by `businessadmin`, source for recipe formulations and branch Import/Export dropdowns. Added screen 50, BR-63/BR-64, the `RAW_MATERIAL` entity to the ERD (with `STOCK_ITEM` and `RECIPE_ITEM` re-pointed to the master), and §2.3 / §2.2.3 use-case entries. | Software Engineering Team | Store Management / Product Owner |
 | **1.11** | 2026-06-13 | CEO-review resolutions. **P0 consistency:** finished the 6-role migration in §3.2 (use-case bodies were still 4-role), fixed BR-54 / hardcoded "5" in §3.13, unified inventory-deduction timing to `PREPARING` (UC-62/BR-07), and cleaned stale "central warehouse"/membership-tier wording in the architecture doc. **New capabilities:** (1) UC-75 Store-Manager Refund/Comp for post-`PENDING` complaints + BR-67 + `ORDER_REFUND` entity; (2) topping recipes that deduct stock (BR-65, UC-62 + §3.3.6); (3) standard-cost COGS via `RAW_MATERIAL.standard_cost` (BR-66) + UC-76 COGS/Margin & Shrinkage report; (4) mandatory audit-log of price/voucher changes (BR-68) + UC-77 Change-History report. Screens 51–53 added to §3.1; UC-75/76/77 added to §2.3. | Software Engineering Team | Store Management / Product Owner |
-| **1.12** | 2026-06-14 | Cleared the 6 CEO-review **P0** backlog items (`srs_review_findings.md`). **RV-C02/C03:** rebuilt the `attendance_logs` schema — replaced the broken `lateness_minutes` GENERATED column (referenced a non-existent `scheduled_start`) with a real `scheduled_start` column snapshotted at check-in; lateness is now derived at the reporting layer in **branch-local** time, fixing the ±7h UTC error (BR-38/BR-39). **RV-F01/F02:** defined the loyalty accrual base "Net Total Payable" (VAT-inclusive, after voucher & point redemption) as **BR-69** and the fixed Voucher→Points→VAT→accrual stacking order as **BR-70** (§3.6.7). **RV-C01:** added PDPA / Decree 13/2023 compliance — customer-consent capture at UC-25 (`consent_at`/`consent_version`, BR-71), 24-month PII retention + on-request erasure and 90-day attendance-photo purge (BR-72), and §4.2.6.1 Personal Data Protection. **RV-O17:** recipe lines must use the raw material's exact master unit — no kg↔g conversion, rejected at save (BR-73, UC-18 AT2). | Software Engineering Team | Store Management / Product Owner |
+| **1.12** | 2026-06-14 | Cleared the 6 CEO-review **P0** backlog items (`srs_review_findings.md`). **RV-C02/C03:** rebuilt the `attendance_logs` schema — replaced the broken `lateness_minutes` GENERATED column (referenced a non-existent `scheduled_start`) with a real `scheduled_start` column snapshotted at check-in; lateness is now derived at the reporting layer in **branch-local** time, fixing the ±7h UTC error (BR-38/BR-39). **RV-F01/F02:** defined the loyalty accrual base "Net Total Payable" (VAT-inclusive, after voucher & point redemption) as **BR-69** and the fixed Voucher→Points→VAT→accrual stacking order as **BR-70** (§3.6.6.3). **RV-C01:** added PDPA / Decree 13/2023 compliance — customer-consent capture at UC-25 (`consent_at`/`consent_version`, BR-71), 24-month PII retention + on-request erasure and 90-day attendance-photo purge (BR-72), and §4.2.6.1 Personal Data Protection. **RV-O17:** recipe lines must use the raw material's exact master unit — no kg↔g conversion, rejected at save (BR-73, UC-18 AT2). | Software Engineering Team | Store Management / Product Owner |
 | **1.16** | 2026-06-15 | **Consistency pass** (pre-merge QA, no spec changes): fixed a duplicate business-rule ID — the §3.13 "Loyalty Config Parameters" rule was mis-numbered `BR-57` (which canonically denotes Employee ID Auto-Allocation) and is renumbered **BR-94** (added to §5.1); fixed a duplicate subsection heading — the pre-existing "Cashier Shift Sessions & Multi-Store Attendance Tracking" was renumbered **§3.7.8** (its children 3.7.8.1/3.7.8.2) so it no longer collides with the new §3.7.7 "Fulfilment Resilience & Queue Lifecycle"; and refreshed the Table of Contents to list the §3.2.14/15, §3.7.5a–3.7.8, §3.9.6, and §3.12.4–3.12.9 subsections added in v1.10–v1.15. | Software Engineering Team | Store Management / Product Owner |
 | **1.15** | 2026-06-14 | Cleared the **remaining P1** backlog (operations/inventory + compliance/people/NFR) — **all P0 and P1 findings are now resolved**. **VietQR/payment (RV-O01/O02/O06):** UC-51 auto-confirm on callback, RETRY-QR idempotency (one settlement per `order_id`), and late-callback reconciliation (auto-flag refund, no order revival) — BR-84/BR-85, UC-51 AT2/AT3. **Offline (RV-O05/C19):** cash-only degraded mode (no offline card auth) with client-UUID identifiers, append-only sync, conflict surfacing, and `MAX_OFFLINE_HOURS` — BR-86, UC-51 AT4, §4.2.2 rewritten. **Order lifecycle (RV-O03/O04):** new terminal `ABANDONED` state + `READY_ABANDON_TIMEOUT` auto-expiry + SM force-close at shift close (BR-88); KDS/printer offline fallback (BR-87, §3.7.7). **Inventory (RV-O16):** negative-stock / `phantom_usage` ledger instead of clamping to 0 (BR-89, UC-62 AT1). **Staff (RV-C04/C05/C06/C07/C08):** cross-branch assignment by home SM + audit + BR-59 host-visibility exception (BR-90, UC-36 AT3); consolidated the duplicate BR-38; absence/OT/early-leave derivation (BR-91); labour-budget & max-hours/rest scheduling validation (BR-92, UC-36 AT2); attendance PIN uniqueness + mandatory photo (BR-93). **NFR (RV-C16/C17):** capacity expressed per-branch × `MAX_ACTIVE_BRANCHES`; 99.9% uptime measured excluding the scheduled maintenance window (§4.2.2/§4.2.3/§4.2.5). New BRs **BR-84…BR-93**. | Software Engineering Team | Store Management / Product Owner |
-| **1.14** | 2026-06-14 | Cleared the **RV-S (fraud & security) P1** backlog cluster, applying the project's "audit-log instead of maker-checker" philosophy consistently. **RV-S05:** mandatory **MFA for HQ roles** (`ceoviewer`/`businessadmin`/`ssadmin`) via email OTP (reusing UC-03/04) or TOTP, parameter `HQ_MFA_REQUIRED` (default on); POS/branch roles exempt — added UC-01 AT4, §3.2.14 MFA Challenge (screen 58), **BR-83**. **RV-S04:** **BR-82** — first `ssadmin` seeded at install (no in-app bootstrap), self-escalation blocked (own role/status change requires a different ssadmin); added UC-12/14 AT3. **RV-S03:** **BR-81** + **UC-83** User Account Change & Access Review report (CEO Viewer, §3.2.15, screen 60) — audits every account create/role-change/deactivate as the SoD compensating control. **RV-S02:** **BR-80** — every checkout voucher application & point redemption written to immutable `AUDIT_LOG` (§3.6.7). **RV-S01:** **UC-82** Cashier Void/Refund Anomaly report (Store Manager + CEO Viewer, §3.12.9, screen 59) + **BR-79** flagging cancel/refund outliers against `CANCEL_REFUND_ALERT_THRESHOLD`; PENDING cancel stays no-PIN (BR-05) and refunds stay SM-authorised (BR-67). Added screens 58–60 to §3.1, UC-82/83 to §2.3, two matrix rows to §5.4, and two security params to §3.13. | Software Engineering Team | Store Management / Product Owner |
-| **1.13** | 2026-06-14 | Cleared the **RV-F (financial/reporting) P1** backlog cluster. **RV-F03:** standardised the point-to-cash parameter to `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point), redemption in multiples of 100, floor-to-VND rounding (**BR-74**; §3.6.5/§3.6.7/§3.13). **RV-F04:** confirmed voucher + point stacking (≤1 voucher, points after voucher, combined cap = Gross Subtotal) via cross-reference to BR-70/BR-50 (§3.6.7). **RV-F05:** added **UC-78** Loyalty Liability & Movement report (CEO Viewer) reporting outstanding points + issued/redeemed/expired movement in points (**BR-75**, §3.12.6). **RV-F06:** added **UC-79** Labour Hours vs Revenue report (CEO Viewer + Store Manager) — a non-monetary staffing-efficiency KPI that stores no wage data, keeping payroll external per §1.2 (**BR-76**, §3.12.7). **RV-F07:** added **UC-80** Worked-Hours Export (Store Manager, own branch) — paired CHECK_IN/CHECK_OUT hours with missing-checkout flagging, feeding external payroll (**BR-77**, §3.9.6). **RV-F08:** added **UC-81** Daily Z-Report (Store Manager) consolidating all of a day's shifts into one branch statement (**BR-78**, §3.12.8). Added screens 54–57 to §3.1, UC-78/79/80/81 to §2.3, four matrix rows to §5.4. | Software Engineering Team | Store Management / Product Owner |
-| **1.17** | 2026-06-16 | Removed Section 3.3.7 (Two-Level Item Availability Model) as it does not represent a standalone screen. Consolidated its availability logic into the functional overview of §3.3 Menu Management and relocated BR-62 definition to §3.4.4.2 Delete Category. | Software Engineering Team | Store Management / Product Owner |
+| **1.14** | 2026-06-14 | Cleared the **RV-S (fraud & security) P1** backlog cluster, applying the project's "audit-log instead of maker-checker" philosophy consistently. **RV-S05:** mandatory **MFA for HQ roles** (`ceoviewer`/`businessadmin`/`ssadmin`) via email OTP (reusing UC-03/04) or TOTP, parameter `HQ_MFA_REQUIRED` (default on); POS/branch roles exempt — added UC-01 AT4, §3.2.14 MFA Challenge (screen 58), **BR-83**. **RV-S04:** **BR-82** — first `ssadmin` seeded at install (no in-app bootstrap), self-escalation blocked (own role/status change requires a different ssadmin); added UC-12/14 AT3. **RV-S03:** **BR-81** + **UC-83** User Account Change & Access Review report (CEO Viewer, §3.2.15, screen 60) — audits every account create/role-change/deactivate as the SoD compensating control. **RV-S02:** **BR-80** — every checkout voucher application & point redemption written to immutable `AUDIT_LOG` (§3.6.6.3). **RV-S01:** **UC-82** Cashier Void/Refund Anomaly report (Store Manager + CEO Viewer, §3.12.9, screen 59) + **BR-79** flagging cancel/refund outliers against `CANCEL_REFUND_ALERT_THRESHOLD`; PENDING cancel stays no-PIN (BR-05) and refunds stay SM-authorised (BR-67). Added screens 58–60 to §3.1, UC-82/83 to §2.3, two matrix rows to §5.4, and two security params to §3.13. | Software Engineering Team | Store Management / Product Owner |
+| **1.13** | 2026-06-14 | Cleared the **RV-F (financial/reporting) P1** backlog cluster. **RV-F03:** standardised the point-to-cash parameter to `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point), redemption in multiples of 100, floor-to-VND rounding (**BR-74**; §3.6.5/§3.6.6.3/§3.13). **RV-F04:** confirmed voucher + point stacking (≤1 voucher, points after voucher, combined cap = Gross Subtotal) via cross-reference to BR-70/BR-50 (§3.6.6.3). **RV-F05:** added **UC-78** Loyalty Liability & Movement report (CEO Viewer) reporting outstanding points + issued/redeemed/expired movement in points (**BR-75**, §3.12.6). **RV-F06:** added **UC-79** Labour Hours vs Revenue report (CEO Viewer + Store Manager) — a non-monetary staffing-efficiency KPI that stores no wage data, keeping payroll external per §1.2 (**BR-76**, §3.12.7). **RV-F07:** added **UC-80** Worked-Hours Export (Store Manager, own branch) — paired CHECK_IN/CHECK_OUT hours with missing-checkout flagging, feeding external payroll (**BR-77**, §3.9.6). **RV-F08:** added **UC-81** Daily Z-Report (Store Manager) consolidating all of a day's shifts into one branch statement (**BR-78**, §3.12.8). Added screens 54–57 to §3.1, UC-78/79/80/81 to §2.3, four matrix rows to §5.4. | Software Engineering Team | Store Management / Product Owner |
+| **1.17** | 2026-06-16 | Cleaned up non-screen standalone sections across the SRS. Removed Section 3.3.7 (Two-Level Availability Model) and relocated its logic to §3.3 overview. Converted Section 3.6.7 (Discount Priority & Stacking) to subsection §3.6.6.3. Relocated KDS KPI (BR-61) and offline fallback (BR-87) to KDS Queue (§3.7.3), ready auto-abandon (BR-88) to Order History (§3.7.1), cancellation/refund data requirements to UC-55/UC-75, and user session separation rule to UC-44. Relocated BR-62 to UC-70. | Software Engineering Team | Store Management / Product Owner |
 
 
 
@@ -107,7 +107,7 @@ This section tracks the revision history and modifications made to the Software 
       - 3.6.4 Apply Voucher (Discount Code)
       - 3.6.5 Redeem Loyalty Points
       - 3.6.6 Process Payment
-      - 3.6.7 Discount Priority & Stacking Rules
+        - 3.6.6.3 Discount Priority & Stacking Rules
       - 3.6.8 Issue Invoice
       - 3.6.9 Close Shift
 
@@ -3526,6 +3526,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | ID | Rule Description |
 |---|---|
 | BR-33 | Starting cash float must be greater than or equal to zero. |
+| BR-95 | **Separation of User and Shift Sessions**: A cashier is allowed to log out of their personal user account session (terminating their User Session token) without being forced to close the POS cash drawer ca làm việc (Shift Session). The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. |
 
 ---
 
@@ -3788,7 +3789,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | ID | Rule Description |
 |---|---|
 | BR-02 | Points can be redeemed for cash discount at checkout. By default, 100 points can be redeemed for a 10,000 VND discount (1 point = 100 VND as per `LOYALTY_REDEMPTION_VALUE_PER_POINT`), and point redemption must be in multiples of 100, subject to the configured maximum discount percentage (`LOYALTY_MAX_REDEMPTION_PERCENT`) and maximum absolute discount amount per order (`LOYALTY_MAX_REDEMPTION_LIMIT`). |
-| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the system parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND per point**), maintained in Central System Settings (UC-30). Redeemed points must be a whole **multiple of 100** (MSG14). The raw discount `Redeemed Points × LOYALTY_REDEMPTION_VALUE_PER_POINT` is then **floored to the nearest whole VND** before the %/absolute caps in §3.6.7 step 3 are applied. This is the single definition of redemption value used by checkout (§3.6.7) and the loyalty-liability report (UC-78). |
+| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the system parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND per point**), maintained in Central System Settings (UC-30). Redeemed points must be a whole **multiple of 100** (MSG14). The raw discount `Redeemed Points × LOYALTY_REDEMPTION_VALUE_PER_POINT` is then **floored to the nearest whole VND** before the %/absolute caps in §3.6.6.3 step 3 are applied. This is the single definition of redemption value used by checkout (§3.6.6.3) and the loyalty-liability report (UC-78). |
 
 ---
 
@@ -3845,7 +3846,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | 1 | Cashier | Selects payment method and initiates transaction. |
 | 2 | Portal | Generates payment gateway endpoint (for QR/Wallet) bound to the `order_id`, or registers Cash drawer float logic. |
 | 2a | Portal | **VietQR auto-confirm**: on receiving the gateway settlement callback for that `order_id`, the Portal **automatically** marks the payment confirmed (no manual cashier confirmation needed) — the 60-second timeout (AT1) is the error fallback, not the normal path (BR-84). |
-| 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.7 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
+| 3 | Portal | Verifies successful receipt confirmation, calculates and awards loyalty points to the linked customer's account (as per Section 3.6.6.3 Order of Calculations and BR-01), records the transaction, and prints the invoice. |
 
 #### Alternative Flows
 ##### AT1: Gateway Timeout
@@ -3885,7 +3886,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 
 ---
 
-## 3.6.7 Discount Priority & Stacking Rules
+### 3.6.6.3 Discount Priority & Stacking Rules
 
 This section outlines the business logic for calculating and applying discounts at checkout when multiple offers, vouchers, or points-redemptions overlap. The fixed evaluation order below is authoritative and is codified as **BR-70** (Discount & Tax Stacking Order); the **Net Total Payable** it produces is the single accrual base defined in **BR-69**.
 
@@ -4125,6 +4126,11 @@ All orders follow the state transitions below:
 | 1 | User | Opens Order History screen. |
 | 2 | Portal | Displays current branch orders list. |
 
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected for longer than the configurable `READY_ABANDON_TIMEOUT` is auto-transitioned to the terminal state `ABANDONED`. At shift close, BR-03 still forbids closing while non-terminal orders exist, but the Store Manager may **force-close** any remaining `READY` orders to `ABANDONED` (logged with the approving manager). Because stock was deducted at `PREPARING` (UC-62/BR-07), no stock reversal occurs; `ABANDONED` orders are reported separately as uncollected and excluded from net sales. |
+
 ---
 
 ## 3.7.2 F36 - View Order Detail / UC-73 View Order Detail
@@ -4223,6 +4229,12 @@ All orders follow the state transitions below:
 |---|---|---|
 | 1 | Barista | Opens the queue display. |
 | 2 | Portal | Displays pending, preparing, and ready orders. |
+
+#### Business Rules
+| ID | Rule Description |
+|---|---|
+| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the branch and shift session level. No performance metric is recorded per individual barista user ID for each beverage item. Reports expose aggregate throughput only. |
+| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the Kitchen Display System or sticker printer is unreachable, orders are **not** lost — new tickets queue locally and are (re)dispatched on reconnect, and the POS exposes a **manual fallback** (on-screen ticket list + reprint, UC-56/UC-57) so the Barista can keep working during peak hours. A printer/KDS outage never blocks taking or preparing orders. |
 
 ---
 
@@ -4326,6 +4338,10 @@ All orders follow the state transitions below:
 | BR-07 | **Inventory Deduction Timing**: Recipe-based stock for an order is deducted exactly once, when the order transitions from `PENDING` to `PREPARING` (UC-62, Barista taps "START PREP"). Every saleable item in the catalog is a prepared beverage/item that passes through the Barista queue, so this single trigger covers all stock movement — the chain sells no packaged/ready-to-serve goods that bypass preparation. Because cancellation is only permitted while the order is still `PENDING` (BR-05), no deduction has occurred at cancellation time, so no replenishment is ever required. |
 | BR-08 | **Loyalty & Voucher Rollback**: Order cancellation reverses used vouchers (restoring total and customer limits) and adjusts loyalty points (gained points are deducted, and redeemed points are refunded to the customer balance). |
 
+#### Data Requirements
+To support cancellation auditing, the system must record:
+- **Order Cancellation Logs**: Capturing the canceled order, the cashier who executed the cancellation, a mandatory cancellation reason, detailed notes, and the timestamp.
+
 ---
 
 ## 3.7.5a F39.1 - Refund / Comp After Preparation / UC-75 Store-Manager Refund or Comp
@@ -4391,57 +4407,11 @@ All orders follow the state transitions below:
 | 5 | Portal | Writes an `order_refunds` audit record (`order_id`, `sm_id`, `cashier_id`, type, amount, reason, notes) and surfaces it on the Store Manager dashboard. |
 
 #### Business Rules
-| ID | Rule Description |
-|---|---|
-| BR-67 | **Store-Manager Refund / Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or SM PIN), always logged with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09); card/VietQR refunds go through the payment gateway. A refund reverses accrued loyalty points and restores redeemed points proportionally to the refunded amount (per BR-08). **Partial / single-line-item refunds are permitted.** A Comp / Remake issues a zero-charge replacement that re-enters the prep queue and deducts stock again (UC-62). The original order's prep/sales history is preserved (not voided). |
+| BR-67 | **Store-Manager Refund / Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or SM PIN), always logged with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09; card/VietQR refunds go through the payment gateway. A refund reverses accrued loyalty points and restores redeemed points proportionally to the refunded amount (per BR-08). **Partial / single-line-item refunds are permitted.** A Comp / Remake issues a zero-charge replacement that re-enters the prep queue and deducts stock again (UC-62). The original order's prep/sales history is preserved (not voided). |
 
----
-
-## 3.7.5.1 KDS Barista Performance KPI
-
-Preparation throughput metrics are aggregated at the **shift and branch level**, not attributed to individual baristas or individual drink preparations. This reflects the shared-station model where multiple baristas may contribute to the same order queue within a single shift.
-
-### Business Rule
-
-| ID | Rule Description |
-|---|---|
-| BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the `store_id + shift_session_id` level. No performance metric is recorded per individual `user_id` for each beverage item. Reports expose aggregate throughput only. |
-
----
-
-## 3.7.6 Void & Cancellation Audit Logging
-
-All order cancellation actions are recorded in the central database to prevent fraud, track waste, and support financial bookkeeping.
-
-### 3.7.6.1 Cancellation & Refund Data Requirements
-
-To support cancellation and refund auditing, the system must record:
-- **Order Cancellation Logs**: Capturing the canceled order, the cashier who executed the cancellation, a mandatory cancellation reason, detailed notes, and the timestamp.
+#### Data Requirements
+To support refund/comp auditing, the system must record:
 - **Order Refund/Comp Logs**: For Store-Manager authorized refunds or comps past the PENDING state, capturing the order, the authorizing Store Manager, the initiating cashier, the active shift session (for cash refunds), the refund type (standard refund or comp remake), the refund amount, the reason, notes, and the timestamp.
-
----
-
-## 3.7.7 Fulfilment Resilience & Queue Lifecycle
-
-### Business Rules
-| ID | Rule Description |
-|---|---|
-| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the Kitchen Display System or sticker printer is unreachable, orders are **not** lost — new tickets queue locally and are (re)dispatched on reconnect, and the POS exposes a **manual fallback** (on-screen ticket list + reprint, UC-56/UC-57) so the Barista can keep working during peak hours. A printer/KDS outage never blocks taking or preparing orders. (RV-O04) |
-| BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected for longer than the configurable `READY_ABANDON_TIMEOUT` is auto-transitioned to the terminal state `ABANDONED`. At shift close, BR-03 still forbids closing while non-terminal orders exist, but the Store Manager may **force-close** any remaining `READY` orders to `ABANDONED` (logged with `sm_id`). Because stock was deducted at `PREPARING` (UC-62/BR-07), no stock reversal occurs; `ABANDONED` orders are reported separately as uncollected and excluded from net sales. (RV-O03) |
-
----
-
-## 3.7.8 Cashier Shift Sessions & Multi-Store Attendance Tracking
-
-This section specifies operational guidelines for cash register shifts, session management, and employee cross-branch deployments.
-
-### 3.7.8.1 Separation of User Session & Shift Session
-- **Rule**: Cashiers are allowed to log out of their personal user account session (terminating their `User Session` token) without being forced to close the POS cash drawer ca làm việc (`Shift Session`).
-- **Operation**: The active shift session remains open on the terminal register under its assigned POS register ID, allowing another cashier to log in and continue transaction checkout. This bypasses the mandatory cash counting and closing float reconciliation when a cashier takes a short break or switches duties mid-shift.
-
-### 3.7.8.2 Cross-Branch Staff Mobility Support
-- **Rule**: Employees (Cashiers, Baristas) are permitted to log in, check-in for attendance, or open POS shifts at any active branch store in the chain when they are assigned as cross-branch support.
-- **Data Association**: The system dynamically identifies the active POS register terminal's `store_id` where the login or attendance popup action occurs. All resulting sales revenue, cash floats, and attendance logs are automatically recorded under that physical branch store's ID rather than the employee's default home branch.
 
 
 
@@ -5863,7 +5833,7 @@ This section details specifications for business reports views, sales analytics 
 | ID | Rule Description |
 |---|---|
 | BR-79 | **Cancellation & Refund Anomaly Monitoring**: The system tracks, per cashier per period, the count and value of order cancellations (BR-51), refunds (BR-67), vouchers applied and comps (BR-80), and flags any cashier whose cancellation or refund rate exceeds the configurable parameter `CANCEL_REFUND_ALERT_THRESHOLD`. Flags are surfaced to the Store Manager (own branch) and CEO Viewer (chain) via UC-82. This is a detective control; it does not block transactions (PENDING cancel stays no-PIN per BR-05, refunds stay SM-authorised per BR-67). (RV-S01) |
-| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry with `cashier_id`, `order_id`, timestamp, voucher code / redeemed points, and discount amount. Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.7, RV-S02) |
+| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry with `cashier_id`, `order_id`, timestamp, voucher code / redeemed points, and discount amount. Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.6.3, RV-S02) |
 
 
 
@@ -6521,18 +6491,18 @@ This section contains business rules, global requirements, common application me
 | BR-66 | **Standard-Cost COGS**: Each `RAW_MATERIAL` carries a chain-wide `standard_cost` (per master unit), maintained by `businessadmin`. Item/topping cost = Σ(recipe qty × standard_cost); gross margin = price − cost. Standard cost (not per-branch purchase price) is the single basis for chain-wide COGS, margin, and ingredient-shrinkage reporting. (§3.5.0, §3.12.4) |
 | BR-67 | **Store-Manager Refund/Comp (post-PENDING)**: Orders past `PENDING` cannot be cancelled (BR-05) but may be refunded or comped with **Store Manager authorisation** (SM login or PIN), logged in `ORDER_REFUND` with the approving `sm_id`. Cash refunds debit the currently-open shift drawer (BR-09); card/VietQR via gateway. Refund reverses loyalty per BR-08; partial/line-item refunds allowed; Comp/Remake re-enters the prep queue (UC-62). Original prep/sales history preserved. (UC-75, §3.7.5a) |
 | BR-68 | **Mandatory Audit Log for Price & Voucher Changes**: As `businessadmin` has unilateral CRUD on selling price and vouchers (no maker-checker), every menu price change and every voucher create/update/delete is written to the immutable `AUDIT_LOG` (actor, timestamp, before/after) and surfaced read-only to `ceoviewer` via UC-77. (§3.12.5) |
-| BR-69 | **Loyalty Accrual Base ("Net Total Payable")**: The loyalty accrual base is the **Net Total Payable** — the VAT-**inclusive** amount actually collected, computed *after* voucher discount and *after* loyalty-point redemption (Gross Subtotal − voucher − point redemption, floored at 0 per BR-50). It includes toppings/option modifiers (part of Gross Subtotal) and the VAT portion, but excludes the value covered by redeemed points (BR-01). This single definition governs accrual everywhere (§3.6.7 step 6, §3.10.4). |
-| BR-70 | **Discount & Tax Stacking Order**: At checkout, calculations are applied in a fixed sequence: (1) Gross Subtotal → (2) Voucher discount → (3) Loyalty-point redemption (with %/absolute caps) → (4) VAT extraction (inclusive) → (5) accrual on Net Total Payable. Voucher and point redemption may stack (≤1 voucher per order); the combined discount is capped at Gross Subtotal so Net Total Payable ≥ 0 (BR-50). Authoritative procedure: §3.6.7. |
+| BR-69 | **Loyalty Accrual Base ("Net Total Payable")**: The loyalty accrual base is the **Net Total Payable** — the VAT-**inclusive** amount actually collected, computed *after* voucher discount and *after* loyalty-point redemption (Gross Subtotal − voucher − point redemption, floored at 0 per BR-50). It includes toppings/option modifiers (part of Gross Subtotal) and the VAT portion, but excludes the value covered by redeemed points (BR-01). This single definition governs accrual everywhere (§3.6.6.3 step 6, §3.10.4). |
+| BR-70 | **Discount & Tax Stacking Order**: At checkout, calculations are applied in a fixed sequence: (1) Gross Subtotal → (2) Voucher discount → (3) Loyalty-point redemption (with %/absolute caps) → (4) VAT extraction (inclusive) → (5) accrual on Net Total Payable. Voucher and point redemption may stack (≤1 voucher per order); the combined discount is capped at Gross Subtotal so Net Total Payable ≥ 0 (BR-50). Authoritative procedure: §3.6.6.3. |
 | BR-71 | **Customer PII Consent (PDPA / Decree 13/2023)**: Enrolling a customer requires recorded consent to process their personal data (phone, optional email, purchase history) for the loyalty program; the system stamps `consent_at` and `consent_version` on the `CUSTOMER` record at registration (UC-25). Consent may be withdrawn, triggering BR-72. (§3.8, §4.2.6.1) |
 | BR-72 | **Personal Data Retention & Erasure**: Customer PII is retained **24 months from the last transaction**, then irreversibly anonymised (PII hashed/nulled; aggregate sales history kept). Attendance camera snapshots are auto-deleted **90 days** after capture (`photo_purge_at`), the attendance row preserved for payroll. The system supports on-request data-subject erasure ahead of the window, detaching PII from the 5-year financial records rather than deleting the transaction. (§3.8, §3.9, §4.2.6) |
 | BR-73 | **Recipe Unit Consistency**: Every recipe line (base item via UC-18/19 and topping via §3.3.6) must use the **exact master stock-keeping unit** of the referenced `RAW_MATERIAL`; no kg↔g / l↔ml conversion is performed and a mismatched unit is rejected at save. Guarantees stock deduction (UC-62) and standard-cost COGS (BR-66) operate on like units. (§3.3, §3.5) |
-| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND/point**, Central System Settings / UC-30). Redeemed points must be a whole **multiple of 100** (MSG14); the raw discount `points × value` is **floored to the nearest whole VND** before the %/absolute caps (§3.6.7 step 3). Single definition used by checkout and the loyalty-liability report (UC-78). (§3.6.5, §3.13) |
+| BR-74 | **Loyalty Redemption Value & Rounding**: The point-to-cash conversion is the parameter `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default **100 VND/point**, Central System Settings / UC-30). Redeemed points must be a whole **multiple of 100** (MSG14); the raw discount `points × value` is **floored to the nearest whole VND** before the %/absolute caps (§3.6.6.3 step 3). Single definition used by checkout and the loyalty-liability report (UC-78). (§3.6.5, §3.13) |
 | BR-75 | **Loyalty Liability Reporting**: Outstanding loyalty liability = **sum of all customers' current point balances** (neither redeemed nor expired per BR-35), reported in **points** (not VND). The movement table reconciles `Opening + Issued − Redeemed − Expired = Closing` for the period (issuance per BR-01/BR-69, redemption per BR-02/BR-74, expiry per BR-35). Surfaced read-only to `ceoviewer` via UC-78. (§3.12.6) |
 | BR-76 | **Labour Productivity Metric (non-monetary)**: Labour efficiency is reported as **Labour Hours vs Net Sales** (`Hours per 1,000,000 VND` and `Net Sales per Labour Hour`) using worked hours (BR-77) and Net Sales (BR-69). The system stores no wage or salary rates and does not calculate financial labor costs; payroll processing remains external (§1.2). Branch labor hours are attributed to the branch where the shift was physically worked (BR-53a). Visible to CEO Viewer (chain) and Store Manager (own branch) via UC-79. (§3.12.7) |
 | BR-77 | **Worked-Hours Computation**: For each employee, worked hours are calculated per business day as the sum of all paired check-in and check-out durations. Any incomplete attendance entry (missing check-in or check-out) is flagged for manager review and excluded from calculations. The system aggregates worked hours per employee to support payroll processing (BR-53a), but does not perform currency-based wage calculations (§1.2). The reports can be exported by the Store Manager to feed external payroll systems. (§3.9.6) |
 | BR-78 | **Daily Z-Report Composition**: The Z-report aggregates **all shift sessions** of one branch for one business day (branch-local) into Gross Sales, Voucher Discounts, Point Redemptions, Net Sales (BR-69), VAT (inclusive 10/110), Refunds (`ORDER_REFUND`, BR-67), tender breakdown (cash/card/VietQR), and counters (orders completed, refunds, PENDING cancellations). Read-only; reconciles to the day's Close-Shift reports (UC-53). Store Manager via UC-81. (§3.12.8) |
 | BR-79 | **Cancellation & Refund Anomaly Monitoring**: The system tracks, per cashier per period, the count/value of cancellations (BR-51), refunds (BR-67), vouchers applied and comps (BR-80), and flags any cashier whose cancel/refund rate exceeds the configurable `CANCEL_REFUND_ALERT_THRESHOLD`. Surfaced to Store Manager (own branch) + CEO Viewer (chain) via UC-82. Detective control only — does not block (PENDING cancel stays no-PIN per BR-05; refunds stay SM-authorised per BR-67). (§3.12.9, RV-S01) |
-| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry (`cashier_id`, `order_id`, timestamp, voucher code / redeemed points, discount amount). Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.7, RV-S02) |
+| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry (`cashier_id`, `order_id`, timestamp, voucher code / redeemed points, discount amount). Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.6.3, RV-S02) |
 | BR-81 | **User Account Change Audit & Access Review**: Account create (UC-11), role/status change or deactivation (UC-12/14), and credential/PIN reset write an immutable `AUDIT_LOG` entry (actor `ssadmin_id`, target, before/after role+status, timestamp). With no maker-checker on provisioning (consistent with BR-68), this audit + the periodic **Access Review report** (UC-83, read-only to `ceoviewer`) is the SoD compensating control. (§3.2.12/3.2.15, RV-S03) |
 | BR-82 | **Privilege Bootstrap & Self-Escalation Prevention**: (a) The first `ssadmin` is provisioned via a secure one-time install/seed process, never the in-app UI; (b) no user may change their own role/permissions/active status — such changes require a *different* `ssadmin`; (c) all changes audit-logged (BR-81). Extends last-admin protection (BR-23). (§3.2.13, RV-S04) |
 | BR-83 | **Mandatory MFA for HQ Roles**: Login by `ceoviewer` / `businessadmin` / `ssadmin` requires a second factor after password — 6-digit email OTP (reusing UC-03/04 infra) or TOTP — governed by `HQ_MFA_REQUIRED` (default true). Branch/POS roles are exempt to avoid disrupting shared-terminal operations. Three failed MFA attempts trigger the BR-17 lockout. (§3.2.1/3.2.14, RV-S05) |

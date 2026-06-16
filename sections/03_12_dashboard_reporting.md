@@ -1,4 +1,4 @@
-﻿# 3.12 Dashboard & Reporting
+# 3.12 Dashboard & Reporting
 
 This section details specifications for business reports views, sales analytics dashboards, and export spreadsheets.
 
@@ -546,6 +546,6 @@ This section details specifications for business reports views, sales analytics 
 | ID | Rule Description |
 |---|---|
 | BR-79 | **Cancellation & Refund Anomaly Monitoring**: The system tracks, per cashier per period, the count and value of order cancellations (BR-51), refunds (BR-67), vouchers applied and comps (BR-80), and flags any cashier whose cancellation or refund rate exceeds the configurable parameter `CANCEL_REFUND_ALERT_THRESHOLD`. Flags are surfaced to the Store Manager (own branch) and CEO Viewer (chain) via UC-82. This is a detective control; it does not block transactions (PENDING cancel stays no-PIN per BR-05, refunds stay SM-authorised per BR-67). (RV-S01) |
-| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry with `cashier_id`, `order_id`, timestamp, voucher code / redeemed points, and discount amount. Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.7, RV-S02) |
+| BR-80 | **Checkout Discount Audit**: Every voucher application and every loyalty-point redemption at checkout writes an immutable `AUDIT_LOG` entry with `cashier_id`, `order_id`, timestamp, voucher code / redeemed points, and discount amount. Closes the gap where `order_cancellations` was the only POS-side audit; feeds UC-82. (§3.6.6.3, RV-S02) |
 
 
