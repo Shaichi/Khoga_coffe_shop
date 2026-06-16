@@ -367,38 +367,11 @@ Preparation throughput metrics are aggregated at the **shift and branch level**,
 
 All order cancellation actions are recorded in the central database to prevent fraud, track waste, and support financial bookkeeping.
 
-### 3.7.6.1 Database Schema (Cancellation Audit Logs)
-```sql
--- Cancellation audit log table
-CREATE TABLE order_cancellations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL REFERENCES orders(id),
-    cashier_id UUID NOT NULL REFERENCES users(id), -- User who executed cancellation
-    reason VARCHAR(100) NOT NULL,                  -- Out of ingredient, customer request, etc.
-    notes TEXT NOT NULL,                           -- Detailed audit explanation
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+### 3.7.6.1 Cancellation & Refund Data Requirements
 
-CREATE INDEX idx_cancellations_order ON order_cancellations(order_id);
-CREATE INDEX idx_cancellations_created_at ON order_cancellations(created_at);
-
--- Refund / Comp audit log (post-PENDING, Store-Manager authorised — UC-75 / BR-67)
-CREATE TABLE order_refunds (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL REFERENCES orders(id),
-    sm_id UUID NOT NULL REFERENCES users(id),        -- Store Manager who authorised
-    cashier_id UUID NOT NULL REFERENCES users(id),   -- Cashier who initiated
-    shift_session_id UUID REFERENCES shift_sessions(id), -- Open shift drawer charged for cash refunds (BR-09)
-    refund_type VARCHAR(20) NOT NULL,                -- REFUND | COMP_REMAKE
-    amount DECIMAL(12,2) NOT NULL DEFAULT 0,         -- Refunded amount (0 for comp/remake)
-    reason VARCHAR(100) NOT NULL,
-    notes TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_refunds_order ON order_refunds(order_id);
-CREATE INDEX idx_refunds_created_at ON order_refunds(created_at);
-```
+To support cancellation and refund auditing, the system must record:
+- **Order Cancellation Logs**: Capturing the canceled order, the cashier who executed the cancellation, a mandatory cancellation reason, detailed notes, and the timestamp.
+- **Order Refund/Comp Logs**: For Store-Manager authorized refunds or comps past the PENDING state, capturing the order, the authorizing Store Manager, the initiating cashier, the active shift session (for cash refunds), the refund type (standard refund or comp remake), the refund amount, the reason, notes, and the timestamp.
 
 ---
 

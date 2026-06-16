@@ -398,25 +398,13 @@ Menu item availability is controlled at two independent levels to separate HQ ch
 | Chain-wide visibility | `menu_items.is_active` | Business Admin | All branches | Item is hidden from every POS in the chain. Use for permanent removal or seasonal deactivation. |
 | Branch-level availability | `branch_menu_status.is_available` | Store Manager | Single branch | Item is temporarily unavailable at that branch (e.g. out of stock, equipment issue). Other branches are unaffected. |
 
-> **Rule**: The `menu_items` table does **not** have an `is_available` column. Per-branch availability is managed exclusively through the `branch_menu_status` join table.
+> **Rule**: The menu catalog does **not** maintain a central availability flag. Per-branch availability is managed exclusively through a separate branch-menu mapping.
 
-### Database Schema
+### Data Requirements
 
-```sql
--- Per-branch item availability (replaces is_available on menu_items)
-CREATE TABLE branch_menu_status (
-    store_id       UUID NOT NULL REFERENCES stores(id),
-    menu_item_id   UUID NOT NULL REFERENCES menu_items(id),
-    is_available   BOOLEAN NOT NULL DEFAULT TRUE,
-    updated_by     UUID REFERENCES users(id),     -- Store Manager who last changed it
-    updated_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (store_id, menu_item_id)
-);
-
--- menu_items uses is_active for chain-wide control; no is_available column
--- Example: is_active = true  → item exists in the global catalog
---          is_active = false → item soft-deleted or chain-wide deactivated (BR-28)
-```
+To support the two-level availability model, the system must maintain:
+- **Chain-wide Status**: An active status flag on each menu item representing its general availability in the global catalog (managed by the Business Admin).
+- **Branch-specific Status**: A mapping between branches and menu items indicating local availability (managed by the local Store Manager), along with the identity of the manager who last updated it and the timestamp of the modification.
 
 ### Category Deletion Cascade Rule
 

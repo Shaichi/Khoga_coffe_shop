@@ -2791,25 +2791,13 @@ Menu item availability is controlled at two independent levels to separate HQ ch
 | Chain-wide visibility | `menu_items.is_active` | Business Admin | All branches | Item is hidden from every POS in the chain. Use for permanent removal or seasonal deactivation. |
 | Branch-level availability | `branch_menu_status.is_available` | Store Manager | Single branch | Item is temporarily unavailable at that branch (e.g. out of stock, equipment issue). Other branches are unaffected. |
 
-> **Rule**: The `menu_items` table does **not** have an `is_available` column. Per-branch availability is managed exclusively through the `branch_menu_status` join table.
+> **Rule**: The menu catalog does **not** maintain a central availability flag. Per-branch availability is managed exclusively through a separate branch-menu mapping.
 
-### Database Schema
+### Data Requirements
 
-```sql
--- Per-branch item availability (replaces is_available on menu_items)
-CREATE TABLE branch_menu_status (
-    store_id       UUID NOT NULL REFERENCES stores(id),
-    menu_item_id   UUID NOT NULL REFERENCES menu_items(id),
-    is_available   BOOLEAN NOT NULL DEFAULT TRUE,
-    updated_by     UUID REFERENCES users(id),     -- Store Manager who last changed it
-    updated_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (store_id, menu_item_id)
-);
-
--- menu_items uses is_active for chain-wide control; no is_available column
--- Example: is_active = true  → item exists in the global catalog
---          is_active = false → item soft-deleted or chain-wide deactivated (BR-28)
-```
+To support the two-level availability model, the system must maintain:
+- **Chain-wide Status**: An active status flag on each menu item representing its general availability in the global catalog (managed by the Business Admin).
+- **Branch-specific Status**: A mapping between branches and menu items indicating local availability (managed by the local Store Manager), along with the identity of the manager who last updated it and the timestamp of the modification.
 
 ### Category Deletion Cascade Rule
 
@@ -4441,38 +4429,11 @@ Preparation throughput metrics are aggregated at the **shift and branch level**,
 
 All order cancellation actions are recorded in the central database to prevent fraud, track waste, and support financial bookkeeping.
 
-### 3.7.6.1 Database Schema (Cancellation Audit Logs)
-```sql
--- Cancellation audit log table
-CREATE TABLE order_cancellations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL REFERENCES orders(id),
-    cashier_id UUID NOT NULL REFERENCES users(id), -- User who executed cancellation
-    reason VARCHAR(100) NOT NULL,                  -- Out of ingredient, customer request, etc.
-    notes TEXT NOT NULL,                           -- Detailed audit explanation
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+### 3.7.6.1 Cancellation & Refund Data Requirements
 
-CREATE INDEX idx_cancellations_order ON order_cancellations(order_id);
-CREATE INDEX idx_cancellations_created_at ON order_cancellations(created_at);
-
--- Refund / Comp audit log (post-PENDING, Store-Manager authorised — UC-75 / BR-67)
-CREATE TABLE order_refunds (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL REFERENCES orders(id),
-    sm_id UUID NOT NULL REFERENCES users(id),        -- Store Manager who authorised
-    cashier_id UUID NOT NULL REFERENCES users(id),   -- Cashier who initiated
-    shift_session_id UUID REFERENCES shift_sessions(id), -- Open shift drawer charged for cash refunds (BR-09)
-    refund_type VARCHAR(20) NOT NULL,                -- REFUND | COMP_REMAKE
-    amount DECIMAL(12,2) NOT NULL DEFAULT 0,         -- Refunded amount (0 for comp/remake)
-    reason VARCHAR(100) NOT NULL,
-    notes TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_refunds_order ON order_refunds(order_id);
-CREATE INDEX idx_refunds_created_at ON order_refunds(created_at);
-```
+To support cancellation and refund auditing, the system must record:
+- **Order Cancellation Logs**: Capturing the canceled order, the cashier who executed the cancellation, a mandatory cancellation reason, detailed notes, and the timestamp.
+- **Order Refund/Comp Logs**: For Store-Manager authorized refunds or comps past the PENDING state, capturing the order, the authorizing Store Manager, the initiating cashier, the active shift session (for cash refunds), the refund type (standard refund or comp remake), the refund amount, the reason, notes, and the timestamp.
 
 ---
 
@@ -5024,32 +4985,11 @@ This section details specifications for staff shifts assignment, schedules views
 | BR-92 | **Labour Budget & Working-Time Validation**: At scheduling, the system enforces configurable working-time limits — maximum daily/weekly working hours and minimum rest hours between consecutive shifts (hard blocks) — and a per-branch labor hour budget per period (soft warning the Store Manager may override with a logged reason). |
 | BR-93 | **Attendance PIN Uniqueness & Mandatory Photo**: An attendance PIN must be unique within its branch and is locked after a configurable number of failed entries. The camera snapshot is mandatory at check-in/out; if the camera is unavailable, the action is queued and flagged for Store Manager confirmation rather than recorded without a photo — closing the buddy-punching gap. (RV-C08) |
 
-### 3.9.4.3 Database Schema (Attendance Logs)
+### 3.9.4.3 Attendance Logs Data Requirements
 
-```sql
-CREATE TABLE attendance_logs (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id),
-    store_id        UUID NOT NULL REFERENCES stores(id),   -- branch where action was taken
-    shift_id        UUID REFERENCES staff_shifts(id),      -- scheduled shift (nullable: cross-branch walk-ins)
-    scheduled_start TIMESTAMP WITH TIME ZONE,              -- snapshot of the shift's scheduled start at CHECK_IN (BR-38); NULL when shift_id is NULL
-    action          VARCHAR(10) NOT NULL,                  -- 'CHECK_IN' | 'CHECK_OUT'
-    photo_url       VARCHAR(500),                          -- camera snapshot URL (taken at action time)
-    photo_purge_at  DATE,                                  -- scheduled erasure date for the snapshot = recorded_at::date + 90 days (BR-72)
-    recorded_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-    -- NOTE: lateness is NOT stored. It is derived at the reporting layer per BR-39, comparing
-    --       recorded_at vs scheduled_start AFTER converting both to the branch-local timezone (§5.2.2).
-    --       The previous GENERATED column referenced a non-existent `scheduled_start` and never ran (RV-C02).
-);
-
-CREATE INDEX idx_attendance_store_date ON attendance_logs(store_id, recorded_at);
-CREATE INDEX idx_attendance_user       ON attendance_logs(user_id);
-CREATE INDEX idx_attendance_photo_purge ON attendance_logs(photo_purge_at) WHERE photo_url IS NOT NULL;
-```
-
-> **scheduled_start**: A point-in-time copy of the rostered start of `shift_id`, written at `CHECK_IN`. Storing it as a real column (rather than joining to `staff_shifts` at read time) makes historical lateness immune to later schedule edits and removes the broken generated-column dependency.
->
-> **photo_url / photo_purge_at**: `photo_url` stores the URL/path of the camera snapshot taken during the attendance popup, required for fraud prevention (verifying the correct employee is clocking in). Nullable only when the attendance action is performed in an offline/no-camera mode. `photo_purge_at` drives the automatic erasure job that deletes the biometric-adjacent snapshot 90 days after capture (BR-72 / §4.2.6); the log row itself is retained for payroll history with `photo_url` nulled.
+To support attendance logging, fraud prevention, and compliance, the system must record:
+- **Attendance Records**: Capturing the employee, the physical branch where the action was taken, the optional scheduled shift, a snapshot of the shift's scheduled start time (captured at check-in), the action type (check-in or check-out), and the timestamp. Storing the scheduled start time at check-in ensures historical lateness calculations are immune to subsequent roster edits.
+- **Biometric Photo Auditing & Erasure**: Storing the camera snapshot URL taken during the attendance action (required for clock-in fraud prevention), and a scheduled erasure date for the snapshot (set to capture date + 90 days). The photo URL must be deleted automatically after 90 days (per BR-72) while preserving the attendance log row (times and lateness data) for payroll history.
 
 ---
 

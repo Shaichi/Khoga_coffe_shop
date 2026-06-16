@@ -256,32 +256,11 @@ This section details specifications for staff shifts assignment, schedules views
 | BR-92 | **Labour Budget & Working-Time Validation**: At scheduling, the system enforces configurable working-time limits — maximum daily/weekly working hours and minimum rest hours between consecutive shifts (hard blocks) — and a per-branch labor hour budget per period (soft warning the Store Manager may override with a logged reason). |
 | BR-93 | **Attendance PIN Uniqueness & Mandatory Photo**: An attendance PIN must be unique within its branch and is locked after a configurable number of failed entries. The camera snapshot is mandatory at check-in/out; if the camera is unavailable, the action is queued and flagged for Store Manager confirmation rather than recorded without a photo — closing the buddy-punching gap. (RV-C08) |
 
-### 3.9.4.3 Database Schema (Attendance Logs)
+### 3.9.4.3 Attendance Logs Data Requirements
 
-```sql
-CREATE TABLE attendance_logs (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id),
-    store_id        UUID NOT NULL REFERENCES stores(id),   -- branch where action was taken
-    shift_id        UUID REFERENCES staff_shifts(id),      -- scheduled shift (nullable: cross-branch walk-ins)
-    scheduled_start TIMESTAMP WITH TIME ZONE,              -- snapshot of the shift's scheduled start at CHECK_IN (BR-38); NULL when shift_id is NULL
-    action          VARCHAR(10) NOT NULL,                  -- 'CHECK_IN' | 'CHECK_OUT'
-    photo_url       VARCHAR(500),                          -- camera snapshot URL (taken at action time)
-    photo_purge_at  DATE,                                  -- scheduled erasure date for the snapshot = recorded_at::date + 90 days (BR-72)
-    recorded_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-    -- NOTE: lateness is NOT stored. It is derived at the reporting layer per BR-39, comparing
-    --       recorded_at vs scheduled_start AFTER converting both to the branch-local timezone (§5.2.2).
-    --       The previous GENERATED column referenced a non-existent `scheduled_start` and never ran (RV-C02).
-);
-
-CREATE INDEX idx_attendance_store_date ON attendance_logs(store_id, recorded_at);
-CREATE INDEX idx_attendance_user       ON attendance_logs(user_id);
-CREATE INDEX idx_attendance_photo_purge ON attendance_logs(photo_purge_at) WHERE photo_url IS NOT NULL;
-```
-
-> **scheduled_start**: A point-in-time copy of the rostered start of `shift_id`, written at `CHECK_IN`. Storing it as a real column (rather than joining to `staff_shifts` at read time) makes historical lateness immune to later schedule edits and removes the broken generated-column dependency.
->
-> **photo_url / photo_purge_at**: `photo_url` stores the URL/path of the camera snapshot taken during the attendance popup, required for fraud prevention (verifying the correct employee is clocking in). Nullable only when the attendance action is performed in an offline/no-camera mode. `photo_purge_at` drives the automatic erasure job that deletes the biometric-adjacent snapshot 90 days after capture (BR-72 / §4.2.6); the log row itself is retained for payroll history with `photo_url` nulled.
+To support attendance logging, fraud prevention, and compliance, the system must record:
+- **Attendance Records**: Capturing the employee, the physical branch where the action was taken, the optional scheduled shift, a snapshot of the shift's scheduled start time (captured at check-in), the action type (check-in or check-out), and the timestamp. Storing the scheduled start time at check-in ensures historical lateness calculations are immune to subsequent roster edits.
+- **Biometric Photo Auditing & Erasure**: Storing the camera snapshot URL taken during the attendance action (required for clock-in fraud prevention), and a scheduled erasure date for the snapshot (set to capture date + 90 days). The photo URL must be deleted automatically after 90 days (per BR-72) while preserving the attendance log row (times and lateness data) for payroll history.
 
 ---
 
