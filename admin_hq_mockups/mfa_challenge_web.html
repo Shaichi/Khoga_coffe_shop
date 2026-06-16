@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HQ Admin Login - Khoga Café</title>
+    <title>MFA Verification - Khoga Café</title>
     <style>
         :root {
             --primary: #3d2314;
@@ -119,6 +119,7 @@
             color: var(--text-muted);
             font-size: 14px;
             margin-bottom: 30px;
+            line-height: 1.5;
         }
         .form-group {
             margin-bottom: 20px;
@@ -139,13 +140,22 @@
             border: 1.5px solid #eaddd3;
             border-radius: 10px;
             box-sizing: border-box;
-            font-size: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-align: center;
             background: white;
             transition: border-color 0.2s;
         }
         input:focus {
             outline: none;
             border-color: var(--accent);
+        }
+        input::placeholder {
+            font-weight: 400;
+            letter-spacing: normal;
+            font-size: 14px;
+            color: #ccc;
         }
         .alert-box {
             background: rgba(207, 102, 121, 0.08);
@@ -184,7 +194,12 @@
             font-size: 14px;
             font-weight: 600;
         }
-        .links a:hover {
+        .links a.disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .links a:hover:not(.disabled) {
             color: var(--primary);
         }
 
@@ -212,54 +227,86 @@
         <!-- Right Pane with Form -->
         <div class="right-pane">
             <div class="login-card">
-                <h2>Đăng Nhập Quản Trị</h2>
-                <p>Nhập tài khoản quản trị HQ để tiếp tục.</p>
+                <h2>Xác Thực Hai Yếu Tố (MFA)</h2>
+                <p>
+                    Tài khoản HQ: <strong id="mfa-username">businessadmin</strong><br>
+                    Một mã xác thực 6 chữ số đã được gửi đến email đăng ký của bạn. Nhập mã để hoàn tất:
+                </p>
 
-                <div class="alert-box" id="login-alert">Tên đăng nhập hoặc mật khẩu quản trị không đúng.</div>
+                <div class="alert-box" id="mfa-alert">Mã xác thực 2 yếu tố không đúng. Vui lòng thử lại.</div>
 
                 <div class="form-group">
-                    <label>Tên đăng nhập</label>
-                    <input type="text" id="username" placeholder="businessadmin" value="businessadmin">
-                </div>
-                <div class="form-group">
-                    <label>Mật khẩu</label>
-                    <input type="password" id="password" placeholder="••••••••" value="admin123">
+                    <label>Mã xác thực (6 chữ số)</label>
+                    <input type="text" id="mfa-code" maxlength="6" placeholder="Nhập 6 chữ số" autocomplete="off">
                 </div>
 
-                <button onclick="handleLogin()">ĐĂNG NHẬP</button>
+                <button onclick="handleVerify()">XÁC NHẬN</button>
 
                 <div class="links">
-                    <a href="forgot_password_web.html">Quên mật khẩu quản trị?</a>
+                    <a href="#" id="resend-link" onclick="handleResend(event)">Gửi lại mã OTP</a>
                 </div>
 
-                <p class="demo-hint" style="margin-top:18px; font-size:12px; color:#9c8579; line-height:1.6;">
-                    Tài khoản demo (mật khẩu <code>admin123</code>) — vai trò do System Admin cấp quyết định màn hình vào:<br>
-                    <code>ceoviewer</code> → Báo cáo &nbsp;·&nbsp; <code>businessadmin</code> → Thực đơn/Voucher/CRM &nbsp;·&nbsp; <code>ssadmin</code> → Nhân sự/Chi nhánh/Cấu hình
+                <p class="demo-hint" style="margin-top:28px; font-size:12px; color:#9c8579; line-height:1.6;">
+                    * Tài khoản demo: Dùng mã OTP mặc định là <code>123456</code> để hoàn tất xác thực đăng nhập.
                 </p>
             </div>
         </div>
     </div>
 
     <script>
-        // Demo HQ accounts → role-specific dashboard. The role assigned by the
-        // System Admin (ssadmin) determines which dashboard the account lands on.
+        // Retrieve username from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('user') || 'businessadmin';
+        document.getElementById('mfa-username').innerText = username;
+
         const HQ_ROLE_DASHBOARDS = {
             "ceoviewer": "dashboard_ceoviewer_web.html",
             "businessadmin": "dashboard_businessadmin_web.html",
             "ssadmin": "dashboard_ssadmin_web.html"
         };
 
-        function handleLogin() {
-            const user = document.getElementById('username').value.trim().toLowerCase();
-            const pass = document.getElementById('password').value;
-            const target = HQ_ROLE_DASHBOARDS[user];
-            if ((pass !== "admin123" && pass !== "12345678") || !target) {
-                document.getElementById('login-alert').style.display = 'block';
+        // Resend OTP logic with countdown
+        let cooldown = 0;
+        let timer = null;
+
+        function startTimer() {
+            cooldown = 60;
+            const link = document.getElementById('resend-link');
+            link.classList.add('disabled');
+            
+            timer = setInterval(() => {
+                cooldown--;
+                if (cooldown <= 0) {
+                    clearInterval(timer);
+                    link.innerText = "Gửi lại mã OTP";
+                    link.classList.remove('disabled');
+                } else {
+                    link.innerText = `Gửi lại mã (${cooldown}s)`;
+                }
+            }, 1000);
+        }
+
+        function handleResend(e) {
+            e.preventDefault();
+            if (cooldown > 0) return;
+            alert("Mã OTP mới đã được gửi lại vào email.");
+            startTimer();
+        }
+
+        function handleVerify() {
+            const code = document.getElementById('mfa-code').value.trim();
+            const target = HQ_ROLE_DASHBOARDS[username] || "dashboard_businessadmin_web.html";
+            
+            if (code === "123456") {
+                alert("Xác thực MFA thành công!");
+                window.location.href = target;
             } else {
-                // HQ role logins require MFA challenge (BR-83)
-                window.location.href = `mfa_challenge_web.html?user=${encodeURIComponent(user)}`;
+                document.getElementById('mfa-alert').style.display = 'block';
             }
         }
+
+        // Initialize cooldown timer on load
+        startTimer();
     </script>
 </body>
 </html>

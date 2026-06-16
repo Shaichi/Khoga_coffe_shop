@@ -209,17 +209,17 @@ This section details specifications for managing product categories.
 | 4 | Portal | Deletes category and returns to list view. |
 
 #### Alternative Flows
-##### AT1: Category Not Empty
-- **Trigger**: At step 2, category contains linked menu items.
+##### AT1: Category Contains Active Menu Items
+- **Trigger**: At step 2, category contains linked menu items that are active (not soft-deleted).
 
 | Sub-step | Actor | Action |
 |---|---|---|
-| 2.1 | Portal | Displays error message: `"Cannot delete category. Please move or delete the associated menu items first."` |
+| 2.1 | Portal | Displays error message: `"Cannot delete category. Please move, delete, or deactivate the associated active menu items first."` |
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-31 | Cannot delete a category if it currently contains active menu items. |
+| BR-31 | Cannot delete a category if it contains active menu items. A category can only be deleted if it is empty or all its items are soft-deleted. Upon deletion, any menu items previously belonging to this category will automatically become uncategorized (per BR-62). |
 
 
 

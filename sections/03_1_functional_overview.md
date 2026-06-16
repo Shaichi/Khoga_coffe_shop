@@ -445,8 +445,8 @@ Sales transactions.
 | 10 | tax_amount | | Decimal (Currency/VND) | Yes | The VAT amount calculated for this order based on global config. |
 | 11 | total | | Decimal (Currency/VND) | Yes | Net payable amount. |
 | 12 | payment_method | | Selection (Payment Method: CASH, CARD, VIETQR) | Yes | Payment method. |
-| 13 | payment_status | | Selection (Payment Status: PENDING, COMPLETED, FAILED, REFUNDED) | Yes | Payment status. |
-| 14 | order_status | | Selection (Fulfillment Status: PENDING, PREPARING, HOLD, READY, COMPLETED, CANCELLED) | Yes | Fulfillment status. |
+| 13 | payment_status | | Selection (Payment Status: PENDING, COMPLETED, FAILED, REFUNDED, PARTIALLY_REFUNDED) | Yes | Payment status. |
+| 14 | order_status | | Selection (Fulfillment Status: PENDING, PREPARING, HOLD, READY, COMPLETED, CANCELLED, ABANDONED) | Yes | Fulfillment status. |
 | 15 | created_at | | Date & Time | Yes | Date and time the order was placed. |
 
 ### 7a. `ORDER_CANCELLATION`
@@ -511,6 +511,7 @@ Chain-wide master catalog of raw materials/ingredients, owned exclusively by the
 | 5 | suggested_min_threshold | | Decimal (Quantity) | No | Default low-stock threshold proposed to branches (each branch may override locally). |
 | 6 | standard_cost | | Decimal (Currency/VND) | No | Standard unit cost per master unit, maintained by Business Admin; basis for chain-wide COGS & margin (BR-66). |
 | 7 | is_active | | Yes/No (Boolean) | Yes | Active status flag. Soft-delete: `Inactive` hides the material from new recipe/import selections (BR-64). |
+| 8 | category | | Selection (Material Category: INGREDIENTS, PACKAGING) | Yes | Grouping label to classify raw materials centrally. |
 
 ### 10a. `STOCK_ITEM`
 Branch-level on-hand quantity of a master raw material (e.g., Coffee Beans, Milk, Paper Cups) scoped per branch.
@@ -522,7 +523,6 @@ Branch-level on-hand quantity of a master raw material (e.g., Coffee Beans, Milk
 | 3 | raw_material_id | | Unique ID (UUID) | Yes | Foreign Key (FK) - references RAW_MATERIAL(id). Name and unit derive from the master (BR-63). |
 | 4 | current_quantity | | Decimal (Quantity) | Yes | Remaining physical amount in stock. |
 | 5 | min_alert_threshold | | Decimal (Quantity) | Yes | Branch-local threshold triggering low stock alert (defaults from the master's suggested minimum). |
-| 6 | category | | Text (Max 50 characters) | Yes | Grouping label (e.g., "Ingredients", "Packaging"). |
 
 ### 11. `STOCK_TRANSACTION`
 Historical ledger of stock modifications.
@@ -545,7 +545,7 @@ Marketing and promotional discount codes.
 | 1 | id | x | Unique ID (UUID) | Yes | Unique identifier for the voucher. |
 | 2 | code | | Text (Max 50 characters) | Yes | Unique alphanumeric code (e.g., "COFFEE20"). |
 | 3 | discount_type | | Selection (Discount Type: PERCENTAGE, FIXED_AMOUNT) | Yes | Discount type. |
-| 4 | discount_value | | Decimal (Currency/VND) | Yes | Value of discount (percentage or flat amount). |
+| 4 | discount_value | | Decimal | Yes | Value of discount: percentage (e.g., 10.0 for 10%) or flat amount in VND, depending on discount_type. |
 | 5 | min_order_value | | Decimal (Currency/VND) | Yes | Minimum subtotal value required to apply voucher. |
 | 6 | start_date | | Date & Time | Yes | Voucher validity start date and time. |
 | 7 | end_date | | Date & Time | Yes | Voucher expiration date and time. |

@@ -97,10 +97,22 @@ graph LR
     subgraph HQ Reporting Read-Only
         UC_ViewReports([View Consolidated Business Reports])
         UC_ExportReports([Export HQ Reports])
+        UC_ViewCOGS([View COGS / Margin & Shrinkage Report])
+        UC_ViewPriceHistory([View Price & Voucher Change History])
+        UC_ViewLoyaltyLiability([View Loyalty Liability & Movement Report])
+        UC_ViewLabourHrsRev([View Labour Hours vs Revenue Report])
+        UC_ViewAnomaly([View Cashier Void/Refund Anomaly Report])
+        UC_ViewAccessReview([View User Account Change & Access Review Report])
     end
 
     %% Links
     Actor_CEO --> UC_ViewReports
+    Actor_CEO --> UC_ViewCOGS
+    Actor_CEO --> UC_ViewPriceHistory
+    Actor_CEO --> UC_ViewLoyaltyLiability
+    Actor_CEO --> UC_ViewLabourHrsRev
+    Actor_CEO --> UC_ViewAnomaly
+    Actor_CEO --> UC_ViewAccessReview
 
     %% Reports extends
     UC_ExportReports -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewReports
@@ -144,29 +156,28 @@ graph LR
 
     %% Business Admin Links
     Actor_BizAdmin --> UC_ListVouchers
+    Actor_BizAdmin --> UC_AddVoucher
+    Actor_BizAdmin --> UC_UpdateVoucher
+    Actor_BizAdmin --> UC_DeleteVoucher
+
     Actor_BizAdmin --> UC_ListCustomers
+    Actor_BizAdmin --> UC_AddCustomer
+    Actor_BizAdmin --> UC_UpdateCustomer
+    Actor_BizAdmin --> UC_ViewCustHistory
+
     Actor_BizAdmin --> UC_ListMenu
+    Actor_BizAdmin --> UC_ViewMenuDetail
+    Actor_BizAdmin --> UC_ListCategories
+    Actor_BizAdmin --> UC_AddCat
+    Actor_BizAdmin --> UC_UpdateCat
+    Actor_BizAdmin --> UC_DeleteCat
+    Actor_BizAdmin --> UC_AddMenu
+    Actor_BizAdmin --> UC_UpdateMenu
+    Actor_BizAdmin --> UC_DeleteMenu
+    Actor_BizAdmin --> UC_ManageToppings
     Actor_BizAdmin --> UC_ManageMaterials
 
-    %% Voucher extends
-    UC_AddVoucher -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListVouchers
-    UC_UpdateVoucher -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListVouchers
-    UC_DeleteVoucher -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListVouchers
-
-    %% Customer extends
-    UC_AddCustomer -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCustomers
-    UC_UpdateCustomer -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCustomers
-    UC_ViewCustHistory -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCustomers
-
-    %% Menu/Category extends
-    UC_ViewMenuDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
-    UC_ListCategories -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
-    UC_AddCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
-    UC_UpdateCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
-    UC_DeleteCat -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListCategories
-    UC_AddMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
-    UC_UpdateMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
-    UC_DeleteMenu -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListMenu
+    %% Sub-menu detail relationships
     UC_ManageToppings -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewMenuDetail
 ```
 
@@ -197,18 +208,16 @@ graph LR
 
     %% System Admin Links
     Actor_SysAdmin --> UC_ListUsers
+    Actor_SysAdmin --> UC_AddUser
+    Actor_SysAdmin --> UC_UpdateUser
+    Actor_SysAdmin --> UC_ViewUser
+    Actor_SysAdmin --> UC_DeactivateUser
+
     Actor_SysAdmin --> UC_ConfigCentral
+
     Actor_SysAdmin --> UC_ListBranches
-
-    %% User extends
-    UC_AddUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-    UC_UpdateUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-    UC_ViewUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-    UC_DeactivateUser -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListUsers
-
-    %% Branch extends
-    UC_AddBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
-    UC_UpdateBranch -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListBranches
+    Actor_SysAdmin --> UC_AddBranch
+    Actor_SysAdmin --> UC_UpdateBranch
 ```
 
 
@@ -245,33 +254,40 @@ graph LR
 
         UC_ViewLocalHistory([View Local Order History])
         UC_ViewOrderDetail([View Order Detail])
+        UC_RefundComp([Store-Manager Refund or Comp])
+        UC_ViewLabourHrsRev([View Labour Hours vs Revenue Report])
+        UC_ExportWorkedHours([Export Worked-Hours Report])
+        UC_ViewZReport([View Daily Z-Report])
+        UC_ViewAnomaly([View Cashier Void/Refund Anomaly Report])
     end
 
     %% Connections
     Actor_Manager --> UC_ListStock
+    Actor_Manager --> UC_ImportStock
+    Actor_Manager --> UC_ExportStock
+    Actor_Manager --> UC_AuditStock
+    Actor_Manager --> UC_ViewHistory
+
     Actor_Manager --> UC_ViewSchedule
+    Actor_Manager --> UC_CreateSchedule
+    Actor_Manager --> UC_UpdateSchedule
+    Actor_Manager --> UC_DeleteSchedule
+    Actor_Manager --> UC_ViewAttendance
+
     Actor_Manager --> UC_ViewRevStore
+    Actor_Manager --> UC_ExportStoreRev
+
     Actor_Manager --> UC_ConfigBranch
     Actor_Manager --> UC_ViewStaffList
     Actor_Manager --> UC_UpdateMenu
     Actor_Manager --> UC_ViewLocalHistory
+    Actor_Manager --> UC_RefundComp
+    Actor_Manager --> UC_ViewLabourHrsRev
+    Actor_Manager --> UC_ExportWorkedHours
+    Actor_Manager --> UC_ViewZReport
+    Actor_Manager --> UC_ViewAnomaly
 
-    %% Stock extends
-    UC_ImportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
-    UC_ExportStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
-    UC_AuditStock -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
-    UC_ViewHistory -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ListStock
-
-    %% Schedule extends
-    UC_CreateSchedule -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewSchedule
-    UC_UpdateSchedule -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewSchedule
-    UC_DeleteSchedule -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewSchedule
-    UC_ViewAttendance -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewSchedule
-
-    %% Revenue extends
-    UC_ExportStoreRev -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewRevStore
-
-    %% Order detail extends
+    %% Extends
     UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
 ```
 
@@ -302,6 +318,7 @@ graph LR
         UC_ViewLocalHistory([View Local Order History])
         UC_ViewOrderDetail([View Order Detail])
         UC_RequestRefund([Request Transaction Refund])
+        UC_RefundComp([Store-Manager Refund or Comp])
         
         UC_AddCustomer([Add Customer / Register Member])
         UC_UpdateCustomer([Update Customer])
@@ -325,6 +342,7 @@ graph LR
     UC_UpdateCart -.-> |"&lt;&lt;extend&gt;&gt;"| UC_AddCart
     UC_ViewOrderDetail -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
     UC_RequestRefund -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
+    UC_RefundComp -.-> |"&lt;&lt;extend&gt;&gt;"| UC_ViewLocalHistory
 ```
 
 

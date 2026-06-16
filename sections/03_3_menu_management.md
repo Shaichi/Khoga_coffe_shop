@@ -422,4 +422,4 @@ CREATE TABLE branch_menu_status (
 
 | ID | Rule Description |
 |---|---|
-| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted (`is_deleted = true`), all `menu_items` rows that referenced it must have their `category_id` set to `NULL` (the column is `NULLABLE`). This prevents foreign key violations while preserving the items in the catalog. Items with `category_id = NULL` appear as uncategorized in the HQ menu grid. |
+| BR-62 | **Category Soft-Delete Handling**: When a category is soft-deleted/archived, all menu items belonging to it have their category association removed (become uncategorized) to preserve historical sales data and prevent catalog issues. Uncategorized items appear as "Uncategorized" in the HQ menu management view and POS catalogs. |

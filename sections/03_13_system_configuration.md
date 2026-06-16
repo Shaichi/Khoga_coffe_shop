@@ -69,7 +69,7 @@ This section details specifications for system settings, store branding profiles
 #### Main Flows
 | Step | Actor | Action |
 |---|---|---|
-| 1 | System Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, or Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount). |
+| 1 | System Admin | Updates the Brand Name, Default VAT, Header Title, Footer Message, Max Active Branches, Loyalty Points Program Settings (Accrual Rate, Redeem Value, Max Redeem, Max Discount), or Security & Fraud Settings (HQ MFA Required, Cancel/Refund Alert Threshold). |
 | 2 | System Admin | Clicks "Save Settings". |
 | 3 | Portal | Validates the input values. |
 | 4 | Portal | Saves the updated configurations. |
@@ -86,6 +86,8 @@ This section details specifications for system settings, store branding profiles
 | 3.4 | Portal | If Redeem Value is not greater than 0, displays message: `"Redeem value must be a numeric value greater than 0."` |
 | 3.5 | Portal | If Max Redeem is not between 0 and 100, displays message: `"Max redeem percentage must be a numeric value between 0 and 100."` |
 | 3.6 | Portal | If Max Discount is not greater than or equal to 0, displays message: `"Max discount must be a numeric value greater than or equal to 0."` |
+| 3.7 | Portal | If Max Active Branches is empty or not greater than 0, displays message: `"Max active branches must be a numeric value greater than 0."` |
+| 3.8 | Portal | If Cancel/Refund Alert Threshold is not between 0 and 100, displays message: `"Cancel/refund alert threshold must be a numeric value between 0 and 100."` |
 
 #### Business Rules
 | ID | Rule Description |
@@ -197,7 +199,7 @@ This section details specifications for system settings, store branding profiles
 #### Business Rules
 | ID | Rule Description |
 |---|---|
-| BR-47 | Store Managers have access to configure branch settings. System Admins also have permissions to view and update branch configurations. |
+| BR-47 | Store Managers configure their own branch's local operational settings (timezone, hardware, logo) via UC-42 Branch Local Settings. The System Admin (`ssadmin`) does not edit branch local settings; the System Admin's branch authority is limited to the Branch Management lifecycle — create, view, and deactivate branches (UC-63 to UC-65). |
 | BR-48 | Device configuration fields can accept TCP/IP addresses or Serial COM ports. |
 
 ---

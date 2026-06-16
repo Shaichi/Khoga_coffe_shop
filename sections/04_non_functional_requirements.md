@@ -56,17 +56,16 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
     - **Conflict resolution**: On reconnect, queued transactions sync **append-only** in client-timestamp order; server-authoritative records (stock balances, voucher usage counters) are recomputed centrally, and any conflict (e.g. voucher over-use, negative stock per BR-89) is surfaced to the Store Manager rather than silently merged.
     - **Max offline duration**: The terminal may operate offline for up to `MAX_OFFLINE_HOURS` (configurable); beyond it, the terminal warns and requires reconnection/manual reconciliation before continuing.
     - **Sync**: Queued offline orders sync to the cloud automatically within **60 seconds** of connectivity recovery.
-- **Mean Time Between Failures (MTBF)**:
-  - The MTBF for POS client applications must be at least **8,000 hours** of continuous run-time.
-  - The MTBF for server-side components must be at least **10,000 hours**.
+- **System Stability & Crash-free Rate**:
+  - The crash-free session rate for both POS client applications and server-side components must be at least **99.9%** (measured over any 30-day window).
 - **Mean Time To Repair (MTTR)**:
   - In the event of a system failure, the MTTR for critical cloud services must be **under 2 hours**.
   - The MTTR for cashier hardware errors at a branch (e.g., POS printer failure) must be **under 15 minutes** using backup local devices.
 - **Accuracy**:
   - All monetary and pricing calculations must be 100% accurate, rounded to the nearest integer for VND currency values.
   - Loyalty point accrual must calculate to exactly two decimal places before being rounded down to the nearest integer.
-- **Maximum Bug & Defect Rate**:
-  - The software release must not exceed **0.5 bugs per thousand lines of code (KLOC)** prior to deployment.
+- **Defect Escape Rate**:
+  - The defect escape rate (bugs found in production vs. total bugs found) must be **under 5%**, and there must be **zero critical or blocker defects** in any production release.
 - **Defect Severity Categorization**:
   - **Minor**: Minor alignment issues, spelling typos, or cosmetic errors.
   - **Significant**: A functional feature has a workaround but doesn't block the core sales path (e.g., optional image thumbnail not displaying).
