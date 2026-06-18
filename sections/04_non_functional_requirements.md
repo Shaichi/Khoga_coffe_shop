@@ -47,15 +47,7 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
 - **Availability**:
   - **System Availability**: The cloud system and APIs must maintain at least **99.9% uptime**, **measured excluding the scheduled maintenance window** below (so planned maintenance does not consume the error budget). This reconciles the SLA with the maintenance allowance — the two no longer contradict (RV-C17).
   - **Maintenance Access**: System maintenance is scheduled during low-traffic periods (02:00 AM to 04:00 AM on Sundays), must not exceed **2 hours per month**, and is announced in advance; downtime inside this window is excluded from the 99.9% measurement.
-  - **Degraded Mode Operations (Offline POS — cash-only)** *(RV-C19, aligns with BR-86)*:
-    > [!IMPORTANT]
-    > If the local store internet connection or the payment gateway drops, the POS cashier terminal must continue to function in a **cash-only** degraded mode, storing orders in secure local storage.
-    - **Tender**: **Cash only.** `CARD` and `VIETQR` are disabled while offline — there is **no offline card authorisation** (avoids decline/chargeback risk).
-    - **Promotions**: Loyalty accrual/redemption and online voucher verification are suspended; only preloaded local vouchers verify, flagged for reconciliation/clawback on reconnect (e.g. single-use voucher spent twice offline is detected and reversed).
-    - **Identifier strategy**: Offline orders/payments are keyed by **client-generated UUIDs** so they never collide with server IDs; the server accepts them idempotently on sync (no renumbering, no duplicates).
-    - **Conflict resolution**: On reconnect, queued transactions sync **append-only** in client-timestamp order; server-authoritative records (stock balances, voucher usage counters) are recomputed centrally, and any conflict (e.g. voucher over-use, negative stock per BR-89) is surfaced to the Store Manager rather than silently merged.
-    - **Max offline duration**: The terminal may operate offline for up to `MAX_OFFLINE_HOURS` (configurable); beyond it, the terminal warns and requires reconnection/manual reconciliation before continuing.
-    - **Sync**: Queued offline orders sync to the cloud automatically within **60 seconds** of connectivity recovery.
+  - **Degraded Mode Operations**: Not supported. The POS Terminal operates as an always-online application and requires active internet connectivity. If connection to the cloud backend or payment gateway is lost, transaction checkout is suspended until connectivity is restored.
 - **System Stability & Crash-free Rate**:
   - The crash-free session rate for both POS client applications and server-side components must be at least **99.9%** (measured over any 30-day window).
 - **Mean Time To Repair (MTTR)**:

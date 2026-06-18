@@ -178,14 +178,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | 2 | Portal | Performs registry lookup. |
 | 3 | Portal | Displays profile details (Name, Points) and Cashier clicks "Link to Cart" to link customer to the cart. |
 
-#### Alternative Flows
-##### AT1: Customer Offline Fallback
-- **Trigger**: At step 2, POS terminal has no internet connection.
 
-| Sub-step | Actor | Action |
-|---|---|---|
-| 2.1 | Portal | Looks up number in local offline cache storage. |
-| 2.2 | Portal | If missing, cashier enters phone number to save locally for retroactive point accumulation once online. |
 
 ---
 
@@ -247,13 +240,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 2.1 | Portal | Displays warning message: `"Order value does not meet the minimum requirement of [X] VND for this voucher."` |
 
-##### AT2: Offline Mode Voucher Processing
-- **Trigger**: At step 2, the POS terminal has lost internet connection.
 
-| Sub-step | Actor | Action |
-|---|---|---|
-| 2.1 | Portal | Bypasses online validation APIs. Only validates against preloaded local offline voucher codes in local storage. |
-| 2.2 | Portal | If the code is not found locally, displays warning: `"Online validation unavailable. Voucher not recognized locally."` |
 
 ---
 
@@ -407,19 +394,14 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 3.1 | Portal | Does **not** revive the order. It records the funds in a **payment-reconciliation queue**, marks them for **refund**, and alerts the Store Manager (BR-85). |
 
-##### AT4: Offline / Gateway Down (cash-only degraded mode)
-- **Trigger**: At step 1, the network or payment gateway is unreachable.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 1.1 | Portal | Disables `CARD` and `VIETQR`, allowing **cash only**. Orders and cash transactions are queued locally and synced when connectivity returns; loyalty accrual/redemption and online voucher checks are suspended (only preloaded local vouchers verify). Banner: `"Offline mode — cash only. Card/QR resume when online."` (BR-86, §4.2.2) |
+##### AT4: [RESERVED / DELETED]
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-84 | **VietQR Settlement Idempotency & Auto-Confirm**: A VietQR request is bound to its `order_id`; the gateway settles **at most once per `order_id`** (auto-confirmed on callback — the 60s timeout is only the error fallback). "RETRY QR" voids the prior QR and reissues for the same order; any duplicate settlement is auto-flagged for refund (BR-85), so a retry can never double-charge the order. (RV-O02/O06) |
 | BR-85 | **VietQR Late-Callback Reconciliation**: A settlement callback for an already-cancelled / timed-out `order_id` does **not** revive the order. The funds are placed in a payment-reconciliation queue, flagged for refund, and surfaced to the Store Manager. No order is silently resurrected and no money lands on a void order unreconciled. (RV-O01) |
-| BR-86 | **Offline Degraded Mode (Cash-Only)**: When the branch is offline or the gateway is down, the POS operates **cash-only** — `CARD`/`VIETQR` are disabled (no offline card auth). Orders + cash sales are recorded to a local queue and synced on reconnect; loyalty accrual/redemption and online voucher verification are suspended, only preloaded local vouchers verify (subject to later reconciliation/clawback). Full offline behaviour (ID strategy, conflict resolution, max duration) is specified in §4.2.2. (RV-C19/O05/O11) |
+| BR-86 | [RESERVED / DELETED] |
 
 ---
 

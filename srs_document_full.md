@@ -29,6 +29,7 @@ This section tracks the revision history and modifications made to the Software 
 | **1.14** | 2026-06-14 | Cleared the **RV-S (fraud & security) P1** backlog cluster, applying the project's "audit-log instead of maker-checker" philosophy consistently. **RV-S05:** mandatory **MFA for HQ roles** (`ceoviewer`/`businessadmin`/`ssadmin`) via email OTP (reusing UC-03/04) or TOTP, parameter `HQ_MFA_REQUIRED` (default on); POS/branch roles exempt — added UC-01 AT4, §3.2.14 MFA Challenge (screen 58), **BR-83**. **RV-S04:** **BR-82** — first `ssadmin` seeded at install (no in-app bootstrap), self-escalation blocked (own role/status change requires a different ssadmin); added UC-12/14 AT3. **RV-S03:** **BR-81** + **UC-83** User Account Change & Access Review report (CEO Viewer, §3.2.15, screen 60) — audits every account create/role-change/deactivate as the SoD compensating control. **RV-S02:** **BR-80** — every checkout voucher application & point redemption written to immutable `AUDIT_LOG` (§3.6.6.3). **RV-S01:** **UC-82** Cashier Void/Refund Anomaly report (Store Manager + CEO Viewer, §3.12.9, screen 59) + **BR-79** flagging cancel/refund outliers against `CANCEL_REFUND_ALERT_THRESHOLD`; PENDING cancel stays no-PIN (BR-05) and refunds stay SM-authorised (BR-67). Added screens 58–60 to §3.1, UC-82/83 to §2.3, two matrix rows to §5.4, and two security params to §3.13. | Software Engineering Team | Store Management / Product Owner |
 | **1.13** | 2026-06-14 | Cleared the **RV-F (financial/reporting) P1** backlog cluster. **RV-F03:** standardised the point-to-cash parameter to `LOYALTY_REDEMPTION_VALUE_PER_POINT` (default 100 VND/point), redemption in multiples of 100, floor-to-VND rounding (**BR-74**; §3.6.5/§3.6.6.3/§3.13). **RV-F04:** confirmed voucher + point stacking (≤1 voucher, points after voucher, combined cap = Gross Subtotal) via cross-reference to BR-70/BR-50 (§3.6.6.3). **RV-F05:** added **UC-78** Loyalty Liability & Movement report (CEO Viewer) reporting outstanding points + issued/redeemed/expired movement in points (**BR-75**, §3.12.6). **RV-F06:** added **UC-79** Labour Hours vs Revenue report (CEO Viewer + Store Manager) — a non-monetary staffing-efficiency KPI that stores no wage data, keeping payroll external per §1.2 (**BR-76**, §3.12.7). **RV-F07:** added **UC-80** Worked-Hours Export (Store Manager, own branch) — paired CHECK_IN/CHECK_OUT hours with missing-checkout flagging, feeding external payroll (**BR-77**, §3.9.6). **RV-F08:** added **UC-81** Daily Z-Report (Store Manager) consolidating all of a day's shifts into one branch statement (**BR-78**, §3.12.8). Added screens 54–57 to §3.1, UC-78/79/80/81 to §2.3, four matrix rows to §5.4. | Software Engineering Team | Store Management / Product Owner |
 | **1.17** | 2026-06-16 | Cleaned up non-screen standalone sections across the SRS. Removed Section 3.3.7 (Two-Level Availability Model) and relocated its logic to §3.3 overview. Converted Section 3.6.7 (Discount Priority & Stacking) to subsection §3.6.6.3. Relocated KDS KPI (BR-61) and offline fallback (BR-87) to KDS Queue (§3.7.3), ready auto-abandon (BR-88) to Order History (§3.7.1), cancellation/refund data requirements to UC-55/UC-75, and user session separation rule to UC-44. Relocated BR-62 to UC-70. | Software Engineering Team | Store Management / Product Owner |
+| **1.18** | 2026-06-18 | Removed offline degraded mode feature (BR-86) and KDS offline fallback (BR-87) to enforce an always-online system architecture across all sections. | Software Engineering Team | Store Management / Product Owner |
 
 
 
@@ -3641,14 +3642,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 | 2 | Portal | Performs registry lookup. |
 | 3 | Portal | Displays profile details (Name, Points) and Cashier clicks "Link to Cart" to link customer to the cart. |
 
-#### Alternative Flows
-##### AT1: Customer Offline Fallback
-- **Trigger**: At step 2, POS terminal has no internet connection.
 
-| Sub-step | Actor | Action |
-|---|---|---|
-| 2.1 | Portal | Looks up number in local offline cache storage. |
-| 2.2 | Portal | If missing, cashier enters phone number to save locally for retroactive point accumulation once online. |
 
 ---
 
@@ -3710,13 +3704,7 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 2.1 | Portal | Displays warning message: `"Order value does not meet the minimum requirement of [X] VND for this voucher."` |
 
-##### AT2: Offline Mode Voucher Processing
-- **Trigger**: At step 2, the POS terminal has lost internet connection.
 
-| Sub-step | Actor | Action |
-|---|---|---|
-| 2.1 | Portal | Bypasses online validation APIs. Only validates against preloaded local offline voucher codes in local storage. |
-| 2.2 | Portal | If the code is not found locally, displays warning: `"Online validation unavailable. Voucher not recognized locally."` |
 
 ---
 
@@ -3870,19 +3858,14 @@ This section details specifications for cashier POS checkout sessions, order pro
 |---|---|---|
 | 3.1 | Portal | Does **not** revive the order. It records the funds in a **payment-reconciliation queue**, marks them for **refund**, and alerts the Store Manager (BR-85). |
 
-##### AT4: Offline / Gateway Down (cash-only degraded mode)
-- **Trigger**: At step 1, the network or payment gateway is unreachable.
-
-| Sub-step | Actor | Action |
-|---|---|---|
-| 1.1 | Portal | Disables `CARD` and `VIETQR`, allowing **cash only**. Orders and cash transactions are queued locally and synced when connectivity returns; loyalty accrual/redemption and online voucher checks are suspended (only preloaded local vouchers verify). Banner: `"Offline mode — cash only. Card/QR resume when online."` (BR-86, §4.2.2) |
+##### AT4: [RESERVED / DELETED]
 
 #### Business Rules
 | ID | Rule Description |
 |---|---|
 | BR-84 | **VietQR Settlement Idempotency & Auto-Confirm**: A VietQR request is bound to its `order_id`; the gateway settles **at most once per `order_id`** (auto-confirmed on callback — the 60s timeout is only the error fallback). "RETRY QR" voids the prior QR and reissues for the same order; any duplicate settlement is auto-flagged for refund (BR-85), so a retry can never double-charge the order. (RV-O02/O06) |
 | BR-85 | **VietQR Late-Callback Reconciliation**: A settlement callback for an already-cancelled / timed-out `order_id` does **not** revive the order. The funds are placed in a payment-reconciliation queue, flagged for refund, and surfaced to the Store Manager. No order is silently resurrected and no money lands on a void order unreconciled. (RV-O01) |
-| BR-86 | **Offline Degraded Mode (Cash-Only)**: When the branch is offline or the gateway is down, the POS operates **cash-only** — `CARD`/`VIETQR` are disabled (no offline card auth). Orders + cash sales are recorded to a local queue and synced on reconnect; loyalty accrual/redemption and online voucher verification are suspended, only preloaded local vouchers verify (subject to later reconciliation/clawback). Full offline behaviour (ID strategy, conflict resolution, max duration) is specified in §4.2.2. (RV-C19/O05/O11) |
+| BR-86 | [RESERVED / DELETED] |
 
 ---
 
@@ -4234,7 +4217,7 @@ All orders follow the state transitions below:
 | ID | Rule Description |
 |---|---|
 | BR-61 | **KDS KPI Aggregation Scope**: Barista performance indicators (e.g., average preparation time, orders completed per shift) are calculated and reported at the branch and shift session level. No performance metric is recorded per individual barista user ID for each beverage item. Reports expose aggregate throughput only. |
-| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the Kitchen Display System or sticker printer is unreachable, orders are **not** lost — new tickets queue locally and are (re)dispatched on reconnect, and the POS exposes a **manual fallback** (on-screen ticket list + reprint, UC-56/UC-57) so the Barista can keep working during peak hours. A printer/KDS outage never blocks taking or preparing orders. |
+| BR-87 | [RESERVED / DELETED] |
 
 ---
 
@@ -6326,15 +6309,7 @@ Requirements for system reliability, availability, fault tolerance, and bug rate
 - **Availability**:
   - **System Availability**: The cloud system and APIs must maintain at least **99.9% uptime**, **measured excluding the scheduled maintenance window** below (so planned maintenance does not consume the error budget). This reconciles the SLA with the maintenance allowance — the two no longer contradict (RV-C17).
   - **Maintenance Access**: System maintenance is scheduled during low-traffic periods (02:00 AM to 04:00 AM on Sundays), must not exceed **2 hours per month**, and is announced in advance; downtime inside this window is excluded from the 99.9% measurement.
-  - **Degraded Mode Operations (Offline POS — cash-only)** *(RV-C19, aligns with BR-86)*:
-    > [!IMPORTANT]
-    > If the local store internet connection or the payment gateway drops, the POS cashier terminal must continue to function in a **cash-only** degraded mode, storing orders in secure local storage.
-    - **Tender**: **Cash only.** `CARD` and `VIETQR` are disabled while offline — there is **no offline card authorisation** (avoids decline/chargeback risk).
-    - **Promotions**: Loyalty accrual/redemption and online voucher verification are suspended; only preloaded local vouchers verify, flagged for reconciliation/clawback on reconnect (e.g. single-use voucher spent twice offline is detected and reversed).
-    - **Identifier strategy**: Offline orders/payments are keyed by **client-generated UUIDs** so they never collide with server IDs; the server accepts them idempotently on sync (no renumbering, no duplicates).
-    - **Conflict resolution**: On reconnect, queued transactions sync **append-only** in client-timestamp order; server-authoritative records (stock balances, voucher usage counters) are recomputed centrally, and any conflict (e.g. voucher over-use, negative stock per BR-89) is surfaced to the Store Manager rather than silently merged.
-    - **Max offline duration**: The terminal may operate offline for up to `MAX_OFFLINE_HOURS` (configurable); beyond it, the terminal warns and requires reconnection/manual reconciliation before continuing.
-    - **Sync**: Queued offline orders sync to the cloud automatically within **60 seconds** of connectivity recovery.
+  - **Degraded Mode Operations**: Not supported. The POS Terminal operates as an always-online application and requires active internet connectivity. If connection to the cloud backend or payment gateway is lost, transaction checkout is suspended until connectivity is restored.
 - **System Stability & Crash-free Rate**:
   - The crash-free session rate for both POS client applications and server-side components must be at least **99.9%** (measured over any 30-day window).
 - **Mean Time To Repair (MTTR)**:
@@ -6508,8 +6483,8 @@ This section contains business rules, global requirements, common application me
 | BR-83 | **Mandatory MFA for HQ Roles**: Login by `ceoviewer` / `businessadmin` / `ssadmin` requires a second factor after password — 6-digit email OTP (reusing UC-03/04 infra) or TOTP — governed by `HQ_MFA_REQUIRED` (default true). Branch/POS roles are exempt to avoid disrupting shared-terminal operations. Three failed MFA attempts trigger the BR-17 lockout. (§3.2.1/3.2.14, RV-S05) |
 | BR-84 | **VietQR Settlement Idempotency & Auto-Confirm**: A VietQR request is bound to its `order_id`; the gateway settles **at most once per `order_id`** (auto-confirmed on callback — the 60s timeout is only the error fallback). "RETRY QR" voids the prior QR and reissues for the same order; any duplicate settlement is auto-flagged for refund (BR-85), so a retry never double-charges. (§3.6.6, RV-O02/O06) |
 | BR-85 | **VietQR Late-Callback Reconciliation**: A settlement callback for an already-cancelled / timed-out `order_id` does **not** revive the order; funds go to a payment-reconciliation queue, are flagged for refund, and surfaced to the Store Manager. No order is silently resurrected and no money lands unreconciled on a void order. (§3.6.6, RV-O01) |
-| BR-86 | **Offline Degraded Mode (Cash-Only)**: When offline or the gateway is down, the POS is **cash-only** (`CARD`/`VIETQR` disabled, no offline card auth). Orders + cash queue locally (client-UUID keyed) and sync on reconnect; loyalty and online voucher checks suspend, only preloaded local vouchers verify (with reconciliation/clawback). Full offline semantics — ID strategy, conflict resolution, `MAX_OFFLINE_HOURS` — in §4.2.2. (RV-C19/O05/O11) |
-| BR-87 | **KDS / Sticker-Printer Offline Fallback**: If the KDS or sticker printer is unreachable, tickets queue locally and re-dispatch on reconnect, and the POS exposes a manual on-screen ticket list + reprint (UC-56/57). A printer/KDS outage never blocks taking or preparing orders. (§3.7.7, RV-O04) |
+| BR-86 | [RESERVED / DELETED] |
+| BR-87 | [RESERVED / DELETED] |
 | BR-88 | **READY Order Auto-Abandon & Shift Close**: A `READY` order uncollected beyond `READY_ABANDON_TIMEOUT` auto-transitions to terminal state `ABANDONED`; at shift close the Store Manager may force-close remaining `READY` orders to `ABANDONED` (logged). Stock was deducted at `PREPARING` (BR-07) so no reversal; abandoned orders are reported as uncollected and excluded from net sales. (§3.7, RV-O03) |
 | BR-89 | **Negative-Stock / Phantom-Usage Ledger**: When a deduction exceeds the available balance, the system records the full deduction and lets the `STOCK_ITEM` balance go **negative**, logging the shortfall as a `phantom_usage` transaction (never clamped to 0). Negative balances surface in MSG07 and the COGS/shrinkage report (UC-76) so loss signals are auditable. (§3.5.6, RV-O16) |
 | BR-90 | **Cross-Branch Shift Assignment**: A Store Manager may assign an own-branch employee to a shift at another branch directly (no host approval) via UC-36. The assignment is audit-logged (capturing the employee, home and target branches, assigning manager, and date) and makes the borrowed employee visible to the host Store Manager for that shift's duration (BR-59 exception). Worked hours follow the employee for payroll, and branch labor costs are attributed to the branch where the shift was physically worked (BR-53a). (§3.9.1, RV-C04) |

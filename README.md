@@ -33,7 +33,7 @@ To facilitate collaboration and version control (aligned with the suggested grou
 4. **[Section 4: Non-Functional Requirements](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/04_non_functional_requirements.md)**
    - External Interfaces (Hardware details & APIs)
    - Quality Attributes (Usability, Performance, Security)
-   - **Offline POS Resilience Mode** (Offline local caching & auto-syncing)
+   - System Reliability & Availability Attributes (SLA & scheduled maintenance details)
 
 5. **[Section 5: Requirement Appendix & Mapping](file:///C:/Users/pc/.gemini/antigravity-ide/scratch/coffee_shop_srs/sections/05_appendix_mapping.md)**
    - Core Business Rules
