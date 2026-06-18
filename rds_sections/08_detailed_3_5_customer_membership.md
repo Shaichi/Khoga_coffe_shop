@@ -1,6 +1,6 @@
 ### **3.5 Customer & Membership Management**
 
-*\[Provide the detailed design for Customer & Membership Management, covering UC-24→UC-27 (View/Add/Update Customer, Redeem Loyalty Points) and UC-49 (Apply Loyalty Points at Checkout). Actors: cashier (CRM lookup and register at POS), storemanager (edit customer info). Key design: PDPA consent is mandatory before any loyalty data is stored (BR-71). Checkout application is covered in Section 3.7.\]*
+*\[Provide the detailed design for Customer & Membership Management, covering UC-24→UC-27 (View/Add/Update Customer, View Customer History) and UC-49 (Redeem Loyalty Points at Checkout). Actors: cashier (CRM lookup and register at POS), businessadmin (CRM management & loyalty history). Key design: PDPA consent is mandatory before any loyalty data is stored (BR-71). Checkout application is covered in Section 3.7.\]*
 
 #### ***3.5.1 Class Diagram***
 
@@ -18,7 +18,6 @@ classDiagram
         +fullName: String
         +phone: String
         +email: String
-        +birthDate: Date
         +pdpaConsentCheckbox: Boolean
         +submitForm()
     }
@@ -55,11 +54,10 @@ classDiagram
         +fullName: String
         +phone: String
         +email: String
-        +birthDate: Date
-        +loyaltyPoints: Integer
+        +points: Integer
         +consentAt: DateTime
         +consentVersion: String
-        +isActive: Boolean
+        +createdAt: DateTime
     }
 
     CustomerSearchView ..> CustomerCoordinator
@@ -81,18 +79,18 @@ sequenceDiagram
     participant CustomerCoord as CustomerCoordinator
     participant CustomerDB as Customer (DB)
 
-    cashier->>AddForm: inputCustomerDetails(name, phone, email, birthDate)
+    cashier->>AddForm: inputCustomerDetails(name, phone, email)
     AddForm->>AddForm: validate PDPA checkbox = true (mandatory, BR-71)
     AddForm->>CustomerCoord: submitForm(dto)
     CustomerCoord->>CustomerDB: checkPhoneUnique(phone)
     CustomerDB-->>CustomerCoord: phone available
-    CustomerCoord->>CustomerDB: createCustomer(dto, pdpaConsentAt=now, pdpaConsentVersion, loyaltyPoints=0)
+    CustomerCoord->>CustomerDB: createCustomer(dto, consentAt=now, consentVersion, points=0)
     CustomerDB-->>CustomerCoord: newCustomer
-    CustomerCoord-->>AddForm: return newCustomer (loyaltyPoints=0)
+    CustomerCoord-->>AddForm: return newCustomer (points=0)
     AddForm-->>cashier: displayCustomerCard()
 ```
 
-#### ***3.5.3 UC-27 Redeem Loyalty Points***
+#### ***3.5.3 UC-49 Redeem Loyalty Points***
 
 *\[Cashier applies loyalty points as a discount during checkout. The points-to-VND conversion rate is configured in SystemConfig (UC-30). Sufficient points balance is validated before confirming. Points are deducted immediately upon redemption confirmation.\]*
 

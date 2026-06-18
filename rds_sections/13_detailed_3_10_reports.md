@@ -1,6 +1,6 @@
 ### **3.10 Reports & Analytics**
 
-*\[Provide the detailed design for Reports & Analytics, covering UC-28→UC-29 (HQ Consolidated Revenue Dashboard), UC-40→UC-41 (Branch Sales Report, Z-Report Archive), UC-76→UC-83 (Price Change History, Voucher Usage Report, Loyalty Liability, Labour Efficiency, COGS/Margin Report, Anomaly Detection, Z-Report Archive). Actors: ceoviewer/businessadmin/ssadmin (HQ reports), storemanager (branch-level reports). Data sources: Order, StockTransaction, AuditLog, ShiftSession tables (read-only).\]*
+*\[Provide the detailed design for Reports & Analytics, covering UC-28→UC-29 (HQ Consolidated Revenue Dashboard & Export), UC-40→UC-41 (Branch Sales Report & Export), and UC-76→UC-83: UC-76 (COGS/Margin & Ingredient Shrinkage), UC-77 (Price & Voucher Change History), UC-78 (Loyalty Liability & Movement), UC-79 (Labour Hours vs Revenue), UC-81 (Daily Z-Report), UC-82 (Cashier Void/Refund Anomaly), UC-83 (User Account Change & Access Review); UC-80 (Worked-Hours Export) is detailed in §3.9. Actors: ceoviewer (HQ read-only reports), storemanager (branch-level reports per §3.1). NOTE: UC-78/UC-81/UC-83 reuse the same ReportCoordinator → «application logic» service → read-only entity pattern in §3.10.1; per COMET "same structure described once", only representative sequences (UC-28/29, UC-76, UC-77, UC-82) are drawn. Data sources: Order, StockTransaction, AuditLog, ShiftSession tables (read-only).\]*
 
 #### ***3.10.1 Class Diagram***
 
@@ -111,7 +111,7 @@ classDiagram
 
 #### ***3.10.2 UC-28/29 HQ Consolidated Revenue Report***
 
-*\[ceoviewer or businessadmin views revenue consolidated across all branches for a selected date range. Supports per-branch breakdown and date granularity (daily/weekly/monthly). Exportable to Excel format.\]*
+*\[ceoviewer views revenue consolidated across all branches for a selected date range (HQ Business Reports, screen 23, is ceoviewer-only per §3.1). Supports per-branch breakdown and date granularity (daily/weekly/monthly). Exportable to Excel format.\]*
 
 ```mermaid
 sequenceDiagram
@@ -138,9 +138,9 @@ sequenceDiagram
     end
 ```
 
-#### ***3.10.3 UC-79 COGS & Margin Report***
+#### ***3.10.3 UC-76 COGS & Margin Report***
 
-*\[businessadmin or storemanager views Cost of Goods Sold by period. COGSCalculator multiplies each sold order item's recipe quantities by the raw material standard cost, summing across all completed orders in the period.\]*
+*\[ceoviewer (chain-wide) or storemanager (own branch) views Cost of Goods Sold by period (BR-66). COGSCalculator multiplies each sold order item's recipe quantities by the raw material standard cost, summing across all completed orders in the period.\]*
 
 ```mermaid
 sequenceDiagram
@@ -170,7 +170,7 @@ sequenceDiagram
 
 #### ***3.10.4 UC-82 Anomaly Detection Report***
 
-*\[ssadmin or businessadmin views anomaly flags across branches. The AnomalyDetector scans for: cancellation ratio exceeding threshold, large stock adjustment discrepancies, and refund/comp rate spikes above baseline.\]*
+*\[Store Manager (own branch) or CEO Viewer (chain) views anomaly flags (UC-82, BR-79). The AnomalyDetector scans for: cancellation ratio exceeding threshold, large stock adjustment discrepancies, and refund/comp rate spikes above baseline. Detective control only — does not block.\]*
 
 ```mermaid
 sequenceDiagram
@@ -204,9 +204,9 @@ sequenceDiagram
     HQDash-->>admin: displayAnomalyReport()
 ```
 
-#### ***3.10.5 UC-76 Price Change History***
+#### ***3.10.5 UC-77 Price & Voucher Change History***
 
-*\[businessadmin or ceoviewer views the full history of price changes for a menu item. Data is sourced from the immutable AuditLog (append-only, no UPDATE/DELETE permitted per BR-80/BR-81).\]*
+*\[ceoviewer views the full history of price (and voucher) changes for a menu item — read-only compensating control for the single businessadmin role. Data is sourced from the immutable AuditLog (append-only, no UPDATE/DELETE permitted), written on every price/voucher mutation per BR-68.\]*
 
 ```mermaid
 sequenceDiagram
@@ -217,7 +217,7 @@ sequenceDiagram
 
     viewer->>PriceHistView: selectMenuItem(menuItemId)
     PriceHistView->>ReportCoord: getPriceChangeHistory(menuItemId)
-    ReportCoord->>AuditDB: findByEntityAndAction(entity=menu_items, id=menuItemId, action=PRICE_UPDATE)
+    ReportCoord->>AuditDB: findByEntityAndAction(entity=menu_items, id=menuItemId, action=UPDATE)
     AuditDB-->>ReportCoord: auditLogs[] (oldPrice, newPrice, changedBy, changedAt)
     ReportCoord-->>PriceHistView: List~PriceChangeDto~
     PriceHistView-->>viewer: displayPriceChangeTimeline()

@@ -96,7 +96,7 @@ classDiagram
 
 #### ***3.2.2 UC-11 Add User Account***
 
-*\[ssadmin creates a new employee account. System auto-generates a temporary password, sends a welcome email with the temporary password, sets mustChangePassword = true, and writes an audit log entry (BR-80).\]*
+*\[ssadmin creates a new employee account. System auto-generates a temporary password, sends a welcome email with the temporary password, sets mustChangePassword = true, and writes an audit log entry (BR-81).\]*
 
 ```mermaid
 sequenceDiagram
@@ -127,7 +127,7 @@ sequenceDiagram
 
 #### ***3.2.3 UC-12/UC-14 Update / Deactivate User Account***
 
-*\[ssadmin updates user profile details or deactivates an account. Self-role escalation is blocked (BR-82): ssadmin cannot elevate their own role. An audit log is written for every change (BR-80). Deactivated users cannot login.\]*
+*\[ssadmin updates user profile details or deactivates an account. Self-role escalation is blocked (BR-82): ssadmin cannot elevate their own role. An audit log is written for every change (BR-81). Deactivated users cannot login.\]*
 
 ```mermaid
 sequenceDiagram

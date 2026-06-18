@@ -8,36 +8,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **documentation and UI/UX specification repository** for **Khoga Café** — a multi-location coffee shop chain management system. It is not a runnable application. The deliverables are SRS documents, Mermaid diagrams, and static HTML mockups.
+This is a **documentation, design-spec, and UI/UX repository** for **Khoga Café** — a multi-location coffee shop chain management system. It is not a runnable application. The deliverables are:
+- the **SRS** (Software Requirements Specification — *what* the system does),
+- the **RDS** (Report 4 / Software Design Document — *how* it is built, following the COMET method),
+- Mermaid diagrams, and static HTML mockups.
+
+The repo has moved past the requirements (SRS) phase into the **detailed-design (RDS)** phase. The RDS defines the target implementation stack (see "Target Implementation Architecture" below); no application code is committed yet.
 
 ## Document Compilation
 
-To rebuild the compiled SRS from modular sections:
+Two compiled documents are generated from modular section files. **Always edit the section files, never the compiled output.**
 
 ```powershell
-python compile_srs.py
-# or
-.\compile_srs.ps1
+# RDS — Software Design Document (current active deliverable)
+python compile_rds.py        # rds_sections/*.md  ->  RDS_Khoga_CoffeeShop_v1.0.md
+
+# SRS — Requirements (compile scripts were DELETED from the working tree)
+# compile_srs.py / compile_srs.ps1 no longer exist on disk; restore from git if needed:
+#   git checkout -- compile_srs.py compile_srs.ps1
+# srs_document_full.md is still present and is the authoritative compiled SRS.
 ```
 
-Output: `srs_document_full.md` (authoritative compiled document).
+Recompile (`python compile_rds.py`) after each batch of `rds_sections/` edits.
+
+**RDS diagram maintenance:** `standardize_sequence_diagrams.py` rewrites free-text sequence-diagram labels in `rds_sections/` into formal UML method signatures (e.g. `enter OTP` → `inputOtp(otp)`). Run it after adding sequence diagrams to keep them UML-compliant.
 
 ## Repository Structure
 
 | Path | Purpose |
 |------|---------|
-| `sections/` | 17 modular SRS markdown files (one per functional domain) |
-| `admin_hq_mockups/` | Web UI mockups for HQ Admin — catalog, vouchers, users, branches, reports |
+| `sections/` | Modular **SRS** markdown files (one per functional domain) — source for `srs_document_full.md` |
+| `rds_sections/` | Modular **RDS** (Software Design) files — source for `RDS_Khoga_CoffeeShop_v1.0.md` (compiled by `compile_rds.py`) |
+| `srs_document_full.md` | Compiled single-file SRS (generated — do not edit directly) |
+| `RDS_Khoga_CoffeeShop_v1.0.md` | Compiled single-file RDS / Software Design Document (generated — do not edit directly) |
+| `admin_hq_mockups/` | Web UI mockups for the 3 HQ roles — catalog, vouchers, users, branches, reports, materials |
 | `cashier_pos_mockups/` | Touchscreen POS mockups — checkout, shifts, payments, order history |
 | `barista_monitor_mockups/` | Kitchen Display System (KDS) tablet mockups for baristas |
 | `store_manager_mockups/` | Store Manager web dashboard — inventory, staff, revenue |
-| `mobile_auth_mockups/` | Mobile login and profile screens |
-| `srs_document_full.md` | Compiled single-file SRS (generated — do not edit directly) |
+| `mobile_auth_mockups/` | Mobile login and profile screens (shared auth set for web + mobile) |
 | `system_architecture_and_operations.md` | Org structure, core business processes, and 6-role rationale |
+| `implementation_plan.md` | RDS/COMET build plan (Vietnamese) — maps the 3 COMET phases to concrete artifacts |
+| `coding_division_plan.md` | Per-student (5-member, 3-iteration) UC/screen/mockup assignment for parallel coding |
+| `group_division_plan.md` | Team division map (restored) |
+| `feature_function_matrix.md` | Feature/function roadmap matrix (restored) |
 | `project_summary.md` | Team-facing overview + keep/improve assessment |
-| `srs_review_findings.md` | CEO-review backlog: 64 open findings (RV-S/O/F/C) with priority + fix direction — review before acting, not yet applied to the SRS |
-
-> **Deleted planning/index docs** (removed in the migration commit, *not yet restored* — see Open Issues): `mockup_mapping.md` (mockup↔UC index), `feature_function_matrix.md` (roadmap), `group_division_plan.md` (team map), `proposed_cancellation_workflow.md`, `srs_revision_summary.md`, `srs_revision_todo.md`, `srs_vs_market_analysis.md`.
+| `srs_review_findings.md` | CEO-review backlog (RV-S/O/F/C findings) — all P0/P1 cleared; only P2/P3 remain |
 
 ## SRS Section Map
 
@@ -55,6 +70,29 @@ Output: `srs_document_full.md` (authoritative compiled document).
 | `sections/03_10_promotion_campaign.md` | Vouchers, discount rules |
 | `sections/03_12_dashboard_reporting.md` | Analytics, HQ and store reports |
 | `sections/03_13_system_configuration.md` | Hardware, VAT, printer config |
+
+## RDS (Software Design) Map
+
+`rds_sections/` follows the COMET method (Hassan Gomaa) and compiles in numeric order. Section 3.x design files mirror the SRS functional domains, each typically containing a COMET class diagram (EBC stereotypes), sequence diagrams, and statecharts.
+
+| File | Content |
+|------|---------|
+| `rds_sections/00_record_of_changes.md` | RDS change log (start here to see latest design state) |
+| `rds_sections/01_system_architecture.md` | 4-tier MVC + COMET EBC architecture diagram & component table |
+| `rds_sections/02_package_diagram.md` | UML package diagram (bean/view/controller/filter/dao/util) |
+| `rds_sections/03_database_design.md` | 21-table ERD, split into Core-Sales/POS + Operations/Staffing/Audit |
+| `rds_sections/04..14_detailed_*.md` | Per-domain detailed design (class + sequence + statechart diagrams) |
+
+## Target Implementation Architecture (RDS)
+
+The RDS specifies a **4-Tier MVC architecture combined with the COMET EBC (Entity–Boundary–Control) design method**. Authoritative source: `rds_sections/01_system_architecture.md`.
+
+- **Presentation:** Thymeleaf (Spring MVC server-side rendered web) for the HQ Admin Portal (`ceoviewer`/`businessadmin`/`ssadmin`) and Store Manager Console (`storemanager`); **Flutter (Dart)** for the POS Terminal (`cashier`) and Barista Queue Monitor (`barista`). POS/Barista clients are **always-online**.
+- **Application:** **Spring Boot 3.x (Java 17+)** — `@RestController` (API gateway, all endpoints under `/api/v1/`, JWT auth, Bean Validation) → `@Service` (`@Transactional` coordinators) → stateless `@Component` rule engines (DiscountStackingEngine BR-70, RecipeDeductionEngine BR-89, LoyaltyPointCalculator, COGSCalculator, AnomalyDetector, AttendancePhotoManager) → `@Scheduled` timers (OrderTimeout 15 min, ShiftAutoClose 23:59, LowStockAlert 22:00, PhotoAutoDelete 02:00 PDPA BR-72, OtpExpiry 10 min).
+- **Domain / DB:** 21 JPA `@Entity` + Spring Data JPA `@Repository` → **SQL Server**, 21 tables, ACID, Unicode (`NVARCHAR`). **All PKs are UUID `VARCHAR(36)`.**
+- **External systems:** VietQR payment gateway (REST webhook, idempotency key = `orderId`, BR-84/85), SMTP (OTP/alerts), ESC/POS receipt + label printers (USB/Network).
+
+**COMET → Spring mapping:** `«boundary»` = Thymeleaf/Flutter view or `@RestController` or external proxy adapter; `«control»` = `@Service`; `«application logic»` = `@Component` engine; `«entity»` = `@Entity`+`@Repository`; `«timer»` = `@Scheduled`. Keep this mapping when authoring RDS class diagrams.
 
 ## Conventions
 
@@ -138,8 +176,8 @@ The 6-role migration of the **written SRS** is complete (incl. §3.2 bodies + §
 **✅ 2. UC-74 (Raw Material Master) fully propagated (resolved 2026-06-11).**
    Now consistent across: §3.5.0, §3.1 (screen 50 + ERD), §3.3 cross-ref, §5.4, BR-63/64, the §2.3 master use-case list, the §2.2.3 Business Admin use-case diagram, and `00_record_of_changes.md` (v1.10). The ERD now has a chain-wide `RAW_MATERIAL` master entity; `STOCK_ITEM` (renumbered 10a) carries a `raw_material_id` FK and `RECIPE_ITEM` re-points to the master per BR-63. (Also recorded the prior 6-role migration as v1.9 and refreshed the §2.2.x / §3.5.0 entries in the `00_record_of_changes.md` Table of Contents, which were stale.)
 
-**🟢 3. Deleted planning/index docs — decide restore vs abandon.**
-   `mockup_mapping.md`, `feature_function_matrix.md`, `group_division_plan.md`, `proposed_cancellation_workflow.md`, `srs_revision_{summary,todo}.md`, `srs_vs_market_analysis.md` were removed in the migration commit. `mockup_mapping.md` in particular is needed as the reference for the mockup audit (Issue 1) and to index the 3 new role dashboards + `materials_web.html`.
+**🟡 3. Deleted planning/index docs — partly restored.**
+   Restored and present: `feature_function_matrix.md`, `group_division_plan.md` (plus new `coding_division_plan.md` + `implementation_plan.md` for the build phase). Still missing: `mockup_mapping.md` (mockup↔UC index), `proposed_cancellation_workflow.md`, `srs_revision_{summary,todo}.md`, `srs_vs_market_analysis.md`. `mockup_mapping.md` would still be useful as the mockup↔UC↔screen index for the 5 mockup folders + role dashboards + `materials_web.html`.
 
 **🟢 4. CEO-review backlog — `srs_review_findings.md` (64 findings; ALL 6 P0 + 26 P1 cleared v1.12→v1.15 → 32 open, all P2/P3). ← only nice-to-have/roadmap left.**
    Direction chosen by the product owner: keep as a **reviewed backlog, not auto-applied** to the SRS. Findings are grouped `RV-S` (security/fraud), `RV-O` (operations/inventory), `RV-F` (financial/reporting), `RV-C` (compliance/people/NFR), each with priority P0–P3, rationale, fix direction, and §/UC/BR refs.
@@ -156,6 +194,6 @@ The 6-role migration of the **written SRS** is complete (incl. §3.2 bodies + §
    - **Next step — P2/P3 only** (nice-to-have + roadmap): e.g. supplier master/price book (RV-O18), expiry/lot/FIFO (RV-O19), recipe versioning (RV-O22), split/partial payment (RV-O08), cohort/RFM analytics (RV-F13), campaign ROI (RV-F09), WCAG (RV-C20), gift cards (RV-F18), Finance read-only role (RV-S14). Not urgent.
    - **Workflow per item:** product-owner sign-off → SRS edit → `00_record_of_changes.md` entry → recompile.
 
-**Reminder:** recompile (`python compile_srs.py`) after each batch of section edits.
+**Reminder:** recompile after each batch of section edits — `python compile_rds.py` for `rds_sections/` (active), or restore + run `compile_srs.py` for `sections/`.
 
 See `project_summary.md` for a team-facing overview + a keep/improve assessment of fit against the business model and org structure.

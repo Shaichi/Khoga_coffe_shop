@@ -1,6 +1,6 @@
 ### **3.6 Inventory & Stock Management**
 
-*\[Provide the detailed design for Inventory & Stock Management, covering UC-31→UC-34 (View Stock Dashboard, Import Stock, Export Stock, Stock Audit/Physical Count) and UC-61→UC-62 (Recipe-based Auto-Deduction on PREPARING status, Low Stock Alert). Actors: storemanager (manual import/export/audit), system scheduler (auto-deduction via RecipeDeductionService, daily alert via LowStockAlertScheduler).\]*
+*\[Provide the detailed design for Inventory & Stock Management, covering UC-31→UC-34 (View Stock Dashboard, Import Stock, Export Stock, Stock Audit/Physical Count), UC-61 (View Import/Export History — reuses the StockDashboard read view), and UC-62 (Recipe-based Auto-Deduction on PREPARING status) plus the automated daily Low Stock Alert. Actors: storemanager (manual import/export/audit), system scheduler (auto-deduction via RecipeDeductionService, daily alert via LowStockAlertScheduler).\]*
 
 #### ***3.6.1 Class Diagram***
 
@@ -60,20 +60,17 @@ classDiagram
         +id: UUID
         +storeId: UUID
         +rawMaterialId: UUID
-        +quantityOnHand: Decimal
-        +minimumThreshold: Decimal
-        +unit: String
+        +currentQuantity: Decimal
+        +minAlertThreshold: Decimal
     }
     class StockTransaction {
         <<entity>>
         +id: UUID
         +stockItemId: UUID
-        +transactionType: TxType
-        +quantityBefore: Decimal
-        +quantityChange: Decimal
-        +quantityAfter: Decimal
         +managerId: UUID
-        +note: String
+        +transactionType: TxType
+        +quantity: Decimal
+        +reason: String
         +createdAt: DateTime
     }
     class RawMaterial {
@@ -118,7 +115,7 @@ sequenceDiagram
     StockCoord->>StockItemDB: findByIdForUpdate(stockItemId)
     StockItemDB-->>StockCoord: stockItem (quantityBefore = Q)
     StockCoord->>StockItemDB: incrementQuantity(stockItemId, quantity)
-    StockCoord->>TxDB: createTransaction(IMPORT, stockItemId, Q, +qty, Q+qty, managerId, note)
+    StockCoord->>TxDB: createTransaction(IMPORT, stockItemId, +qty, managerId, reason)
     TxDB-->>StockCoord: txRecord
     StockCoord-->>ImportForm: showSuccess(newOnHand = Q+qty)
     ImportForm-->>storemanager: display updated stock level
@@ -143,13 +140,13 @@ sequenceDiagram
         StockItemDB-->>StockCoord: stockItem (systemQty = S)
         StockCoord->>StockCoord: adjustment = actualQty - S
         StockCoord->>StockItemDB: setQuantity(stockItemId, actualQty)
-        StockCoord->>TxDB: createTransaction(AUDIT_ADJUSTMENT, stockItemId, S, adjustment, actualQty, managerId, note)
+        StockCoord->>TxDB: createTransaction(AUDIT_ADJUSTMENT, stockItemId, adjustment, managerId, reason)
     end
     StockCoord-->>AuditForm: showAuditSummary(adjustmentReport)
     AuditForm-->>storemanager: display adjustment report (discrepancy per item)
 ```
 
-#### ***3.6.4 UC-61/62 Automatic Recipe-Based Stock Deduction***
+#### ***3.6.4 UC-62 Automatic Recipe-Based Stock Deduction***
 
 *\[When the Barista updates order status to PREPARING, the RecipeDeductionService is triggered. Each order item's recipe formula is consumed from branch stock. If any ingredient is insufficient, the system still deducts everything (allowing negative balance) and records a `phantom_usage` transaction to monitor leakage (BR-89). It does NOT set the order status to HOLD. A low-stock alert MSG07 is dispatched, but the order preparation proceeds without blocking. RECIPE_DEDUCTION transactions have null manager_id to distinguish them from manual adjustments.\]*
 

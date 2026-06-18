@@ -1,6 +1,6 @@
 ### **3.9 Staff Management**
 
-*\[Provide the detailed design for Staff Management, covering UC-35→UC-39 (View/Create/Update/Delete Schedule, View Attendance Report), UC-66 (Attendance Check-in/out with PIN + Photo Capture), and UC-80 (Export Worked Hours). Actors: storemanager (schedule CRUD + attendance oversight), cashier/barista (self check-in at branch). Key PDPA design: attendance photos are stored on server filesystem (path only in DB), automatically purged by PhotoAutoDeleteScheduler after 90 days (BR-72).\]*
+*\[Provide the detailed design for Staff Management, covering UC-35→UC-39 (View/Create/Update/Delete Schedule, View Attendance Report), Attendance Check-In/Out with PIN + Photo Capture (automated popup function per BR-38/BR-53/BR-93 — not a standalone use case), and UC-80 (Export Worked Hours). Actors: storemanager (schedule CRUD + attendance oversight), cashier/barista (self check-in at branch). Key PDPA design: attendance photos are stored on server filesystem (path only in DB), automatically purged by PhotoAutoDeleteScheduler after 90 days (BR-72).\]*
 
 #### ***3.9.1 Class Diagram***
 
@@ -21,7 +21,7 @@ classDiagram
         +shiftType: ShiftType
         +startTime: Time
         +endTime: Time
-        +posRegisterId: Integer
+        +posRegisterId: String
         +submitSchedule()
     }
     class AttendanceCheckInScreen {
@@ -74,11 +74,11 @@ classDiagram
         +id: UUID
         +storeId: UUID
         +userId: UUID
-        +date: Date
+        +shiftDate: Date
         +shiftType: ShiftType
-        +startTime: Time
-        +endTime: Time
-        +posRegisterId: Integer
+        +shiftStartTime: Time
+        +shiftEndTime: Time
+        +posRegisterId: String
     }
     class AttendanceLog {
         <<entity>>
@@ -163,7 +163,7 @@ sequenceDiagram
     end
 ```
 
-#### ***3.9.3 UC-66 Attendance Check-In with Photo (PDPA-Compliant & Fallback)***
+#### ***3.9.3 Attendance Check-In/Out with Photo (BR-38/BR-53/BR-93, PDPA-Compliant & Fallback)***
 
 *\[Employee clocks in at branch using their 4-digit PIN + camera photo capture (BR-93). System validates that the PIN is unique within the store and identifies the employee. Camera snapshot is mandatory at check-in/out; if the camera is unavailable, the action is queued and flagged for Store Manager confirmation rather than recorded without a photo. PDPA compliance: photos are auto-purged after 90 days by PhotoAutoDeleteScheduler (BR-72).\]*
 

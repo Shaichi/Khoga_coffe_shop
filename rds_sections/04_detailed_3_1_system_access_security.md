@@ -277,7 +277,7 @@ sequenceDiagram
 
 #### ***3.1.6 USER Account Statechart***
 
-*\[The User account lifecycle has 4 states. The CREATED state forces a password change on first login. ACTIVE is the normal operational state. LOCKED occurs after 5 consecutive failed login attempts (BR-15). INACTIVE results from manual deactivation by ssadmin or storemanager (own branch staff only).\]*
+*\[The User account lifecycle has 4 states. The CREATED state forces a password change on first login. ACTIVE is the normal operational state. LOCKED occurs after 5 consecutive failed login attempts and is a time-bound 15-minute suspension that auto-clears (BR-11); an ssadmin may also unlock manually. INACTIVE results from manual deactivation by ssadmin or storemanager (own branch staff only).\]*
 
 ```mermaid
 stateDiagram-v2
@@ -285,11 +285,13 @@ stateDiagram-v2
 
     CREATED --> ACTIVE : login() [mustChangePassword == true] / forcePasswordChange(); setMustChangePassword(false)
 
-    ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount()
+    ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount(suspend15min)
 
     ACTIVE --> INACTIVE_BY_SM : deactivate() [isSM == true && isOwnBranch == true] / deactivateAccount()
 
     ACTIVE --> INACTIVE_BY_ADMIN : deactivate() [isSSAdmin == true] / deactivateAccount()
+
+    LOCKED --> ACTIVE : timeTrigger [suspensionElapsed >= 15min] / resetFailedAttempts()
 
     LOCKED --> ACTIVE : unlock() [isSSAdmin == true] / resetFailedAttempts()
 

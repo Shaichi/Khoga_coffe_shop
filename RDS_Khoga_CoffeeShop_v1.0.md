@@ -1,8 +1,8 @@
-﻿**CAPSTONE PROJECT REPORT**
+**CAPSTONE PROJECT REPORT**
 
-**Report 4 - Software Design Document**
+**Report 4 – Software Design Document**
 
-**Khoga Cafe Shop Management System**
+**Khoga Café Shop Management System**
 
 Version: 1.0 | Date: 2026-06-18
 
@@ -45,10 +45,14 @@ Version: 1.0 | Date: 2026-06-18
 | 2026-06-18 | M | Software Engineering Team | Standardized Section 1.2 Package Diagram to UML package diagram conventions (Visual Paradigm style), organizing 18 subsystems into structured tiers with explicit dependency stereotypes (use, import, access). |
 | 2026-06-18 | M | Software Engineering Team | Standardized all 4 Statechart diagrams (USER, VOUCHER, SHIFT, ORDER lifecycles) to UML-compliant syntax matching Visual Paradigm layout (Trigger [Guard] / Action format). |
 | 2026-06-18 | M | Software Engineering Team | Standardized all 32 Sequence diagrams to UML method signature conventions, converting free-text labels to formal API/event operation calls. |
-|  |  |  |  |
+| 2026-06-18 | M | Software Engineering Team | SRS-consistency review fixes: corrected mis-mapped use-case numbers in section/sequence titles (UC-51/53 in §3.7, UC-55 cancel in §3.8, UC-49 redeem in §3.5, UC-76/77 in §3.10, dropped wrong UC-66/UC-73 labels); fixed wrong business-rule citations (BR-11/42/54/68/81/88) across §3.1/3.2/3.4/3.7/3.10/3.11 and the Package Diagram. |
+| 2026-06-18 | M | Software Engineering Team | Reconciled class diagrams to the 21-table schema: removed non-schema attributes (Customer.birthDate/isActive, StockItem.unit, Order.notes, StockTransaction before/after) and aligned types (pos_register_id String, OrderRefund.shift_session_id added). Standardized enums to SRS (payment_status COMPLETED not PAID; audit action_type UPDATE; voucher state SCHEDULED). |
+| 2026-06-18 | M | Software Engineering Team | Closed business-logic gaps: USER lockout 15-min auto-clear (BR-11); ORDER READY→ABANDONED via timeout + SM force-close (BR-88); SM cash-refund debits open drawer + loyalty reversal (BR-09/BR-08/BR-67); branch deactivation checks non-terminal orders + cascade (BR-55/BR-56). Documented `SystemConfig` as an infrastructure key-value store outside the 21-entity business ERD. |
 |  |  |  |  |
 
 \*A – Added   M – Modified   D – Deleted
+
+
 
 
 # **II. Software Design Document**
@@ -136,6 +140,8 @@ graph TB
 | «application logic» (Engine) | Component: @Component (pure business rules) | DiscountStackingEngine, RecipeDeductionEngine |
 | «entity» (Domain Object) | Model: @Entity + @Repository | User, Order, MenuItem, StockItem, AuditLog |
 | «timer» (Scheduled Task) | Scheduler: @Scheduled / @Async | OrderTimeoutScheduler, ShiftAutoCloseScheduler |
+
+
 
 
 ### **1.2 Package Diagram**
@@ -233,14 +239,16 @@ graph TB
 | 08 | `com.khoga.order` | Order lifecycle: queue display, barista status update, cashier cancellation (PENDING only), SM-authorized refund/comp. Contains `OrderController` («boundary»), `OrderService`, `OrderQueueService`, `CancellationService`, `RefundService` («control»). Coordinates UC-55→UC-60, UC-73, UC-75. |
 | 09 | `com.khoga.staff` | Staff scheduling and attendance tracking. Schedule CRUD by storemanager. Attendance check-in with PIN + camera photo (PDPA-compliant BR-72). Worked-hours export. Contains schedule/attendance controllers and services, `AttendancePhotoManager` («application logic»). Coordinates UC-35→UC-39, UC-66, UC-80. |
 | 10 | `com.khoga.report` | All reporting and analytics: HQ consolidated dashboard, COGS/margin, price change history, loyalty liability, labour efficiency, Z-report archive, anomaly detection. Contains `ReportController` («boundary»), multiple report service classes («application logic»). Coordinates UC-28→UC-29, UC-40→UC-41, UC-76→UC-83. |
-| 11 | `com.khoga.branch` | Branch lifecycle management: add, edit, deactivate. Enforces MAX_ACTIVE_BRANCHES constraint (BR-35). Contains `BranchController` («boundary»), `BranchService` («control»). Coordinates UC-63→UC-65. |
+| 11 | `com.khoga.branch` | Branch lifecycle management: add, edit, deactivate. Enforces MAX_ACTIVE_BRANCHES constraint (BR-54). Contains `BranchController` («boundary»), `BranchService` («control»). Coordinates UC-63→UC-65. |
 | 12 | `com.khoga.config_module` | Central system configuration (tax rate, loyalty rates, VietQR credentials) managed by ssadmin, and branch-local overrides by storemanager. Contains `ConfigController` («boundary»), `SystemConfigService` («control»). Coordinates UC-30, UC-42. |
 | 13 | `com.khoga.audit` | Immutable audit log service auto-triggered by @EntityListeners for: price changes, voucher mutations, user account changes, checkout voucher/loyalty usage. Contains `AuditLogService`. Supports BR-68, BR-80, BR-81. |
 | 14 | `com.khoga.integration` | External system adapters («boundary» external proxies): `VietQRClient` + `VietQRSettlementHandler` (payment gateway), `EmailService` (SMTP OTP/alerts), `PrinterService` (ESC/POS receipt and cup label). |
 | 15 | `com.khoga.common` | Shared persistence layer: all 21 JPA `@Entity` classes, `@Repository` interfaces, request/response DTOs, custom exceptions, `@ControllerAdvice`, and input validators. Classified as «entity» (data) subsystem. |
-| 16 | `com.khoga.scheduler` | Spring `@Scheduled` background timer tasks («timer» subsystem): `OrderTimeoutScheduler` (15-min READY→ABANDONED), `ShiftAutoCloseScheduler` (23:59 cron), `LowStockAlertScheduler` (22:00 cron), `ReadyAbandonScheduler`, `OtpExpiryScheduler` (10-min), `PhotoAutoDeleteScheduler` (02:00 cron — PDPA BR-72). |
+| 16 | `com.khoga.scheduler` | Spring `@Scheduled` background timer tasks («timer» subsystem): `OrderTimeoutScheduler` (READY→ABANDONED after `READY_ABANDON_TIMEOUT`, BR-88), `ShiftAutoCloseScheduler` (23:59 cron, BR-88), `LowStockAlertScheduler` (22:00 cron), `OtpExpiryScheduler` (10-min), `PhotoAutoDeleteScheduler` (02:00 cron — PDPA BR-72). |
 | 17 | `src/main/resources/templates/` | Thymeleaf server-side rendered web frontend for HQ Admin Portal and Store Manager Console. Views are rendered by Spring MVC controllers and delivered as HTML. Static assets (CSS/JS/images) reside in `src/main/resources/static/`. Classified as «boundary» (UI Web) subsystem. |
 | 18 | `khoga_pos_app/` | Flutter application for POS Terminal and Barista Queue Monitor. Communicates via `dio` HTTP client over HTTPS/JSON. Always-online; requires active network connection to process transactions. Classified as «boundary» (UI Flutter) subsystem. |
+
+
 
 
 ## **2\. Database Design**
@@ -601,6 +609,10 @@ erDiagram
 | 20 | attendance_logs | Employee clock-in/out records. At check-in, system snapshots scheduled_start (shift start time) to calculate lateness dynamically at the reporting layer; lateness is not stored in the database. Mandatory check-in photo_path stored server-side. PDPA: auto-purged after 90 days (BR-72). Key definitions: PK is id (UUID); FK is store_id → stores(id), user_id → users(id) |
 | 21 | audit_logs | Immutable security event log (append-only, no UPDATE / DELETE permitted). Records price changes, voucher mutations, user account changes, checkout voucher/point usage. Key definitions: PK is id (UUID); FK is user_id → users(id) |
 
+> **NOTE — Central configuration (`SystemConfig`):** Central parameters edited via UC-30 (tax rate BR-45, loyalty params BR-94, `MAX_ACTIVE_BRANCHES` BR-54, VietQR credentials, etc.) are persisted in an **infrastructure-level key-value store** (`config_key` / `config_value` / `scope` / `store_id` / `updated_by` / `updated_at`). This is **intentionally kept outside the 21-entity business ERD** above; it is referenced by the detailed designs in §3.7 and §3.11 as the `SystemConfig` «entity». The 21-table count therefore covers only the core business domain.
+
+
+
 
 ## **3\. Detailed Design**
 
@@ -881,7 +893,7 @@ sequenceDiagram
 
 #### ***3.1.6 USER Account Statechart***
 
-*\[The User account lifecycle has 4 states. The CREATED state forces a password change on first login. ACTIVE is the normal operational state. LOCKED occurs after 5 consecutive failed login attempts (BR-15). INACTIVE results from manual deactivation by ssadmin or storemanager (own branch staff only).\]*
+*\[The User account lifecycle has 4 states. The CREATED state forces a password change on first login. ACTIVE is the normal operational state. LOCKED occurs after 5 consecutive failed login attempts and is a time-bound 15-minute suspension that auto-clears (BR-11); an ssadmin may also unlock manually. INACTIVE results from manual deactivation by ssadmin or storemanager (own branch staff only).\]*
 
 ```mermaid
 stateDiagram-v2
@@ -889,11 +901,13 @@ stateDiagram-v2
 
     CREATED --> ACTIVE : login() [mustChangePassword == true] / forcePasswordChange(); setMustChangePassword(false)
 
-    ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount()
+    ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount(suspend15min)
 
     ACTIVE --> INACTIVE_BY_SM : deactivate() [isSM == true && isOwnBranch == true] / deactivateAccount()
 
     ACTIVE --> INACTIVE_BY_ADMIN : deactivate() [isSSAdmin == true] / deactivateAccount()
+
+    LOCKED --> ACTIVE : timeTrigger [suspensionElapsed >= 15min] / resetFailedAttempts()
 
     LOCKED --> ACTIVE : unlock() [isSSAdmin == true] / resetFailedAttempts()
 
@@ -901,6 +915,8 @@ stateDiagram-v2
 
     INACTIVE_BY_ADMIN --> ACTIVE : reactivate() [isSSAdmin == true] / activateAccount()
 ```
+
+
 
 
 
@@ -1002,7 +1018,7 @@ classDiagram
 
 #### ***3.2.2 UC-11 Add User Account***
 
-*\[ssadmin creates a new employee account. System auto-generates a temporary password, sends a welcome email with the temporary password, sets mustChangePassword = true, and writes an audit log entry (BR-80).\]*
+*\[ssadmin creates a new employee account. System auto-generates a temporary password, sends a welcome email with the temporary password, sets mustChangePassword = true, and writes an audit log entry (BR-81).\]*
 
 ```mermaid
 sequenceDiagram
@@ -1033,7 +1049,7 @@ sequenceDiagram
 
 #### ***3.2.3 UC-12/UC-14 Update / Deactivate User Account***
 
-*\[ssadmin updates user profile details or deactivates an account. Self-role escalation is blocked (BR-82): ssadmin cannot elevate their own role. An audit log is written for every change (BR-80). Deactivated users cannot login.\]*
+*\[ssadmin updates user profile details or deactivates an account. Self-role escalation is blocked (BR-82): ssadmin cannot elevate their own role. An audit log is written for every change (BR-81). Deactivated users cannot login.\]*
 
 ```mermaid
 sequenceDiagram
@@ -1060,6 +1076,8 @@ sequenceDiagram
     UserMgmtCoord-->>EditForm: showSuccess()
     EditForm-->>ssadmin: display updated user record
 ```
+
+
 
 
 
@@ -1318,6 +1336,8 @@ sequenceDiagram
 
 
 
+
+
 ### **3.4 Voucher Management**
 
 *\[Provide the detailed design for Voucher Management, covering UC-20→UC-23 (View/Add/Update/Delete Voucher). Voucher application at checkout is described in Section 3.7 POS Transaction (UC-48). Actor: businessadmin (CRUD). The class diagram covers the voucher lifecycle; the sequence diagram covers the add/update flow. The VOUCHER statechart documents the full lifecycle.\]*
@@ -1390,7 +1410,7 @@ classDiagram
 
 #### ***3.4.2 UC-21/22 Add / Update Voucher***
 
-*\[businessadmin creates or updates a voucher. System validates: code uniqueness on add, validFrom < validTo, PERCENTAGE type must have capAmount set (BR-66), discountValue must be in [1..100] for PERCENTAGE type. Every mutation is audit-logged (BR-81).\]*
+*\[businessadmin creates or updates a voucher. System validates: code uniqueness on add, validFrom < validTo, PERCENTAGE type must have capAmount set (BR-42), discountValue must be in [1..100] for PERCENTAGE type. Every mutation is audit-logged (BR-68).\]*
 
 ```mermaid
 sequenceDiagram
@@ -1411,7 +1431,7 @@ sequenceDiagram
     end
 
     Note over VoucherCoord: Validate validFrom < validTo
-    Note over VoucherCoord: PERCENTAGE type must have capAmount set (BR-66)
+    Note over VoucherCoord: PERCENTAGE type must have capAmount set (BR-42)
     Note over VoucherCoord: discountValue in [1..100] for PERCENTAGE type
 
     VoucherCoord->>VoucherDB: save(dto)
@@ -1423,13 +1443,13 @@ sequenceDiagram
 
 #### ***3.4.3 VOUCHER Lifecycle Statechart***
 
-*\[The Voucher lifecycle has 4 states. Vouchers that have been used in orders cannot be deleted from the database (foreign key constraint on orders table). Deactivation via is_active flag is used instead of deletion.\]*
+*\[The Voucher lifecycle has 4 states. State names align with SRS BR-52: SCHEDULED (before start date), ACTIVE, and a terminal end state. The terminal EXHAUSTED state covers BOTH the SRS EXPIRED case (currentDate > validTo) AND the usage-limit-reached case (currentUsesTotal >= maxUsesTotal). Vouchers that have been used in orders cannot be deleted from the database (foreign key constraint on orders table); deactivation via is_active flag is used instead of deletion.\]*
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT : createVoucher() [validFrom > currentDate && isActive == true]
+    [*] --> SCHEDULED : createVoucher() [validFrom > currentDate && isActive == true]
 
-    DRAFT --> ACTIVE : timeTrigger [currentDate >= validFrom && isActive == true]
+    SCHEDULED --> ACTIVE : timeTrigger [currentDate >= validFrom && isActive == true]
 
     ACTIVE --> EXHAUSTED : useVoucher() [currentUsesTotal >= maxUsesTotal || currentDate > validTo]
 
@@ -1443,9 +1463,11 @@ stateDiagram-v2
 
 
 
+
+
 ### **3.5 Customer & Membership Management**
 
-*\[Provide the detailed design for Customer & Membership Management, covering UC-24→UC-27 (View/Add/Update Customer, Redeem Loyalty Points) and UC-49 (Apply Loyalty Points at Checkout). Actors: cashier (CRM lookup and register at POS), storemanager (edit customer info). Key design: PDPA consent is mandatory before any loyalty data is stored (BR-71). Checkout application is covered in Section 3.7.\]*
+*\[Provide the detailed design for Customer & Membership Management, covering UC-24→UC-27 (View/Add/Update Customer, View Customer History) and UC-49 (Redeem Loyalty Points at Checkout). Actors: cashier (CRM lookup and register at POS), businessadmin (CRM management & loyalty history). Key design: PDPA consent is mandatory before any loyalty data is stored (BR-71). Checkout application is covered in Section 3.7.\]*
 
 #### ***3.5.1 Class Diagram***
 
@@ -1463,7 +1485,6 @@ classDiagram
         +fullName: String
         +phone: String
         +email: String
-        +birthDate: Date
         +pdpaConsentCheckbox: Boolean
         +submitForm()
     }
@@ -1500,11 +1521,10 @@ classDiagram
         +fullName: String
         +phone: String
         +email: String
-        +birthDate: Date
-        +loyaltyPoints: Integer
+        +points: Integer
         +consentAt: DateTime
         +consentVersion: String
-        +isActive: Boolean
+        +createdAt: DateTime
     }
 
     CustomerSearchView ..> CustomerCoordinator
@@ -1526,18 +1546,18 @@ sequenceDiagram
     participant CustomerCoord as CustomerCoordinator
     participant CustomerDB as Customer (DB)
 
-    cashier->>AddForm: inputCustomerDetails(name, phone, email, birthDate)
+    cashier->>AddForm: inputCustomerDetails(name, phone, email)
     AddForm->>AddForm: validate PDPA checkbox = true (mandatory, BR-71)
     AddForm->>CustomerCoord: submitForm(dto)
     CustomerCoord->>CustomerDB: checkPhoneUnique(phone)
     CustomerDB-->>CustomerCoord: phone available
-    CustomerCoord->>CustomerDB: createCustomer(dto, pdpaConsentAt=now, pdpaConsentVersion, loyaltyPoints=0)
+    CustomerCoord->>CustomerDB: createCustomer(dto, consentAt=now, consentVersion, points=0)
     CustomerDB-->>CustomerCoord: newCustomer
-    CustomerCoord-->>AddForm: return newCustomer (loyaltyPoints=0)
+    CustomerCoord-->>AddForm: return newCustomer (points=0)
     AddForm-->>cashier: displayCustomerCard()
 ```
 
-#### ***3.5.3 UC-27 Redeem Loyalty Points***
+#### ***3.5.3 UC-49 Redeem Loyalty Points***
 
 *\[Cashier applies loyalty points as a discount during checkout. The points-to-VND conversion rate is configured in SystemConfig (UC-30). Sufficient points balance is validated before confirming. Points are deducted immediately upon redemption confirmation.\]*
 
@@ -1569,9 +1589,11 @@ sequenceDiagram
 
 
 
+
+
 ### **3.6 Inventory & Stock Management**
 
-*\[Provide the detailed design for Inventory & Stock Management, covering UC-31→UC-34 (View Stock Dashboard, Import Stock, Export Stock, Stock Audit/Physical Count) and UC-61→UC-62 (Recipe-based Auto-Deduction on PREPARING status, Low Stock Alert). Actors: storemanager (manual import/export/audit), system scheduler (auto-deduction via RecipeDeductionService, daily alert via LowStockAlertScheduler).\]*
+*\[Provide the detailed design for Inventory & Stock Management, covering UC-31→UC-34 (View Stock Dashboard, Import Stock, Export Stock, Stock Audit/Physical Count), UC-61 (View Import/Export History — reuses the StockDashboard read view), and UC-62 (Recipe-based Auto-Deduction on PREPARING status) plus the automated daily Low Stock Alert. Actors: storemanager (manual import/export/audit), system scheduler (auto-deduction via RecipeDeductionService, daily alert via LowStockAlertScheduler).\]*
 
 #### ***3.6.1 Class Diagram***
 
@@ -1631,20 +1653,17 @@ classDiagram
         +id: UUID
         +storeId: UUID
         +rawMaterialId: UUID
-        +quantityOnHand: Decimal
-        +minimumThreshold: Decimal
-        +unit: String
+        +currentQuantity: Decimal
+        +minAlertThreshold: Decimal
     }
     class StockTransaction {
         <<entity>>
         +id: UUID
         +stockItemId: UUID
-        +transactionType: TxType
-        +quantityBefore: Decimal
-        +quantityChange: Decimal
-        +quantityAfter: Decimal
         +managerId: UUID
-        +note: String
+        +transactionType: TxType
+        +quantity: Decimal
+        +reason: String
         +createdAt: DateTime
     }
     class RawMaterial {
@@ -1689,7 +1708,7 @@ sequenceDiagram
     StockCoord->>StockItemDB: findByIdForUpdate(stockItemId)
     StockItemDB-->>StockCoord: stockItem (quantityBefore = Q)
     StockCoord->>StockItemDB: incrementQuantity(stockItemId, quantity)
-    StockCoord->>TxDB: createTransaction(IMPORT, stockItemId, Q, +qty, Q+qty, managerId, note)
+    StockCoord->>TxDB: createTransaction(IMPORT, stockItemId, +qty, managerId, reason)
     TxDB-->>StockCoord: txRecord
     StockCoord-->>ImportForm: showSuccess(newOnHand = Q+qty)
     ImportForm-->>storemanager: display updated stock level
@@ -1714,13 +1733,13 @@ sequenceDiagram
         StockItemDB-->>StockCoord: stockItem (systemQty = S)
         StockCoord->>StockCoord: adjustment = actualQty - S
         StockCoord->>StockItemDB: setQuantity(stockItemId, actualQty)
-        StockCoord->>TxDB: createTransaction(AUDIT_ADJUSTMENT, stockItemId, S, adjustment, actualQty, managerId, note)
+        StockCoord->>TxDB: createTransaction(AUDIT_ADJUSTMENT, stockItemId, adjustment, managerId, reason)
     end
     StockCoord-->>AuditForm: showAuditSummary(adjustmentReport)
     AuditForm-->>storemanager: display adjustment report (discrepancy per item)
 ```
 
-#### ***3.6.4 UC-61/62 Automatic Recipe-Based Stock Deduction***
+#### ***3.6.4 UC-62 Automatic Recipe-Based Stock Deduction***
 
 *\[When the Barista updates order status to PREPARING, the RecipeDeductionService is triggered. Each order item's recipe formula is consumed from branch stock. If any ingredient is insufficient, the system still deducts everything (allowing negative balance) and records a `phantom_usage` transaction to monitor leakage (BR-89). It does NOT set the order status to HOLD. A low-stock alert MSG07 is dispatched, but the order preparation proceeds without blocking. RECIPE_DEDUCTION transactions have null manager_id to distinguish them from manual adjustments.\]*
 
@@ -1761,6 +1780,8 @@ sequenceDiagram
 
 
 
+
+
 ### **3.7 POS Transaction**
 
 *\[Provide the detailed design for POS Transaction, covering UC-44→UC-55 (Open Shift, Full Checkout Pipeline, VietQR Payment, Close Shift/Z-Report). Actor: cashier (POS Terminal on Flutter). Key design decisions: (1) DiscountStackingEngine enforces voucher + loyalty point stacking rules (BR-70); (2) VietQR uses idempotency key = orderId (BR-84/BR-85); (3) ShiftAutoCloseScheduler force-closes open shifts at 23:59.\]*
@@ -1775,7 +1796,7 @@ classDiagram
         <<boundary>>
         +cashierId: UUID
         +openingCash: Decimal
-        +registerNumber: Integer
+        +posRegisterId: String
         +submitOpen()
     }
     class PosCheckoutGrid {
@@ -1841,13 +1862,13 @@ classDiagram
         <<entity>>
         +id: UUID
         +storeId: UUID
-        +cashierId: UUID
-        +registerNumber: Integer
-        +openingCash: Decimal
-        +closingCash: Decimal
+        +userId: UUID
+        +posRegisterId: String
+        +startingCash: Decimal
+        +endingCash: Decimal
         +status: ShiftStatus
-        +openedAt: DateTime
-        +closedAt: DateTime
+        +startTime: DateTime
+        +endTime: DateTime
     }
     class VietQRClient {
         <<boundary>>
@@ -1898,7 +1919,7 @@ classDiagram
 
 #### ***3.7.2 UC-44 Open Shift***
 
-*\[Cashier opens a new work shift by declaring the opening cash float. Only one OPEN shift is allowed per register per branch at a time (BR-92). System validates no duplicate active shift before creating the ShiftSession record.\]*
+*\[Cashier opens a new work shift by declaring the opening cash float. Only one OPEN shift is allowed per register per branch at a time (design constraint; see SHIFT statechart §3.7.6). System validates no duplicate active shift before creating the ShiftSession record.\]*
 
 ```mermaid
 sequenceDiagram
@@ -1956,7 +1977,7 @@ sequenceDiagram
 
     cashier->>PayPanel: enter cash received
     PayPanel->>CheckoutCoord: confirmCashPayment(orderId, cashReceived)
-    CheckoutCoord->>OrderDB: updatePaymentStatus(PAID)
+    CheckoutCoord->>OrderDB: updatePaymentStatus(COMPLETED)
     CheckoutCoord->>CustomerDB: incrementPoints(customerId, earnedPoints)
     CheckoutCoord->>AuditDB: writeAuditLog(CHECKOUT, voucher/points usage)
     CheckoutCoord->>PrintSvc: printReceipt(orderId)
@@ -1965,7 +1986,7 @@ sequenceDiagram
     PayPanel-->>cashier: display change + order goes to barista queue
 ```
 
-#### ***3.7.4 UC-53 VietQR Payment Flow***
+#### ***3.7.4 UC-51 VietQR Payment Flow***
 
 *\[When cashier selects VietQR, system calls VietQR gateway to generate a QR code. Customer scans QR and completes payment in their banking app. Gateway sends a webhook callback. System verifies HMAC signature and marks order as PAID (BR-84/BR-85).\]*
 
@@ -1993,14 +2014,14 @@ sequenceDiagram
     VietQRGateway->>CheckoutCoord: POST /api/v1/payments/vietqr/callback (webhook)
     CheckoutCoord->>VietQRClient: verifyWebhookSignature(payload)
     VietQRClient-->>CheckoutCoord: signature valid
-    CheckoutCoord->>OrderDB: updatePaymentStatus(PAID, transactionRef)
+    CheckoutCoord->>OrderDB: updatePaymentStatus(COMPLETED, transactionRef)
     CheckoutCoord->>PrintSvc: printReceipt(orderId)
     CheckoutCoord->>PrintSvc: printCupLabel(orderId)
     CheckoutCoord-->>PayPanel: notifyPaidSuccess()
     PayPanel-->>cashier: show "Payment Received" confirmation
 ```
 
-#### ***3.7.5 UC-55 Close Shift (Z-Report)***
+#### ***3.7.5 UC-53 Close Shift (Z-Report)***
 
 *\[Cashier declares the closing cash amount. System computes expected cash from all CASH orders in the shift, calculates discrepancy, generates Z-Report, and sets shift to CLOSED. ShiftAutoCloseScheduler forces close at 23:59 if cashier forgets.\]*
 
@@ -2029,7 +2050,7 @@ sequenceDiagram
 
 #### ***3.7.6 SHIFT Session Statechart***
 
-*\[A ShiftSession follows a simple 2-state lifecycle: OPEN → CLOSED. Only one shift can be OPEN per register per branch. ShiftAutoCloseScheduler forces CLOSED at 23:59 daily for any session still OPEN (BR-92).\]*
+*\[A ShiftSession follows a simple 2-state lifecycle: OPEN → CLOSED. Only one shift can be OPEN per register per branch. ShiftAutoCloseScheduler forces CLOSED at 23:59 daily for any session still OPEN (BR-88).\]*
 
 ```mermaid
 stateDiagram-v2
@@ -2044,9 +2065,11 @@ stateDiagram-v2
 
 
 
+
+
 ### **3.8 Order Management**
 
-*\[Provide the detailed design for Order Management, covering UC-55→UC-60 (View Order Queue, Barista Update Status), UC-58 (Cancel PENDING Order by cashier), UC-73 (Auto-Abandon READY Orders by system), UC-75 (SM-Authorized Refund/Comp). Actors: cashier (cancel PENDING only), storemanager (refund/comp authorization), barista (queue display + status transitions), system scheduler (auto-abandon after 15 min). The ORDER statechart documents all 7 valid states and their transitions.\]*
+*\[Provide the detailed design for Order Management, covering UC-57 (View Order Queue Display), UC-58 (Update Preparation Status by barista), UC-55 (Cancel PENDING Order / Request Transaction Refund by cashier), UC-75 (SM-Authorized Refund/Comp), and the automated READY auto-abandon (BR-88). Actors: cashier (cancel PENDING only), storemanager (refund/comp authorization), barista (queue display + status transitions), system scheduler (auto-abandon after READY_ABANDON_TIMEOUT). The ORDER statechart documents all 7 valid states and their transitions.\]*
 
 #### ***3.8.1 Class Diagram***
 
@@ -2102,14 +2125,18 @@ classDiagram
         <<entity>>
         +id: UUID
         +storeId: UUID
+        +orderNumber: String
         +shiftSessionId: UUID
         +customerId: UUID
         +voucherId: UUID
+        +orderType: OrderType
         +status: OrderStatus
         +paymentStatus: PaymentStatus
         +paymentMethod: PaymentMethod
-        +totalAmount: Decimal
-        +notes: String
+        +subtotal: Decimal
+        +discount: Decimal
+        +taxAmount: Decimal
+        +total: Decimal
         +createdAt: DateTime
     }
     class OrderItem {
@@ -2143,10 +2170,12 @@ classDiagram
         +orderId: UUID
         +smId: UUID
         +cashierId: UUID
+        +shiftSessionId: UUID
         +refundType: RefundType
-        +refundAmount: Decimal
+        +amount: Decimal
         +reason: String
-        +authorisedAt: DateTime
+        +notes: String
+        +createdAt: DateTime
     }
 
     OrderQueueView ..> OrderCoordinator
@@ -2165,7 +2194,7 @@ classDiagram
     OrderItem *-- OrderItemTopping
 ```
 
-#### ***3.8.2 UC-58 Cancel PENDING Order***
+#### ***3.8.2 UC-55 Cancel PENDING Order***
 
 *\[Only PENDING orders can be cancelled by cashier (BR-05). The cancellation creates an immutable OrderCancellation record with the reason code and notes. Order status transitions to CANCELLED. Cancelled orders cannot be reopened.\]*
 
@@ -2191,7 +2220,7 @@ sequenceDiagram
 
 #### ***3.8.3 UC-75 SM-Authorized Refund / Comp Remake***
 
-*\[For post-PENDING complaints (e.g., wrong order already prepared), only storemanager can authorize a REFUND or COMP_REMAKE. SM enters their PIN to authorize. System creates an immutable OrderRefund record. For COMP_REMAKE type, a new duplicate order is created in PENDING status.\]*
+*\[For post-PENDING complaints (e.g., wrong order already prepared), only storemanager can authorize a REFUND or COMP_REMAKE (BR-67). SM enters their PIN to authorize. System creates an immutable OrderRefund record. A CASH refund debits the currently-open shift drawer (BR-09) and stamps `shift_session_id`; card/VietQR refunds go via the gateway with no drawer impact. Loyalty points earned/redeemed on the original order are reversed per BR-08. For COMP_REMAKE type, a new duplicate order is created in PENDING status.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2202,6 +2231,8 @@ sequenceDiagram
     participant UserDB as User (DB)
     participant OrderDB as Order (DB)
     participant RefundDB as OrderRefund (DB)
+    participant ShiftDB as ShiftSession (DB)
+    participant CustomerDB as Customer (DB)
 
     cashier->>RefundDialog: inputRefundDetails(orderId, refundType, amount)
     RefundDialog->>RefundDialog: requestSmPin()
@@ -2211,8 +2242,18 @@ sequenceDiagram
     UserDB-->>OrderCoord: authenticated
     OrderCoord->>OrderDB: findById(orderId)
     OrderDB-->>OrderCoord: orderRecord
-    OrderCoord->>RefundDB: createRefund(orderId, smId, cashierId, refundType, amount, reason, now)
+
+    alt CASH refund (BR-09)
+        OrderCoord->>ShiftDB: getOpenShift(storeId)
+        ShiftDB-->>OrderCoord: openShift (drawer to debit)
+        Note over OrderCoord, ShiftDB: refund debits the currently-open drawer; shift_session_id stamped
+    else CARD / VietQR refund
+        Note over OrderCoord: gateway refund API — no drawer impact
+    end
+
+    OrderCoord->>RefundDB: createRefund(orderId, smId, cashierId, shiftSessionId, refundType, amount, reason, notes, now)
     RefundDB-->>OrderCoord: refundRecord
+    OrderCoord->>CustomerDB: reverseLoyalty(orderId) (BR-08)
 
     alt REFUND type
         OrderCoord->>OrderDB: flagRefunded(orderId)
@@ -2224,9 +2265,9 @@ sequenceDiagram
     RefundDialog-->>cashier: displaySuccess()
 ```
 
-#### ***3.8.4 UC-73 Auto-Abandon READY Orders (OrderTimeoutScheduler)***
+#### ***3.8.4 Auto-Abandon READY Orders (OrderTimeoutScheduler, BR-88 — automated)***
 
-*\[READY orders not picked up within 15 minutes are automatically set to ABANDONED by the OrderTimeoutScheduler. This prevents stale orders from persisting indefinitely in the barista queue.\]*
+*\[READY orders not picked up within `READY_ABANDON_TIMEOUT` are automatically set to ABANDONED by the OrderTimeoutScheduler (BR-88). This is an automated system function (not a user use case). It prevents stale orders from persisting indefinitely in the barista queue.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2247,7 +2288,7 @@ sequenceDiagram
 
 #### ***3.8.5 ORDER Lifecycle Statechart***
 
-*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is triggered when a preparation issue is reported by the Barista (reportIssue()). ABANDONED is system-triggered after 15 min in READY state. CANCELLED and ABANDONED are terminal states.\]*
+*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is triggered when a preparation issue is reported by the Barista (reportIssue()). ABANDONED is reached two ways (BR-88): system-triggered after `READY_ABANDON_TIMEOUT` in READY state, or Store-Manager force-close of remaining READY orders at shift close. CANCELLED and ABANDONED are terminal states.\]*
 
 ```mermaid
 stateDiagram-v2
@@ -2265,7 +2306,9 @@ stateDiagram-v2
 
     READY --> COMPLETED : confirmPickup() / status = COMPLETED
 
-    READY --> ABANDONED : timeTrigger [elapsedTime >= 15min] / status = ABANDONED
+    READY --> ABANDONED : timeTrigger [elapsedTime >= READY_ABANDON_TIMEOUT] / status = ABANDONED
+
+    READY --> ABANDONED : forceCloseAtShiftClose() [isStoreManager == true] / status = ABANDONED
 
     COMPLETED --> [*] : archive()
     CANCELLED --> [*] : archive()
@@ -2274,9 +2317,11 @@ stateDiagram-v2
 
 
 
+
+
 ### **3.9 Staff Management**
 
-*\[Provide the detailed design for Staff Management, covering UC-35→UC-39 (View/Create/Update/Delete Schedule, View Attendance Report), UC-66 (Attendance Check-in/out with PIN + Photo Capture), and UC-80 (Export Worked Hours). Actors: storemanager (schedule CRUD + attendance oversight), cashier/barista (self check-in at branch). Key PDPA design: attendance photos are stored on server filesystem (path only in DB), automatically purged by PhotoAutoDeleteScheduler after 90 days (BR-72).\]*
+*\[Provide the detailed design for Staff Management, covering UC-35→UC-39 (View/Create/Update/Delete Schedule, View Attendance Report), Attendance Check-In/Out with PIN + Photo Capture (automated popup function per BR-38/BR-53/BR-93 — not a standalone use case), and UC-80 (Export Worked Hours). Actors: storemanager (schedule CRUD + attendance oversight), cashier/barista (self check-in at branch). Key PDPA design: attendance photos are stored on server filesystem (path only in DB), automatically purged by PhotoAutoDeleteScheduler after 90 days (BR-72).\]*
 
 #### ***3.9.1 Class Diagram***
 
@@ -2297,7 +2342,7 @@ classDiagram
         +shiftType: ShiftType
         +startTime: Time
         +endTime: Time
-        +posRegisterId: Integer
+        +posRegisterId: String
         +submitSchedule()
     }
     class AttendanceCheckInScreen {
@@ -2350,11 +2395,11 @@ classDiagram
         +id: UUID
         +storeId: UUID
         +userId: UUID
-        +date: Date
+        +shiftDate: Date
         +shiftType: ShiftType
-        +startTime: Time
-        +endTime: Time
-        +posRegisterId: Integer
+        +shiftStartTime: Time
+        +shiftEndTime: Time
+        +posRegisterId: String
     }
     class AttendanceLog {
         <<entity>>
@@ -2439,7 +2484,7 @@ sequenceDiagram
     end
 ```
 
-#### ***3.9.3 UC-66 Attendance Check-In with Photo (PDPA-Compliant & Fallback)***
+#### ***3.9.3 Attendance Check-In/Out with Photo (BR-38/BR-53/BR-93, PDPA-Compliant & Fallback)***
 
 *\[Employee clocks in at branch using their 4-digit PIN + camera photo capture (BR-93). System validates that the PIN is unique within the store and identifies the employee. Camera snapshot is mandatory at check-in/out; if the camera is unavailable, the action is queued and flagged for Store Manager confirmation rather than recorded without a photo. PDPA compliance: photos are auto-purged after 90 days by PhotoAutoDeleteScheduler (BR-72).\]*
 
@@ -2550,9 +2595,11 @@ sequenceDiagram
 
 
 
+
+
 ### **3.10 Reports & Analytics**
 
-*\[Provide the detailed design for Reports & Analytics, covering UC-28→UC-29 (HQ Consolidated Revenue Dashboard), UC-40→UC-41 (Branch Sales Report, Z-Report Archive), UC-76→UC-83 (Price Change History, Voucher Usage Report, Loyalty Liability, Labour Efficiency, COGS/Margin Report, Anomaly Detection, Z-Report Archive). Actors: ceoviewer/businessadmin/ssadmin (HQ reports), storemanager (branch-level reports). Data sources: Order, StockTransaction, AuditLog, ShiftSession tables (read-only).\]*
+*\[Provide the detailed design for Reports & Analytics, covering UC-28→UC-29 (HQ Consolidated Revenue Dashboard & Export), UC-40→UC-41 (Branch Sales Report & Export), and UC-76→UC-83: UC-76 (COGS/Margin & Ingredient Shrinkage), UC-77 (Price & Voucher Change History), UC-78 (Loyalty Liability & Movement), UC-79 (Labour Hours vs Revenue), UC-81 (Daily Z-Report), UC-82 (Cashier Void/Refund Anomaly), UC-83 (User Account Change & Access Review); UC-80 (Worked-Hours Export) is detailed in §3.9. Actors: ceoviewer (HQ read-only reports), storemanager (branch-level reports per §3.1). NOTE: UC-78/UC-81/UC-83 reuse the same ReportCoordinator → «application logic» service → read-only entity pattern in §3.10.1; per COMET "same structure described once", only representative sequences (UC-28/29, UC-76, UC-77, UC-82) are drawn. Data sources: Order, StockTransaction, AuditLog, ShiftSession tables (read-only).\]*
 
 #### ***3.10.1 Class Diagram***
 
@@ -2663,7 +2710,7 @@ classDiagram
 
 #### ***3.10.2 UC-28/29 HQ Consolidated Revenue Report***
 
-*\[ceoviewer or businessadmin views revenue consolidated across all branches for a selected date range. Supports per-branch breakdown and date granularity (daily/weekly/monthly). Exportable to Excel format.\]*
+*\[ceoviewer views revenue consolidated across all branches for a selected date range (HQ Business Reports, screen 23, is ceoviewer-only per §3.1). Supports per-branch breakdown and date granularity (daily/weekly/monthly). Exportable to Excel format.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2690,9 +2737,9 @@ sequenceDiagram
     end
 ```
 
-#### ***3.10.3 UC-79 COGS & Margin Report***
+#### ***3.10.3 UC-76 COGS & Margin Report***
 
-*\[businessadmin or storemanager views Cost of Goods Sold by period. COGSCalculator multiplies each sold order item's recipe quantities by the raw material standard cost, summing across all completed orders in the period.\]*
+*\[ceoviewer (chain-wide) or storemanager (own branch) views Cost of Goods Sold by period (BR-66). COGSCalculator multiplies each sold order item's recipe quantities by the raw material standard cost, summing across all completed orders in the period.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2722,7 +2769,7 @@ sequenceDiagram
 
 #### ***3.10.4 UC-82 Anomaly Detection Report***
 
-*\[ssadmin or businessadmin views anomaly flags across branches. The AnomalyDetector scans for: cancellation ratio exceeding threshold, large stock adjustment discrepancies, and refund/comp rate spikes above baseline.\]*
+*\[Store Manager (own branch) or CEO Viewer (chain) views anomaly flags (UC-82, BR-79). The AnomalyDetector scans for: cancellation ratio exceeding threshold, large stock adjustment discrepancies, and refund/comp rate spikes above baseline. Detective control only — does not block.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2756,9 +2803,9 @@ sequenceDiagram
     HQDash-->>admin: displayAnomalyReport()
 ```
 
-#### ***3.10.5 UC-76 Price Change History***
+#### ***3.10.5 UC-77 Price & Voucher Change History***
 
-*\[businessadmin or ceoviewer views the full history of price changes for a menu item. Data is sourced from the immutable AuditLog (append-only, no UPDATE/DELETE permitted per BR-80/BR-81).\]*
+*\[ceoviewer views the full history of price (and voucher) changes for a menu item — read-only compensating control for the single businessadmin role. Data is sourced from the immutable AuditLog (append-only, no UPDATE/DELETE permitted), written on every price/voucher mutation per BR-68.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2769,7 +2816,7 @@ sequenceDiagram
 
     viewer->>PriceHistView: selectMenuItem(menuItemId)
     PriceHistView->>ReportCoord: getPriceChangeHistory(menuItemId)
-    ReportCoord->>AuditDB: findByEntityAndAction(entity=menu_items, id=menuItemId, action=PRICE_UPDATE)
+    ReportCoord->>AuditDB: findByEntityAndAction(entity=menu_items, id=menuItemId, action=UPDATE)
     AuditDB-->>ReportCoord: auditLogs[] (oldPrice, newPrice, changedBy, changedAt)
     ReportCoord-->>PriceHistView: List~PriceChangeDto~
     PriceHistView-->>viewer: displayPriceChangeTimeline()
@@ -2777,9 +2824,11 @@ sequenceDiagram
 
 
 
+
+
 ### **3.11 System Configuration & Branch Management**
 
-*\[Provide the detailed design for System Configuration & Branch Management, covering UC-30 (Central System Config by ssadmin), UC-42 (Branch-Local Config Override by storemanager), and UC-63→UC-65 (Branch Lifecycle: Add/Edit/Deactivate). Key constraints: Adding a branch is blocked if MAX_ACTIVE_BRANCHES is reached (BR-35). Deactivating a branch is blocked if the branch has OPEN shift sessions. All config changes are audit-logged.\]*
+*\[Provide the detailed design for System Configuration & Branch Management, covering UC-30 (Central System Config by ssadmin), UC-42 (Branch-Local Config Override by storemanager), and UC-63→UC-65 (Branch Lifecycle: Add/Edit/Deactivate). Key constraints: Adding a branch is blocked if MAX_ACTIVE_BRANCHES is reached (BR-54). Deactivating a branch is blocked if the branch has OPEN shift sessions OR any orders in non-terminal states (PENDING/PREPARING/HOLD/READY) per BR-55, and on success cascades per BR-56 (deactivate branch staff + delete future schedules with notification). All config changes are audit-logged. NOTE: `SystemConfig` is an infrastructure-level key-value store (config_key/config_value/scope), intentionally outside the 21-entity business ERD of Section 2; it persists central parameters editable via UC-30 with updatedBy/updatedAt for the audit trail.\]*
 
 #### ***3.11.1 Class Diagram***
 
@@ -2871,7 +2920,7 @@ classDiagram
 
 #### ***3.11.2 UC-30 Central System Configuration***
 
-*\[ssadmin manages central system-wide configurations: tax rate, loyalty earn rate (points per VND), loyalty redemption rate (VND per point), VietQR API credentials, MAX_ACTIVE_BRANCHES, and other global parameters. Every change is audit-logged (BR-80). Config values are loaded fresh from DB on each request (no restart needed).\]*
+*\[ssadmin manages central system-wide configurations: tax rate (BR-45), loyalty earn/redemption parameters (BR-94), VietQR API credentials, MAX_ACTIVE_BRANCHES (BR-54), and other global parameters held in the `SystemConfig` infrastructure key-value store. Every change is audit-logged. Config values are loaded fresh from the store on each request (no restart needed), applying to new orders per BR-46.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2892,23 +2941,26 @@ sequenceDiagram
     ConfigCoord->>ConfigDB: findByKey(key)
     ConfigDB-->>ConfigCoord: oldConfig
     ConfigCoord->>ConfigDB: updateConfig(key, newValue, updatedBy=ssadmin.id, updatedAt=now)
-    ConfigCoord->>AuditDB: writeAuditLog(CONFIG_UPDATE, system_configs, oldConfig, newConfig)
+    ConfigCoord->>AuditDB: writeAuditLog(UPDATE, system_configs, oldConfig, newConfig)
     ConfigCoord-->>ConfigForm: showSuccess(key, newValue)
     ConfigForm-->>ssadmin: displayUpdatedConfigGrid()
 ```
 
 #### ***3.11.3 UC-63/64/65 Branch Lifecycle Management***
 
-*\[ssadmin creates, updates, or deactivates branch records. Adding a branch checks MAX_ACTIVE_BRANCHES constraint (BR-35). Deactivating a branch checks that no OPEN shift sessions exist. All operations are audit-logged.\]*
+*\[ssadmin creates, updates, or deactivates branch records. Adding a branch checks MAX_ACTIVE_BRANCHES constraint (BR-54). Deactivating a branch checks that no OPEN shift sessions AND no non-terminal orders exist (BR-55); on success it cascades per BR-56 (deactivate branch staff + terminate their sessions, delete future schedules with notification; historical records preserved read-only). All operations are audit-logged.\]*
 
 ```mermaid
 sequenceDiagram
     actor ssadmin
     participant BranchForm as AddBranchForm / EditBranchForm
     participant BranchCoord as BranchCoordinator
-    participant ConfigDB as SystemConfig (DB)
+    participant ConfigDB as SystemConfig (KV store)
     participant ShiftDB as ShiftSession (DB)
+    participant OrderDB as Order (DB)
     participant StoreDB as Store (DB)
+    participant UserDB as User (DB)
+    participant ScheduleDB as StaffSchedule (DB)
     participant AuditDB as AuditLog (DB)
 
     ssadmin->>BranchForm: submitBranchAction(dto)
@@ -2919,7 +2971,7 @@ sequenceDiagram
         ConfigDB-->>BranchCoord: maxBranches = N
         BranchCoord->>StoreDB: countActiveBranches()
         StoreDB-->>BranchCoord: currentCount = C
-        BranchCoord->>BranchCoord: validate(C < N) — blocked if C >= N (BR-35)
+        BranchCoord->>BranchCoord: validate(C < N) — blocked if C >= N (BR-54)
         BranchCoord->>StoreDB: createStore(dto, isActive=true)
         StoreDB-->>BranchCoord: newStore
         BranchCoord->>AuditDB: writeAuditLog(CREATE, stores, null, newStore)
@@ -2931,9 +2983,14 @@ sequenceDiagram
     else DEACTIVATE Branch (UC-65)
         BranchCoord->>ShiftDB: findOpenShifts(storeId)
         ShiftDB-->>BranchCoord: openShiftsList (must be empty)
-        BranchCoord->>BranchCoord: validate(openShifts.isEmpty()) — blocked if open shifts exist
+        BranchCoord->>OrderDB: findNonTerminalOrders(storeId)
+        OrderDB-->>BranchCoord: activeOrders (must be empty — BR-55)
+        BranchCoord->>BranchCoord: validate(openShifts.isEmpty() && activeOrders.isEmpty()) — else block
         BranchCoord->>StoreDB: setIsActive(storeId, false)
-        BranchCoord->>AuditDB: writeAuditLog(DEACTIVATE, stores, isActive=true, isActive=false)
+        Note over BranchCoord, ScheduleDB: Cascade per BR-56
+        BranchCoord->>UserDB: deactivateBranchStaff(storeId) + terminateSessions()
+        BranchCoord->>ScheduleDB: deleteFutureSchedules(storeId) + notifyEmployees()
+        BranchCoord->>AuditDB: writeAuditLog(UPDATE, stores, isActive=true, isActive=false)
     end
 
     BranchCoord-->>BranchForm: showSuccess()

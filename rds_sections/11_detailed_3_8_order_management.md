@@ -1,6 +1,6 @@
 ### **3.8 Order Management**
 
-*\[Provide the detailed design for Order Management, covering UC-55→UC-60 (View Order Queue, Barista Update Status), UC-58 (Cancel PENDING Order by cashier), UC-73 (Auto-Abandon READY Orders by system), UC-75 (SM-Authorized Refund/Comp). Actors: cashier (cancel PENDING only), storemanager (refund/comp authorization), barista (queue display + status transitions), system scheduler (auto-abandon after 15 min). The ORDER statechart documents all 7 valid states and their transitions.\]*
+*\[Provide the detailed design for Order Management, covering UC-57 (View Order Queue Display), UC-58 (Update Preparation Status by barista), UC-55 (Cancel PENDING Order / Request Transaction Refund by cashier), UC-75 (SM-Authorized Refund/Comp), and the automated READY auto-abandon (BR-88). Actors: cashier (cancel PENDING only), storemanager (refund/comp authorization), barista (queue display + status transitions), system scheduler (auto-abandon after READY_ABANDON_TIMEOUT). The ORDER statechart documents all 7 valid states and their transitions.\]*
 
 #### ***3.8.1 Class Diagram***
 
@@ -56,14 +56,18 @@ classDiagram
         <<entity>>
         +id: UUID
         +storeId: UUID
+        +orderNumber: String
         +shiftSessionId: UUID
         +customerId: UUID
         +voucherId: UUID
+        +orderType: OrderType
         +status: OrderStatus
         +paymentStatus: PaymentStatus
         +paymentMethod: PaymentMethod
-        +totalAmount: Decimal
-        +notes: String
+        +subtotal: Decimal
+        +discount: Decimal
+        +taxAmount: Decimal
+        +total: Decimal
         +createdAt: DateTime
     }
     class OrderItem {
@@ -97,10 +101,12 @@ classDiagram
         +orderId: UUID
         +smId: UUID
         +cashierId: UUID
+        +shiftSessionId: UUID
         +refundType: RefundType
-        +refundAmount: Decimal
+        +amount: Decimal
         +reason: String
-        +authorisedAt: DateTime
+        +notes: String
+        +createdAt: DateTime
     }
 
     OrderQueueView ..> OrderCoordinator
@@ -119,7 +125,7 @@ classDiagram
     OrderItem *-- OrderItemTopping
 ```
 
-#### ***3.8.2 UC-58 Cancel PENDING Order***
+#### ***3.8.2 UC-55 Cancel PENDING Order***
 
 *\[Only PENDING orders can be cancelled by cashier (BR-05). The cancellation creates an immutable OrderCancellation record with the reason code and notes. Order status transitions to CANCELLED. Cancelled orders cannot be reopened.\]*
 
@@ -145,7 +151,7 @@ sequenceDiagram
 
 #### ***3.8.3 UC-75 SM-Authorized Refund / Comp Remake***
 
-*\[For post-PENDING complaints (e.g., wrong order already prepared), only storemanager can authorize a REFUND or COMP_REMAKE. SM enters their PIN to authorize. System creates an immutable OrderRefund record. For COMP_REMAKE type, a new duplicate order is created in PENDING status.\]*
+*\[For post-PENDING complaints (e.g., wrong order already prepared), only storemanager can authorize a REFUND or COMP_REMAKE (BR-67). SM enters their PIN to authorize. System creates an immutable OrderRefund record. A CASH refund debits the currently-open shift drawer (BR-09) and stamps `shift_session_id`; card/VietQR refunds go via the gateway with no drawer impact. Loyalty points earned/redeemed on the original order are reversed per BR-08. For COMP_REMAKE type, a new duplicate order is created in PENDING status.\]*
 
 ```mermaid
 sequenceDiagram
@@ -156,6 +162,8 @@ sequenceDiagram
     participant UserDB as User (DB)
     participant OrderDB as Order (DB)
     participant RefundDB as OrderRefund (DB)
+    participant ShiftDB as ShiftSession (DB)
+    participant CustomerDB as Customer (DB)
 
     cashier->>RefundDialog: inputRefundDetails(orderId, refundType, amount)
     RefundDialog->>RefundDialog: requestSmPin()
@@ -165,8 +173,18 @@ sequenceDiagram
     UserDB-->>OrderCoord: authenticated
     OrderCoord->>OrderDB: findById(orderId)
     OrderDB-->>OrderCoord: orderRecord
-    OrderCoord->>RefundDB: createRefund(orderId, smId, cashierId, refundType, amount, reason, now)
+
+    alt CASH refund (BR-09)
+        OrderCoord->>ShiftDB: getOpenShift(storeId)
+        ShiftDB-->>OrderCoord: openShift (drawer to debit)
+        Note over OrderCoord, ShiftDB: refund debits the currently-open drawer; shift_session_id stamped
+    else CARD / VietQR refund
+        Note over OrderCoord: gateway refund API — no drawer impact
+    end
+
+    OrderCoord->>RefundDB: createRefund(orderId, smId, cashierId, shiftSessionId, refundType, amount, reason, notes, now)
     RefundDB-->>OrderCoord: refundRecord
+    OrderCoord->>CustomerDB: reverseLoyalty(orderId) (BR-08)
 
     alt REFUND type
         OrderCoord->>OrderDB: flagRefunded(orderId)
@@ -178,9 +196,9 @@ sequenceDiagram
     RefundDialog-->>cashier: displaySuccess()
 ```
 
-#### ***3.8.4 UC-73 Auto-Abandon READY Orders (OrderTimeoutScheduler)***
+#### ***3.8.4 Auto-Abandon READY Orders (OrderTimeoutScheduler, BR-88 — automated)***
 
-*\[READY orders not picked up within 15 minutes are automatically set to ABANDONED by the OrderTimeoutScheduler. This prevents stale orders from persisting indefinitely in the barista queue.\]*
+*\[READY orders not picked up within `READY_ABANDON_TIMEOUT` are automatically set to ABANDONED by the OrderTimeoutScheduler (BR-88). This is an automated system function (not a user use case). It prevents stale orders from persisting indefinitely in the barista queue.\]*
 
 ```mermaid
 sequenceDiagram
@@ -201,7 +219,7 @@ sequenceDiagram
 
 #### ***3.8.5 ORDER Lifecycle Statechart***
 
-*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is triggered when a preparation issue is reported by the Barista (reportIssue()). ABANDONED is system-triggered after 15 min in READY state. CANCELLED and ABANDONED are terminal states.\]*
+*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is triggered when a preparation issue is reported by the Barista (reportIssue()). ABANDONED is reached two ways (BR-88): system-triggered after `READY_ABANDON_TIMEOUT` in READY state, or Store-Manager force-close of remaining READY orders at shift close. CANCELLED and ABANDONED are terminal states.\]*
 
 ```mermaid
 stateDiagram-v2
@@ -219,7 +237,9 @@ stateDiagram-v2
 
     READY --> COMPLETED : confirmPickup() / status = COMPLETED
 
-    READY --> ABANDONED : timeTrigger [elapsedTime >= 15min] / status = ABANDONED
+    READY --> ABANDONED : timeTrigger [elapsedTime >= READY_ABANDON_TIMEOUT] / status = ABANDONED
+
+    READY --> ABANDONED : forceCloseAtShiftClose() [isStoreManager == true] / status = ABANDONED
 
     COMPLETED --> [*] : archive()
     CANCELLED --> [*] : archive()

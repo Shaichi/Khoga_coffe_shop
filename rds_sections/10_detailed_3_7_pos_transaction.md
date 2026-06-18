@@ -12,7 +12,7 @@ classDiagram
         <<boundary>>
         +cashierId: UUID
         +openingCash: Decimal
-        +registerNumber: Integer
+        +posRegisterId: String
         +submitOpen()
     }
     class PosCheckoutGrid {
@@ -78,13 +78,13 @@ classDiagram
         <<entity>>
         +id: UUID
         +storeId: UUID
-        +cashierId: UUID
-        +registerNumber: Integer
-        +openingCash: Decimal
-        +closingCash: Decimal
+        +userId: UUID
+        +posRegisterId: String
+        +startingCash: Decimal
+        +endingCash: Decimal
         +status: ShiftStatus
-        +openedAt: DateTime
-        +closedAt: DateTime
+        +startTime: DateTime
+        +endTime: DateTime
     }
     class VietQRClient {
         <<boundary>>
@@ -135,7 +135,7 @@ classDiagram
 
 #### ***3.7.2 UC-44 Open Shift***
 
-*\[Cashier opens a new work shift by declaring the opening cash float. Only one OPEN shift is allowed per register per branch at a time (BR-92). System validates no duplicate active shift before creating the ShiftSession record.\]*
+*\[Cashier opens a new work shift by declaring the opening cash float. Only one OPEN shift is allowed per register per branch at a time (design constraint; see SHIFT statechart §3.7.6). System validates no duplicate active shift before creating the ShiftSession record.\]*
 
 ```mermaid
 sequenceDiagram
@@ -193,7 +193,7 @@ sequenceDiagram
 
     cashier->>PayPanel: enter cash received
     PayPanel->>CheckoutCoord: confirmCashPayment(orderId, cashReceived)
-    CheckoutCoord->>OrderDB: updatePaymentStatus(PAID)
+    CheckoutCoord->>OrderDB: updatePaymentStatus(COMPLETED)
     CheckoutCoord->>CustomerDB: incrementPoints(customerId, earnedPoints)
     CheckoutCoord->>AuditDB: writeAuditLog(CHECKOUT, voucher/points usage)
     CheckoutCoord->>PrintSvc: printReceipt(orderId)
@@ -202,7 +202,7 @@ sequenceDiagram
     PayPanel-->>cashier: display change + order goes to barista queue
 ```
 
-#### ***3.7.4 UC-53 VietQR Payment Flow***
+#### ***3.7.4 UC-51 VietQR Payment Flow***
 
 *\[When cashier selects VietQR, system calls VietQR gateway to generate a QR code. Customer scans QR and completes payment in their banking app. Gateway sends a webhook callback. System verifies HMAC signature and marks order as PAID (BR-84/BR-85).\]*
 
@@ -230,14 +230,14 @@ sequenceDiagram
     VietQRGateway->>CheckoutCoord: POST /api/v1/payments/vietqr/callback (webhook)
     CheckoutCoord->>VietQRClient: verifyWebhookSignature(payload)
     VietQRClient-->>CheckoutCoord: signature valid
-    CheckoutCoord->>OrderDB: updatePaymentStatus(PAID, transactionRef)
+    CheckoutCoord->>OrderDB: updatePaymentStatus(COMPLETED, transactionRef)
     CheckoutCoord->>PrintSvc: printReceipt(orderId)
     CheckoutCoord->>PrintSvc: printCupLabel(orderId)
     CheckoutCoord-->>PayPanel: notifyPaidSuccess()
     PayPanel-->>cashier: show "Payment Received" confirmation
 ```
 
-#### ***3.7.5 UC-55 Close Shift (Z-Report)***
+#### ***3.7.5 UC-53 Close Shift (Z-Report)***
 
 *\[Cashier declares the closing cash amount. System computes expected cash from all CASH orders in the shift, calculates discrepancy, generates Z-Report, and sets shift to CLOSED. ShiftAutoCloseScheduler forces close at 23:59 if cashier forgets.\]*
 
@@ -266,7 +266,7 @@ sequenceDiagram
 
 #### ***3.7.6 SHIFT Session Statechart***
 
-*\[A ShiftSession follows a simple 2-state lifecycle: OPEN → CLOSED. Only one shift can be OPEN per register per branch. ShiftAutoCloseScheduler forces CLOSED at 23:59 daily for any session still OPEN (BR-92).\]*
+*\[A ShiftSession follows a simple 2-state lifecycle: OPEN → CLOSED. Only one shift can be OPEN per register per branch. ShiftAutoCloseScheduler forces CLOSED at 23:59 daily for any session still OPEN (BR-88).\]*
 
 ```mermaid
 stateDiagram-v2

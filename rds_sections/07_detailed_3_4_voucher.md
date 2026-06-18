@@ -70,7 +70,7 @@ classDiagram
 
 #### ***3.4.2 UC-21/22 Add / Update Voucher***
 
-*\[businessadmin creates or updates a voucher. System validates: code uniqueness on add, validFrom < validTo, PERCENTAGE type must have capAmount set (BR-66), discountValue must be in [1..100] for PERCENTAGE type. Every mutation is audit-logged (BR-81).\]*
+*\[businessadmin creates or updates a voucher. System validates: code uniqueness on add, validFrom < validTo, PERCENTAGE type must have capAmount set (BR-42), discountValue must be in [1..100] for PERCENTAGE type. Every mutation is audit-logged (BR-68).\]*
 
 ```mermaid
 sequenceDiagram
@@ -91,7 +91,7 @@ sequenceDiagram
     end
 
     Note over VoucherCoord: Validate validFrom < validTo
-    Note over VoucherCoord: PERCENTAGE type must have capAmount set (BR-66)
+    Note over VoucherCoord: PERCENTAGE type must have capAmount set (BR-42)
     Note over VoucherCoord: discountValue in [1..100] for PERCENTAGE type
 
     VoucherCoord->>VoucherDB: save(dto)
@@ -103,13 +103,13 @@ sequenceDiagram
 
 #### ***3.4.3 VOUCHER Lifecycle Statechart***
 
-*\[The Voucher lifecycle has 4 states. Vouchers that have been used in orders cannot be deleted from the database (foreign key constraint on orders table). Deactivation via is_active flag is used instead of deletion.\]*
+*\[The Voucher lifecycle has 4 states. State names align with SRS BR-52: SCHEDULED (before start date), ACTIVE, and a terminal end state. The terminal EXHAUSTED state covers BOTH the SRS EXPIRED case (currentDate > validTo) AND the usage-limit-reached case (currentUsesTotal >= maxUsesTotal). Vouchers that have been used in orders cannot be deleted from the database (foreign key constraint on orders table); deactivation via is_active flag is used instead of deletion.\]*
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT : createVoucher() [validFrom > currentDate && isActive == true]
+    [*] --> SCHEDULED : createVoucher() [validFrom > currentDate && isActive == true]
 
-    DRAFT --> ACTIVE : timeTrigger [currentDate >= validFrom && isActive == true]
+    SCHEDULED --> ACTIVE : timeTrigger [currentDate >= validFrom && isActive == true]
 
     ACTIVE --> EXHAUSTED : useVoucher() [currentUsesTotal >= maxUsesTotal || currentDate > validTo]
 
