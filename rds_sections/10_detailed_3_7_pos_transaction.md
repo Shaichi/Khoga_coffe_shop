@@ -1,10 +1,10 @@
 ### **3.7 POS Transaction**
 
-*\[Provide the detailed design for POS Transaction, covering UC-44→UC-55 (Open Shift, Full Checkout Pipeline, VietQR Payment, Close Shift/Z-Report, Offline Cash Mode). Actor: cashier (POS Terminal on Flutter). Key design decisions: (1) DiscountStackingEngine enforces voucher + loyalty point stacking rules (BR-70); (2) VietQR uses idempotency key = orderId (BR-84/BR-85); (3) ShiftAutoCloseScheduler force-closes open shifts at 23:59 (BR); (4) Offline cash orders use client_uuid for deduplication (BR-86).\]*
+*\[Provide the detailed design for POS Transaction, covering UC-44→UC-55 (Open Shift, Full Checkout Pipeline, VietQR Payment, Close Shift/Z-Report). Actor: cashier (POS Terminal on Flutter). Key design decisions: (1) DiscountStackingEngine enforces voucher + loyalty point stacking rules (BR-70); (2) VietQR uses idempotency key = orderId (BR-84/BR-85); (3) ShiftAutoCloseScheduler force-closes open shifts at 23:59.\]*
 
 #### ***3.7.1 Class Diagram***
 
-*\[Class diagram for POS Transaction. COMET stereotypes: ShiftOpenForm, PosCheckoutGrid, PaymentPanel, ShiftCloseForm, OfflineSyncIndicator («boundary»); VietQRClient, PrinterServiceProxy («boundary» external); CheckoutCoordinator, ShiftSessionCoordinator («control»); DiscountStackingEngine, ShiftReconciliationService, OfflineSyncManager («application logic»); ShiftAutoCloseScheduler («timer»); ShiftSession, Order, Voucher, Customer, SystemConfig («entity»).\]*
+*\[Class diagram for POS Transaction. COMET stereotypes: ShiftOpenForm, PosCheckoutGrid, PaymentPanel, ShiftCloseForm («boundary»); VietQRClient, PrinterServiceProxy («boundary» external); CheckoutCoordinator, ShiftSessionCoordinator («control»); DiscountStackingEngine, ShiftReconciliationService («application logic»); ShiftAutoCloseScheduler («timer»); ShiftSession, Order, Voucher, Customer, SystemConfig («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -37,12 +37,7 @@ classDiagram
         +closingCash: Decimal
         +submitClose()
     }
-    class OfflineSyncIndicator {
-        <<boundary>>
-        +isOnline: Boolean
-        +pendingCount: Integer
-        +syncNow()
-    }
+
     class CheckoutCoordinator {
         <<control>>
         +buildCart(items): CartDto
@@ -73,12 +68,7 @@ classDiagram
         +computeDiscrepancy(expected, actual): Decimal
         +generateZReport(sessionId): ZReportDto
     }
-    class OfflineSyncManager {
-        <<application logic>>
-        +saveLocalOrder(orderDto): void
-        +syncPendingOrders(): void
-        +resolveConflict(localOrder, serverResponse): void
-    }
+
     class ShiftAutoCloseScheduler {
         <<timer>>
         +schedule: "59 23 * * *" (23:59 cron)
@@ -130,7 +120,7 @@ classDiagram
     ShiftCloseForm ..> ShiftSessionCoordinator
     PosCheckoutGrid ..> CheckoutCoordinator
     PaymentPanel ..> CheckoutCoordinator
-    OfflineSyncIndicator ..> OfflineSyncManager
+
     CheckoutCoordinator --> DiscountStackingEngine
     CheckoutCoordinator --> ShiftSession
     CheckoutCoordinator --> VietQRClient
