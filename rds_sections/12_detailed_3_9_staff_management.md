@@ -1,4 +1,4 @@
-﻿### **3.9 Staff Management**
+### **3.9 Staff Management**
 
 *\[Provide the detailed design for Staff Management, covering UC-35→UC-39 (View/Create/Update/Delete Schedule, View Attendance Report), UC-66 (Attendance Check-in/out with PIN + Photo Capture), and UC-80 (Export Worked Hours). Actors: storemanager (schedule CRUD + attendance oversight), cashier/barista (self check-in at branch). Key PDPA design: attendance photos are stored on server filesystem (path only in DB), automatically purged by PhotoAutoDeleteScheduler after 90 days (BR-72).\]*
 
@@ -95,10 +95,10 @@ classDiagram
         +role: Role
     }
 
-    ScheduleCalendarView --> ScheduleCoordinator
-    CreateScheduleForm --> ScheduleCoordinator
-    AttendanceCheckInScreen --> AttendanceCoordinator
-    AttendanceReportView --> AttendanceCoordinator
+    ScheduleCalendarView ..> ScheduleCoordinator
+    CreateScheduleForm ..> ScheduleCoordinator
+    AttendanceCheckInScreen ..> AttendanceCoordinator
+    AttendanceReportView ..> AttendanceCoordinator
     AttendanceCoordinator --> AttendancePhotoManager
     AttendanceCoordinator --> AttendanceLog
     AttendanceCoordinator --> User

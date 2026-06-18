@@ -1,4 +1,4 @@
-﻿### **3.4 Voucher Management**
+### **3.4 Voucher Management**
 
 *\[Provide the detailed design for Voucher Management, covering UC-20→UC-23 (View/Add/Update/Delete Voucher). Voucher application at checkout is described in Section 3.7 POS Transaction (UC-48). Actor: businessadmin (CRUD). The class diagram covers the voucher lifecycle; the sequence diagram covers the add/update flow. The VOUCHER statechart documents the full lifecycle.\]*
 
@@ -61,9 +61,9 @@ classDiagram
         +writeLog(actionType, entity, old, new)
     }
 
-    VoucherListView --> VoucherCoordinator
-    AddVoucherForm --> VoucherCoordinator
-    EditVoucherForm --> VoucherCoordinator
+    VoucherListView ..> VoucherCoordinator
+    AddVoucherForm ..> VoucherCoordinator
+    EditVoucherForm ..> VoucherCoordinator
     VoucherCoordinator --> Voucher
     VoucherCoordinator --> AuditLog
 ```

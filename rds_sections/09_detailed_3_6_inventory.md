@@ -1,4 +1,4 @@
-﻿### **3.6 Inventory & Stock Management**
+### **3.6 Inventory & Stock Management**
 
 *\[Provide the detailed design for Inventory & Stock Management, covering UC-31→UC-34 (View Stock Dashboard, Import Stock, Export Stock, Stock Audit/Physical Count) and UC-61→UC-62 (Recipe-based Auto-Deduction on PREPARING status, Low Stock Alert). Actors: storemanager (manual import/export/audit), system scheduler (auto-deduction via RecipeDeductionService, daily alert via LowStockAlertScheduler).\]*
 
@@ -88,10 +88,10 @@ classDiagram
         +sendLowStockAlert(to, items): void
     }
 
-    StockDashboardView --> StockCoordinator
-    ImportStockForm --> StockCoordinator
-    ExportStockForm --> StockCoordinator
-    StockAuditForm --> StockCoordinator
+    StockDashboardView ..> StockCoordinator
+    ImportStockForm ..> StockCoordinator
+    ExportStockForm ..> StockCoordinator
+    StockAuditForm ..> StockCoordinator
     StockCoordinator --> RecipeDeductionService
     StockCoordinator --> StockItem
     StockCoordinator --> StockTransaction

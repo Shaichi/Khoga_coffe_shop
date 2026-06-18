@@ -1,4 +1,4 @@
-﻿### **3.8 Order Management**
+### **3.8 Order Management**
 
 *\[Provide the detailed design for Order Management, covering UC-55→UC-60 (View Order Queue, Barista Update Status), UC-58 (Cancel PENDING Order by cashier), UC-73 (Auto-Abandon READY Orders by system), UC-75 (SM-Authorized Refund/Comp). Actors: cashier (cancel PENDING only), storemanager (refund/comp authorization), barista (queue display + status transitions), system scheduler (auto-abandon after 15 min). The ORDER statechart documents all 7 valid states and their transitions.\]*
 
@@ -96,16 +96,19 @@ classDiagram
         +authorisedAt: DateTime
     }
 
-    OrderQueueView --> OrderCoordinator
-    BaristaQueueMonitor --> OrderQueueCoordinator
-    CancellationDialog --> OrderCoordinator
-    RefundAuthDialog --> OrderCoordinator
+    OrderQueueView ..> OrderCoordinator
+    BaristaQueueMonitor ..> OrderQueueCoordinator
+    CancellationDialog ..> OrderCoordinator
+    RefundAuthDialog ..> OrderCoordinator
     OrderTimeoutScheduler --> OrderCoordinator
     OrderCoordinator --> Order
     OrderCoordinator --> OrderItem
     OrderCoordinator --> OrderCancellation
     OrderCoordinator --> OrderRefund
     OrderQueueCoordinator --> Order
+    Order *-- OrderItem
+    Order *-- OrderCancellation
+    Order *-- OrderRefund
 ```
 
 #### ***3.8.2 UC-58 Cancel PENDING Order***

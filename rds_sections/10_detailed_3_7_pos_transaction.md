@@ -1,4 +1,4 @@
-﻿### **3.7 POS Transaction**
+### **3.7 POS Transaction**
 
 *\[Provide the detailed design for POS Transaction, covering UC-44→UC-55 (Open Shift, Full Checkout Pipeline, VietQR Payment, Close Shift/Z-Report, Offline Cash Mode). Actor: cashier (POS Terminal on Flutter). Key design decisions: (1) DiscountStackingEngine enforces voucher + loyalty point stacking rules (BR-70); (2) VietQR uses idempotency key = orderId (BR-84/BR-85); (3) ShiftAutoCloseScheduler force-closes open shifts at 23:59 (BR); (4) Offline cash orders use client_uuid for deduplication (BR-86).\]*
 
@@ -119,11 +119,11 @@ classDiagram
         +loyaltyPoints: Integer
     }
 
-    ShiftOpenForm --> ShiftSessionCoordinator
-    ShiftCloseForm --> ShiftSessionCoordinator
-    PosCheckoutGrid --> CheckoutCoordinator
-    PaymentPanel --> CheckoutCoordinator
-    OfflineSyncIndicator --> OfflineSyncManager
+    ShiftOpenForm ..> ShiftSessionCoordinator
+    ShiftCloseForm ..> ShiftSessionCoordinator
+    PosCheckoutGrid ..> CheckoutCoordinator
+    PaymentPanel ..> CheckoutCoordinator
+    OfflineSyncIndicator ..> OfflineSyncManager
     CheckoutCoordinator --> DiscountStackingEngine
     CheckoutCoordinator --> ShiftSession
     CheckoutCoordinator --> VietQRClient

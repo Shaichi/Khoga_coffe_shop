@@ -1,4 +1,4 @@
-﻿### **3.2 User Account Management**
+### **3.2 User Account Management**
 
 *\[Provide the detailed design for User Account Management, covering UC-10→UC-14 (View User List, Add User, Update User, View User Detail, Deactivate/Reactivate User). Actor: ssadmin. The class diagram covers all user management use cases. Sequence diagrams cover the Add User and Update/Deactivate User flows.\]*
 
@@ -82,10 +82,10 @@ classDiagram
         +createdAt: DateTime
     }
 
-    UserListView --> UserManagementCoordinator
-    AddUserForm --> UserManagementCoordinator
-    EditUserForm --> UserManagementCoordinator
-    UserDetailView --> UserManagementCoordinator
+    UserListView ..> UserManagementCoordinator
+    AddUserForm ..> UserManagementCoordinator
+    EditUserForm ..> UserManagementCoordinator
+    UserDetailView ..> UserManagementCoordinator
     UserManagementCoordinator --> PasswordPolicyValidator
     UserManagementCoordinator --> EmailServiceProxy
     UserManagementCoordinator --> User

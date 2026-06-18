@@ -1,4 +1,4 @@
-﻿### **3.10 Reports & Analytics**
+### **3.10 Reports & Analytics**
 
 *\[Provide the detailed design for Reports & Analytics, covering UC-28→UC-29 (HQ Consolidated Revenue Dashboard), UC-40→UC-41 (Branch Sales Report, Z-Report Archive), UC-76→UC-83 (Price Change History, Voucher Usage Report, Loyalty Liability, Labour Efficiency, COGS/Margin Report, Anomaly Detection, Z-Report Archive). Actors: ceoviewer/businessadmin/ssadmin (HQ reports), storemanager (branch-level reports). Data sources: Order, StockTransaction, AuditLog, ShiftSession tables (read-only).\]*
 
@@ -86,10 +86,10 @@ classDiagram
         +createdAt: DateTime
     }
 
-    HQDashboardView --> ReportCoordinator
-    BranchReportView --> ReportCoordinator
-    ZReportArchiveView --> ReportCoordinator
-    PriceHistoryView --> ReportCoordinator
+    HQDashboardView ..> ReportCoordinator
+    BranchReportView ..> ReportCoordinator
+    ZReportArchiveView ..> ReportCoordinator
+    PriceHistoryView ..> ReportCoordinator
     ReportCoordinator --> COGSCalculator
     ReportCoordinator --> AnomalyDetector
     ReportCoordinator --> LabourEfficiencyService

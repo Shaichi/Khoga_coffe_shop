@@ -706,14 +706,14 @@ classDiagram
         +lastLoginAt: DateTime
     }
 
-    LoginForm --> AuthenticationCoordinator
-    MfaChallengeForm --> AuthenticationCoordinator
-    ForgotPasswordForm --> AuthenticationCoordinator
-    OtpVerificationForm --> AuthenticationCoordinator
-    SetNewPasswordForm --> AuthenticationCoordinator
-    ForcePasswordChangeForm --> AuthenticationCoordinator
-    EditProfileForm --> ProfileCoordinator
-    ChangePasswordForm --> ProfileCoordinator
+    LoginForm ..> AuthenticationCoordinator
+    MfaChallengeForm ..> AuthenticationCoordinator
+    ForgotPasswordForm ..> AuthenticationCoordinator
+    OtpVerificationForm ..> AuthenticationCoordinator
+    SetNewPasswordForm ..> AuthenticationCoordinator
+    ForcePasswordChangeForm ..> AuthenticationCoordinator
+    EditProfileForm ..> ProfileCoordinator
+    ChangePasswordForm ..> ProfileCoordinator
     AuthenticationCoordinator --> PasswordPolicyValidator
     AuthenticationCoordinator --> OtpExpiryTimer
     AuthenticationCoordinator --> EmailServiceProxy
@@ -981,10 +981,10 @@ classDiagram
         +createdAt: DateTime
     }
 
-    UserListView --> UserManagementCoordinator
-    AddUserForm --> UserManagementCoordinator
-    EditUserForm --> UserManagementCoordinator
-    UserDetailView --> UserManagementCoordinator
+    UserListView ..> UserManagementCoordinator
+    AddUserForm ..> UserManagementCoordinator
+    EditUserForm ..> UserManagementCoordinator
+    UserDetailView ..> UserManagementCoordinator
     UserManagementCoordinator --> PasswordPolicyValidator
     UserManagementCoordinator --> EmailServiceProxy
     UserManagementCoordinator --> User
@@ -1167,11 +1167,11 @@ classDiagram
         +writeLog(actionType, entity, old, new)
     }
 
-    MenuCategoryView --> CatalogCoordinator
-    AddMenuItemForm --> CatalogCoordinator
-    EditMenuItemForm --> CatalogCoordinator
-    AddCategoryForm --> CatalogCoordinator
-    RawMaterialMasterView --> CatalogCoordinator
+    MenuCategoryView ..> CatalogCoordinator
+    AddMenuItemForm ..> CatalogCoordinator
+    EditMenuItemForm ..> CatalogCoordinator
+    AddCategoryForm ..> CatalogCoordinator
+    RawMaterialMasterView ..> CatalogCoordinator
     CatalogCoordinator --> MenuItem
     CatalogCoordinator --> Category
     CatalogCoordinator --> OptionTopping
@@ -1180,8 +1180,8 @@ classDiagram
     CatalogCoordinator --> BranchMenuStatus
     CatalogCoordinator --> AuditLog
     RecipeItem --> RawMaterial
-    MenuItem --> RecipeItem
-    OptionTopping --> RecipeItem
+    MenuItem *-- RecipeItem
+    OptionTopping *-- RecipeItem
 ```
 
 #### ***3.3.2 UC-18 Add Menu Item with Recipe Formula***
@@ -1373,9 +1373,9 @@ classDiagram
         +writeLog(actionType, entity, old, new)
     }
 
-    VoucherListView --> VoucherCoordinator
-    AddVoucherForm --> VoucherCoordinator
-    EditVoucherForm --> VoucherCoordinator
+    VoucherListView ..> VoucherCoordinator
+    AddVoucherForm ..> VoucherCoordinator
+    EditVoucherForm ..> VoucherCoordinator
     VoucherCoordinator --> Voucher
     VoucherCoordinator --> AuditLog
 ```
@@ -1499,10 +1499,10 @@ classDiagram
         +isActive: Boolean
     }
 
-    CustomerSearchView --> CustomerCoordinator
-    AddCustomerForm --> CustomerCoordinator
-    EditCustomerForm --> CustomerCoordinator
-    RedemptionPanel --> CustomerCoordinator
+    CustomerSearchView ..> CustomerCoordinator
+    AddCustomerForm ..> CustomerCoordinator
+    EditCustomerForm ..> CustomerCoordinator
+    RedemptionPanel ..> CustomerCoordinator
     CustomerCoordinator --> LoyaltyPointCalculator
     CustomerCoordinator --> Customer
 ```
@@ -1651,10 +1651,10 @@ classDiagram
         +sendLowStockAlert(to, items): void
     }
 
-    StockDashboardView --> StockCoordinator
-    ImportStockForm --> StockCoordinator
-    ExportStockForm --> StockCoordinator
-    StockAuditForm --> StockCoordinator
+    StockDashboardView ..> StockCoordinator
+    ImportStockForm ..> StockCoordinator
+    ExportStockForm ..> StockCoordinator
+    StockAuditForm ..> StockCoordinator
     StockCoordinator --> RecipeDeductionService
     StockCoordinator --> StockItem
     StockCoordinator --> StockTransaction
@@ -1872,11 +1872,11 @@ classDiagram
         +loyaltyPoints: Integer
     }
 
-    ShiftOpenForm --> ShiftSessionCoordinator
-    ShiftCloseForm --> ShiftSessionCoordinator
-    PosCheckoutGrid --> CheckoutCoordinator
-    PaymentPanel --> CheckoutCoordinator
-    OfflineSyncIndicator --> OfflineSyncManager
+    ShiftOpenForm ..> ShiftSessionCoordinator
+    ShiftCloseForm ..> ShiftSessionCoordinator
+    PosCheckoutGrid ..> CheckoutCoordinator
+    PaymentPanel ..> CheckoutCoordinator
+    OfflineSyncIndicator ..> OfflineSyncManager
     CheckoutCoordinator --> DiscountStackingEngine
     CheckoutCoordinator --> ShiftSession
     CheckoutCoordinator --> VietQRClient
@@ -2134,16 +2134,19 @@ classDiagram
         +authorisedAt: DateTime
     }
 
-    OrderQueueView --> OrderCoordinator
-    BaristaQueueMonitor --> OrderQueueCoordinator
-    CancellationDialog --> OrderCoordinator
-    RefundAuthDialog --> OrderCoordinator
+    OrderQueueView ..> OrderCoordinator
+    BaristaQueueMonitor ..> OrderQueueCoordinator
+    CancellationDialog ..> OrderCoordinator
+    RefundAuthDialog ..> OrderCoordinator
     OrderTimeoutScheduler --> OrderCoordinator
     OrderCoordinator --> Order
     OrderCoordinator --> OrderItem
     OrderCoordinator --> OrderCancellation
     OrderCoordinator --> OrderRefund
     OrderQueueCoordinator --> Order
+    Order *-- OrderItem
+    Order *-- OrderCancellation
+    Order *-- OrderRefund
 ```
 
 #### ***3.8.2 UC-58 Cancel PENDING Order***
@@ -2352,10 +2355,10 @@ classDiagram
         +role: Role
     }
 
-    ScheduleCalendarView --> ScheduleCoordinator
-    CreateScheduleForm --> ScheduleCoordinator
-    AttendanceCheckInScreen --> AttendanceCoordinator
-    AttendanceReportView --> AttendanceCoordinator
+    ScheduleCalendarView ..> ScheduleCoordinator
+    CreateScheduleForm ..> ScheduleCoordinator
+    AttendanceCheckInScreen ..> AttendanceCoordinator
+    AttendanceReportView ..> AttendanceCoordinator
     AttendanceCoordinator --> AttendancePhotoManager
     AttendanceCoordinator --> AttendanceLog
     AttendanceCoordinator --> User
@@ -2534,10 +2537,10 @@ classDiagram
         +createdAt: DateTime
     }
 
-    HQDashboardView --> ReportCoordinator
-    BranchReportView --> ReportCoordinator
-    ZReportArchiveView --> ReportCoordinator
-    PriceHistoryView --> ReportCoordinator
+    HQDashboardView ..> ReportCoordinator
+    BranchReportView ..> ReportCoordinator
+    ZReportArchiveView ..> ReportCoordinator
+    PriceHistoryView ..> ReportCoordinator
     ReportCoordinator --> COGSCalculator
     ReportCoordinator --> AnomalyDetector
     ReportCoordinator --> LabourEfficiencyService
@@ -2744,11 +2747,11 @@ classDiagram
         +writeLog(actionType, entity, old, new)
     }
 
-    SystemConfigForm --> SystemConfigCoordinator
-    BranchLocalConfigForm --> SystemConfigCoordinator
-    AddBranchForm --> BranchCoordinator
-    EditBranchForm --> BranchCoordinator
-    BranchListView --> BranchCoordinator
+    SystemConfigForm ..> SystemConfigCoordinator
+    BranchLocalConfigForm ..> SystemConfigCoordinator
+    AddBranchForm ..> BranchCoordinator
+    EditBranchForm ..> BranchCoordinator
+    BranchListView ..> BranchCoordinator
     SystemConfigCoordinator --> SystemConfig
     SystemConfigCoordinator --> AuditLog
     BranchCoordinator --> Store

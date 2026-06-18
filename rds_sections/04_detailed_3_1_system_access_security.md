@@ -1,4 +1,4 @@
-﻿## **3\. Detailed Design**
+## **3\. Detailed Design**
 
 ### **3.1 System Access & Security**
 
@@ -108,14 +108,14 @@ classDiagram
         +lastLoginAt: DateTime
     }
 
-    LoginForm --> AuthenticationCoordinator
-    MfaChallengeForm --> AuthenticationCoordinator
-    ForgotPasswordForm --> AuthenticationCoordinator
-    OtpVerificationForm --> AuthenticationCoordinator
-    SetNewPasswordForm --> AuthenticationCoordinator
-    ForcePasswordChangeForm --> AuthenticationCoordinator
-    EditProfileForm --> ProfileCoordinator
-    ChangePasswordForm --> ProfileCoordinator
+    LoginForm ..> AuthenticationCoordinator
+    MfaChallengeForm ..> AuthenticationCoordinator
+    ForgotPasswordForm ..> AuthenticationCoordinator
+    OtpVerificationForm ..> AuthenticationCoordinator
+    SetNewPasswordForm ..> AuthenticationCoordinator
+    ForcePasswordChangeForm ..> AuthenticationCoordinator
+    EditProfileForm ..> ProfileCoordinator
+    ChangePasswordForm ..> ProfileCoordinator
     AuthenticationCoordinator --> PasswordPolicyValidator
     AuthenticationCoordinator --> OtpExpiryTimer
     AuthenticationCoordinator --> EmailServiceProxy

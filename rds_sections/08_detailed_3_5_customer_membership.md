@@ -1,4 +1,4 @@
-﻿### **3.5 Customer & Membership Management**
+### **3.5 Customer & Membership Management**
 
 *\[Provide the detailed design for Customer & Membership Management, covering UC-24→UC-27 (View/Add/Update Customer, Redeem Loyalty Points) and UC-49 (Apply Loyalty Points at Checkout). Actors: cashier (CRM lookup and register at POS), storemanager (edit customer info). Key design: PDPA consent is mandatory before any loyalty data is stored (BR-71). Checkout application is covered in Section 3.7.\]*
 
@@ -62,10 +62,10 @@ classDiagram
         +isActive: Boolean
     }
 
-    CustomerSearchView --> CustomerCoordinator
-    AddCustomerForm --> CustomerCoordinator
-    EditCustomerForm --> CustomerCoordinator
-    RedemptionPanel --> CustomerCoordinator
+    CustomerSearchView ..> CustomerCoordinator
+    AddCustomerForm ..> CustomerCoordinator
+    EditCustomerForm ..> CustomerCoordinator
+    RedemptionPanel ..> CustomerCoordinator
     CustomerCoordinator --> LoyaltyPointCalculator
     CustomerCoordinator --> Customer
 ```

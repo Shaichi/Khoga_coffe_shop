@@ -1,4 +1,4 @@
-﻿### **3.11 System Configuration & Branch Management**
+### **3.11 System Configuration & Branch Management**
 
 *\[Provide the detailed design for System Configuration & Branch Management, covering UC-30 (Central System Config by ssadmin), UC-42 (Branch-Local Config Override by storemanager), and UC-63→UC-65 (Branch Lifecycle: Add/Edit/Deactivate). Key constraints: Adding a branch is blocked if MAX_ACTIVE_BRANCHES is reached (BR-35). Deactivating a branch is blocked if the branch has OPEN shift sessions. All config changes are audit-logged.\]*
 
@@ -79,11 +79,11 @@ classDiagram
         +writeLog(actionType, entity, old, new)
     }
 
-    SystemConfigForm --> SystemConfigCoordinator
-    BranchLocalConfigForm --> SystemConfigCoordinator
-    AddBranchForm --> BranchCoordinator
-    EditBranchForm --> BranchCoordinator
-    BranchListView --> BranchCoordinator
+    SystemConfigForm ..> SystemConfigCoordinator
+    BranchLocalConfigForm ..> SystemConfigCoordinator
+    AddBranchForm ..> BranchCoordinator
+    EditBranchForm ..> BranchCoordinator
+    BranchListView ..> BranchCoordinator
     SystemConfigCoordinator --> SystemConfig
     SystemConfigCoordinator --> AuditLog
     BranchCoordinator --> Store

@@ -1,4 +1,4 @@
-﻿### **3.3 Menu & Category Management**
+### **3.3 Menu & Category Management**
 
 *\[Provide the detailed design for Menu & Category Management, covering UC-15→UC-19, UC-68→UC-74 (View/Add/Update/Delete Menu Items, Categories, Toppings, Raw Material Master, Recipe Management, Branch Availability Toggle). Actors: businessadmin (chain-wide catalog CRUD), storemanager (local branch availability toggle via branch_menu_status). For features with the same class structure, the class diagram is provided once.\]*
 
@@ -110,11 +110,11 @@ classDiagram
         +writeLog(actionType, entity, old, new)
     }
 
-    MenuCategoryView --> CatalogCoordinator
-    AddMenuItemForm --> CatalogCoordinator
-    EditMenuItemForm --> CatalogCoordinator
-    AddCategoryForm --> CatalogCoordinator
-    RawMaterialMasterView --> CatalogCoordinator
+    MenuCategoryView ..> CatalogCoordinator
+    AddMenuItemForm ..> CatalogCoordinator
+    EditMenuItemForm ..> CatalogCoordinator
+    AddCategoryForm ..> CatalogCoordinator
+    RawMaterialMasterView ..> CatalogCoordinator
     CatalogCoordinator --> MenuItem
     CatalogCoordinator --> Category
     CatalogCoordinator --> OptionTopping
@@ -123,8 +123,8 @@ classDiagram
     CatalogCoordinator --> BranchMenuStatus
     CatalogCoordinator --> AuditLog
     RecipeItem --> RawMaterial
-    MenuItem --> RecipeItem
-    OptionTopping --> RecipeItem
+    MenuItem *-- RecipeItem
+    OptionTopping *-- RecipeItem
 ```
 
 #### ***3.3.2 UC-18 Add Menu Item with Recipe Formula***
