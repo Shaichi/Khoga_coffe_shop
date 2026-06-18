@@ -1,6 +1,6 @@
 ## **2\. Database Design**
 
-*\[The database design follows the entity relationships defined in the SRS (§3.1.5 / §3.1.6). The system uses `MySQL 8.x` with `InnoDB` engine and `utf8mb4` charset. All primary keys use `UUID` (`VARCHAR(36)`). The diagrams below show the entity relationships with full column definitions, followed by the table descriptions.\]*
+*\[The database design follows the entity relationships defined in the SRS (§3.1.5 / §3.1.6). The system uses `SQL Server` with ACID transactions and Unicode support (`NVARCHAR`). All primary keys use `UUID` (`VARCHAR(36)`). The diagrams below show the entity relationships with full column definitions, followed by the table descriptions.\]*
 
 ### **2.1. Core Sales & POS ERD**
 

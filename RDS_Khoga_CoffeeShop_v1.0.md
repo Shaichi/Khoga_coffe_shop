@@ -87,7 +87,7 @@ graph TB
     end
 
     subgraph DB["DATABASE TIER"]
-        MYSQL["MySQL 8.x — 21 tables — InnoDB — utf8mb4"]
+        SQLSERVER["SQL Server — 21 tables — ACID Transactions — Unicode (NVARCHAR)"]
     end
 
     subgraph EXT["EXTERNAL SYSTEMS"]
@@ -103,7 +103,7 @@ graph TB
     SVC --> SCHED
     SVC --> ENT
     ENT --> REPO
-    REPO --> MYSQL
+    REPO --> SQLSERVER
     CTRL -->|"REST webhook"| VIETQR
     SVC -->|"SMTP"| EMAIL
     APP -->|"ESC/POS"| PRINTER
@@ -119,8 +119,8 @@ graph TB
 | 04 | @Service Layer | «control» (Coordinator) | Business logic orchestration. Each service coordinates domain entities, calls application logic components, and manages transactions via @Transactional. |
 | 05 | Application Logic Components | «application logic» | Stateless business rule engines: DiscountStackingEngine (BR-70), RecipeDeductionEngine (BR-89), LoyaltyPointCalculator, COGSCalculator, AnomalyDetector, AttendancePhotoManager (PDPA). |
 | 06 | @Scheduled Tasks | «timer» | Spring @Scheduled background timers: OrderTimeoutTimer (15 min), ShiftAutoCloseTimer (23:59 cron), LowStockAlertTimer (22:00 cron), PhotoAutoDeleteTimer (02:00 cron — PDPA 90-day purge BR-72), OtpExpiryTimer (10 min). |
-| 07 | @Entity / @Repository (Domain Tier) | «entity» | 21 JPA domain entities mapped to MySQL 8.x tables via Spring Data JPA repositories. All PK are UUID VARCHAR(36). |
-| 08 | MySQL 8.x | Database | Relational database with InnoDB engine, ACID transactions, utf8mb4 charset. 21 tables. |
+| 07 | @Entity / @Repository (Domain Tier) | «entity» | 21 JPA domain entities mapped to SQL Server tables via Spring Data JPA repositories. All PK are UUID VARCHAR(36). |
+| 08 | SQL Server | Database | Relational database with ACID transactions, Unicode support (NVARCHAR). 21 tables. |
 | 09 | VietQR Payment Gateway | External System | Vietnamese QR payment provider. Integrated via REST webhook callback with idempotency key (orderId) to prevent duplicate charges (BR-84/BR-85). |
 | 10 | SMTP Email Server | External System | Email delivery service for: OTP delivery (BR-16), low stock daily alerts (22:00), and welcome email for new staff accounts. |
 | 11 | ESC/POS Printer | External System | Receipt and cup label printers connected via USB/Network to POS Terminal (Flutter) and Barista tablets. Triggered by PrinterServiceProxy after order completion. |
@@ -245,7 +245,7 @@ graph TB
 
 ## **2\. Database Design**
 
-*\[The database design follows the entity relationships defined in the SRS (§3.1.5 / §3.1.6). The system uses `MySQL 8.x` with `InnoDB` engine and `utf8mb4` charset. All primary keys use `UUID` (`VARCHAR(36)`). The diagrams below show the entity relationships with full column definitions, followed by the table descriptions.\]*
+*\[The database design follows the entity relationships defined in the SRS (§3.1.5 / §3.1.6). The system uses `SQL Server` with ACID transactions and Unicode support (`NVARCHAR`). All primary keys use `UUID` (`VARCHAR(36)`). The diagrams below show the entity relationships with full column definitions, followed by the table descriptions.\]*
 
 ### **2.1. Core Sales & POS ERD**
 
