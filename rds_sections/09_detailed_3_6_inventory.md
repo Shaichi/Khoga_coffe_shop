@@ -47,7 +47,7 @@ classDiagram
         <<application logic>>
         +deductIngredients(orderId): DeductionResult
         +calculateRequiredQty(orderItems, recipes): Map
-        +checkSufficientStock(storeId, requireMap): Boolean
+        +createPhantomUsageTx(stockItemId, shortageQty): void
     }
     class LowStockAlertScheduler {
         <<timer>>
@@ -151,7 +151,7 @@ sequenceDiagram
 
 #### ***3.6.4 UC-61/62 Automatic Recipe-Based Stock Deduction***
 
-*\[When the Barista updates order status to PREPARING, the RecipeDeductionService is triggered. Each order item's recipe formula is consumed from branch stock. If any ingredient is insufficient, the order is set to HOLD and an alert is shown (BR-89). RECIPE_DEDUCTION transactions have null manager_id to distinguish them from manual adjustments.\]*
+*\[When the Barista updates order status to PREPARING, the RecipeDeductionService is triggered. Each order item's recipe formula is consumed from branch stock. If any ingredient is insufficient, the system still deducts everything (allowing negative balance) and records a `phantom_usage` transaction to monitor leakage (BR-89). It does NOT set the order status to HOLD. A low-stock alert MSG07 is dispatched, but the order preparation proceeds without blocking. RECIPE_DEDUCTION transactions have null manager_id to distinguish them from manual adjustments.\]*
 
 ```mermaid
 sequenceDiagram
@@ -168,21 +168,23 @@ sequenceDiagram
     OrderCoord->>RecipeDeductSvc: deductIngredients(orderId)
     RecipeDeductSvc->>RecipeDB: fetchRecipesForOrder(orderId)
     RecipeDB-->>RecipeDeductSvc: requireMap (ingredientId to qty)
-    RecipeDeductSvc->>StockItemDB: checkSufficientStock(storeId, requireMap)
-    StockItemDB-->>RecipeDeductSvc: stockLevels
 
-    alt All ingredients sufficient
-        loop for each ingredient
-            RecipeDeductSvc->>StockItemDB: decrementQuantity(stockItemId, qty)
-            RecipeDeductSvc->>TxDB: createTransaction(RECIPE_DEDUCTION, ..., managerId=null)
+    loop for each ingredient in requireMap
+        RecipeDeductSvc->>StockItemDB: getStockItem(storeId, ingredientId)
+        StockItemDB-->>RecipeDeductSvc: stockItem (currentOnHand)
+        
+        Note over RecipeDeductSvc, StockItemDB: Decrement qty from stock level (may go negative)
+        RecipeDeductSvc->>StockItemDB: setQuantity(stockItemId, currentOnHand - requiredQty)
+        RecipeDeductSvc->>TxDB: createTransaction(RECIPE_DEDUCTION, stockItemId, requiredQty, managerId=null)
+        
+        alt currentOnHand - requiredQty < 0
+            Note over RecipeDeductSvc, TxDB: Create phantom_usage transaction for the deficit (BR-89)
+            RecipeDeductSvc->>TxDB: createTransaction(PHANTOM_USAGE, stockItemId, abs(deficit), managerId=null)
+            RecipeDeductSvc-->>OrderCoord: triggerLowStockAlert(MSG07, ingredientId)
         end
-        RecipeDeductSvc-->>OrderCoord: SUCCESS
-        OrderCoord-->>BaristaMonitor: showStatus(PREPARING)
-    else Ingredient insufficient
-        RecipeDeductSvc-->>OrderCoord: HOLD (shortageList)
-        OrderCoord->>OrderCoord: setStatus(orderId, HOLD)
-        OrderCoord-->>BaristaMonitor: showHoldAlert(shortageList)
-        BaristaMonitor-->>barista: display HOLD reason + shortage details
     end
+    
+    RecipeDeductSvc-->>OrderCoord: SUCCESS
+    OrderCoord-->>BaristaMonitor: showStatus(PREPARING)
 ```
 

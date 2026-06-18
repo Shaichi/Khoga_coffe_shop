@@ -30,6 +30,7 @@ erDiagram
         datetime created_at
         datetime last_login_at
         boolean must_change_password
+        string attendance_pin
     }
 
     CATEGORY {
@@ -74,6 +75,8 @@ erDiagram
         int points
         string email
         datetime created_at
+        datetime consent_at
+        string consent_version
     }
 
     SHIFT_SESSION {
@@ -213,6 +216,7 @@ erDiagram
         datetime created_at
         datetime last_login_at
         boolean must_change_password
+        string attendance_pin
     }
 
     RAW_MATERIAL {
@@ -328,12 +332,12 @@ erDiagram
 
 | No | Table | Description |
 | :---- | :---- | :---- |
-| 01 | users | Stores login credentials and RBAC roles for all 6 employee types (ceoviewer, businessadmin, ssadmin, storemanager, cashier, barista). Key definitions: PK is id (UUID); FK is store_id → stores(id) |
+| 01 | users | Stores login credentials, RBAC roles, and attendance PIN for check-in/out (BR-93). attendance_pin must be unique per store (store_id). Key definitions: PK is id (UUID); FK is store_id → stores(id) |
 | 02 | categories | Main food and beverage product groupings (e.g., Coffee, Tea, Pastry). Used to organize the menu catalog chain-wide. Key definitions: PK is id (UUID) |
 | 03 | menu_items | Individual beverage/food catalog listings with pricing, barcodes, chain-wide active status, and image references. Soft-delete supported via is_deleted flag. Key definitions: PK is id (UUID); FK is category_id → categories(id) |
 | 04 | branch_menu_status | Per-branch item availability toggle. Allows Store Manager to temporarily disable items locally without affecting other branches. Key definitions: PK is (store_id, menu_item_id) — composite; FK is store_id → stores(id), menu_item_id → menu_items(id) |
 | 05 | option_toppings | Customizable add-ons for menu items (e.g., Extra Shot, Oat Milk, Tapioca Pearls). Each topping has a price and may have a recipe formula. Key definitions: PK is id (UUID); FK is menu_item_id → menu_items(id) |
-| 06 | customers | Loyalty membership registry tracking points balance. Includes PDPA consent timestamp and consent version (BR-71). Key definitions: PK is id (UUID) |
+| 06 | customers | Loyalty membership registry tracking points balance. Includes PDPA consent timestamp (consent_at) and consent version (consent_version) (BR-71). Key definitions: PK is id (UUID) |
 | 07 | shift_sessions | POS cashier work session records including opening/closing cash float, discrepancy, and shift status (OPEN / CLOSED). Key definitions: PK is id (UUID); FK is store_id → stores(id), user_id → users(id) |
 | 08 | orders | Sales transaction records linking customer, shift, voucher, payment status, and fulfillment status (7 states: PENDING / PREPARING / HOLD / READY / COMPLETED / CANCELLED / ABANDONED). Key definitions: PK is id (UUID); FK is store_id → stores(id), shift_session_id → shift_sessions(id), customer_id → customers(id), voucher_id → vouchers(id) |
 | 09 | order_items | Line items of each order with quantity and unit price snapshot at time of sale. Key definitions: PK is id (UUID); FK is order_id → orders(id), menu_item_id → menu_items(id) |

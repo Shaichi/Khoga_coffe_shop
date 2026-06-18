@@ -63,7 +63,6 @@ classDiagram
         +paymentStatus: PaymentStatus
         +paymentMethod: PaymentMethod
         +totalAmount: Decimal
-        +clientUuid: UUID
         +notes: String
         +createdAt: DateTime
     }

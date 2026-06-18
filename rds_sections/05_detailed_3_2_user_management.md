@@ -64,6 +64,7 @@ classDiagram
         +storeId: UUID
         +isActive: Boolean
         +mustChangePassword: Boolean
+        +attendancePin: String
     }
     class Store {
         <<entity>>

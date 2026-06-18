@@ -104,6 +104,7 @@ classDiagram
         +storeId: UUID
         +isActive: Boolean
         +mustChangePassword: Boolean
+        +attendancePin: String
         +createdAt: DateTime
         +lastLoginAt: DateTime
     }

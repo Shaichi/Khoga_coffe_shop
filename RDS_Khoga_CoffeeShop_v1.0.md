@@ -275,6 +275,7 @@ erDiagram
         datetime created_at
         datetime last_login_at
         boolean must_change_password
+        string attendance_pin
     }
 
     CATEGORY {
@@ -319,6 +320,8 @@ erDiagram
         int points
         string email
         datetime created_at
+        datetime consent_at
+        string consent_version
     }
 
     SHIFT_SESSION {
@@ -458,6 +461,7 @@ erDiagram
         datetime created_at
         datetime last_login_at
         boolean must_change_password
+        string attendance_pin
     }
 
     RAW_MATERIAL {
@@ -573,12 +577,12 @@ erDiagram
 
 | No | Table | Description |
 | :---- | :---- | :---- |
-| 01 | users | Stores login credentials and RBAC roles for all 6 employee types (ceoviewer, businessadmin, ssadmin, storemanager, cashier, barista). Key definitions: PK is id (UUID); FK is store_id → stores(id) |
+| 01 | users | Stores login credentials, RBAC roles, and attendance PIN for check-in/out (BR-93). attendance_pin must be unique per store (store_id). Key definitions: PK is id (UUID); FK is store_id → stores(id) |
 | 02 | categories | Main food and beverage product groupings (e.g., Coffee, Tea, Pastry). Used to organize the menu catalog chain-wide. Key definitions: PK is id (UUID) |
 | 03 | menu_items | Individual beverage/food catalog listings with pricing, barcodes, chain-wide active status, and image references. Soft-delete supported via is_deleted flag. Key definitions: PK is id (UUID); FK is category_id → categories(id) |
 | 04 | branch_menu_status | Per-branch item availability toggle. Allows Store Manager to temporarily disable items locally without affecting other branches. Key definitions: PK is (store_id, menu_item_id) — composite; FK is store_id → stores(id), menu_item_id → menu_items(id) |
 | 05 | option_toppings | Customizable add-ons for menu items (e.g., Extra Shot, Oat Milk, Tapioca Pearls). Each topping has a price and may have a recipe formula. Key definitions: PK is id (UUID); FK is menu_item_id → menu_items(id) |
-| 06 | customers | Loyalty membership registry tracking points balance. Includes PDPA consent timestamp and consent version (BR-71). Key definitions: PK is id (UUID) |
+| 06 | customers | Loyalty membership registry tracking points balance. Includes PDPA consent timestamp (consent_at) and consent version (consent_version) (BR-71). Key definitions: PK is id (UUID) |
 | 07 | shift_sessions | POS cashier work session records including opening/closing cash float, discrepancy, and shift status (OPEN / CLOSED). Key definitions: PK is id (UUID); FK is store_id → stores(id), user_id → users(id) |
 | 08 | orders | Sales transaction records linking customer, shift, voucher, payment status, and fulfillment status (7 states: PENDING / PREPARING / HOLD / READY / COMPLETED / CANCELLED / ABANDONED). Key definitions: PK is id (UUID); FK is store_id → stores(id), shift_session_id → shift_sessions(id), customer_id → customers(id), voucher_id → vouchers(id) |
 | 09 | order_items | Line items of each order with quantity and unit price snapshot at time of sale. Key definitions: PK is id (UUID); FK is order_id → orders(id), menu_item_id → menu_items(id) |
@@ -702,6 +706,7 @@ classDiagram
         +storeId: UUID
         +isActive: Boolean
         +mustChangePassword: Boolean
+        +attendancePin: String
         +createdAt: DateTime
         +lastLoginAt: DateTime
     }
@@ -963,6 +968,7 @@ classDiagram
         +storeId: UUID
         +isActive: Boolean
         +mustChangePassword: Boolean
+        +attendancePin: String
     }
     class Store {
         <<entity>>
@@ -1494,8 +1500,8 @@ classDiagram
         +email: String
         +birthDate: Date
         +loyaltyPoints: Integer
-        +pdpaConsentAt: DateTime
-        +pdpaConsentVersion: String
+        +consentAt: DateTime
+        +consentVersion: String
         +isActive: Boolean
     }
 
@@ -1610,7 +1616,7 @@ classDiagram
         <<application logic>>
         +deductIngredients(orderId): DeductionResult
         +calculateRequiredQty(orderItems, recipes): Map
-        +checkSufficientStock(storeId, requireMap): Boolean
+        +createPhantomUsageTx(stockItemId, shortageQty): void
     }
     class LowStockAlertScheduler {
         <<timer>>
@@ -1714,7 +1720,7 @@ sequenceDiagram
 
 #### ***3.6.4 UC-61/62 Automatic Recipe-Based Stock Deduction***
 
-*\[When the Barista updates order status to PREPARING, the RecipeDeductionService is triggered. Each order item's recipe formula is consumed from branch stock. If any ingredient is insufficient, the order is set to HOLD and an alert is shown (BR-89). RECIPE_DEDUCTION transactions have null manager_id to distinguish them from manual adjustments.\]*
+*\[When the Barista updates order status to PREPARING, the RecipeDeductionService is triggered. Each order item's recipe formula is consumed from branch stock. If any ingredient is insufficient, the system still deducts everything (allowing negative balance) and records a `phantom_usage` transaction to monitor leakage (BR-89). It does NOT set the order status to HOLD. A low-stock alert MSG07 is dispatched, but the order preparation proceeds without blocking. RECIPE_DEDUCTION transactions have null manager_id to distinguish them from manual adjustments.\]*
 
 ```mermaid
 sequenceDiagram
@@ -1731,22 +1737,24 @@ sequenceDiagram
     OrderCoord->>RecipeDeductSvc: deductIngredients(orderId)
     RecipeDeductSvc->>RecipeDB: fetchRecipesForOrder(orderId)
     RecipeDB-->>RecipeDeductSvc: requireMap (ingredientId to qty)
-    RecipeDeductSvc->>StockItemDB: checkSufficientStock(storeId, requireMap)
-    StockItemDB-->>RecipeDeductSvc: stockLevels
 
-    alt All ingredients sufficient
-        loop for each ingredient
-            RecipeDeductSvc->>StockItemDB: decrementQuantity(stockItemId, qty)
-            RecipeDeductSvc->>TxDB: createTransaction(RECIPE_DEDUCTION, ..., managerId=null)
+    loop for each ingredient in requireMap
+        RecipeDeductSvc->>StockItemDB: getStockItem(storeId, ingredientId)
+        StockItemDB-->>RecipeDeductSvc: stockItem (currentOnHand)
+        
+        Note over RecipeDeductSvc, StockItemDB: Decrement qty from stock level (may go negative)
+        RecipeDeductSvc->>StockItemDB: setQuantity(stockItemId, currentOnHand - requiredQty)
+        RecipeDeductSvc->>TxDB: createTransaction(RECIPE_DEDUCTION, stockItemId, requiredQty, managerId=null)
+        
+        alt currentOnHand - requiredQty < 0
+            Note over RecipeDeductSvc, TxDB: Create phantom_usage transaction for the deficit (BR-89)
+            RecipeDeductSvc->>TxDB: createTransaction(PHANTOM_USAGE, stockItemId, abs(deficit), managerId=null)
+            RecipeDeductSvc-->>OrderCoord: triggerLowStockAlert(MSG07, ingredientId)
         end
-        RecipeDeductSvc-->>OrderCoord: SUCCESS
-        OrderCoord-->>BaristaMonitor: showStatus(PREPARING)
-    else Ingredient insufficient
-        RecipeDeductSvc-->>OrderCoord: HOLD (shortageList)
-        OrderCoord->>OrderCoord: setStatus(orderId, HOLD)
-        OrderCoord-->>BaristaMonitor: showHoldAlert(shortageList)
-        BaristaMonitor-->>barista: display HOLD reason + shortage details
     end
+    
+    RecipeDeductSvc-->>OrderCoord: SUCCESS
+    OrderCoord-->>BaristaMonitor: showStatus(PREPARING)
 ```
 
 
@@ -2099,7 +2107,6 @@ classDiagram
         +paymentStatus: PaymentStatus
         +paymentMethod: PaymentMethod
         +totalAmount: Decimal
-        +clientUuid: UUID
         +notes: String
         +createdAt: DateTime
     }
@@ -2312,13 +2319,18 @@ classDiagram
         +createSchedule(dto): StaffSchedule
         +updateSchedule(id, dto): StaffSchedule
         +deleteSchedule(id): void
+        +validateWorkingHoursConstraints(employeeId, shiftDate, startTime, endTime): Boolean
+        +validateLabourBudget(storeId, shiftDate, additionalHours): BudgetValidationResult
+        +assignCrossBranch(employeeId, targetStoreId, shiftDate, shiftType): StaffSchedule
     }
     class AttendanceCoordinator {
         <<control>>
-        +checkIn(employeeId, pin, photo): AttendanceLog
+        +checkIn(storeId, pin, photo): AttendanceLog
         +checkOut(attendanceId, pin): AttendanceLog
         +getAttendanceReport(storeId, range): ReportDto
         +exportWorkedHours(storeId, range): ExcelFile
+        +validatePinUniquenessInBranch(storeId, pin): Boolean
+        +deriveLatenessAndOT(scheduledShift, checkInTime, checkOutTime): AttendanceMetrics
     }
     class AttendancePhotoManager {
         <<application logic>>
@@ -2357,7 +2369,7 @@ classDiagram
     class User {
         <<entity>>
         +id: UUID
-        +pin: String
+        +attendancePin: String
         +fullName: String
         +role: Role
     }
@@ -2374,9 +2386,9 @@ classDiagram
     PhotoAutoDeleteScheduler --> AttendanceLog
 ```
 
-#### ***3.9.2 UC-36 Create Staff Schedule***
+#### ***3.9.2 UC-36 Create Staff Schedule (with Cross-Branch and Hours Validation)***
 
-*\[storemanager creates a schedule entry for a specific employee in the branch. System validates the employee belongs to the branch and detects scheduling conflicts (same employee, overlapping dates/shifts). POS register ID is optionally assigned to cashier shifts.\]*
+*\[storemanager creates a schedule entry for a specific employee in the branch. System validates the employee belongs to the branch (or handles cross-branch assignment per BR-90 directly without target-branch host approval), validates working hour limits (BR-92), and detects scheduling conflicts (same employee, overlapping dates/shifts). POS register ID is optionally assigned to cashier shifts.\]*
 
 ```mermaid
 sequenceDiagram
@@ -2385,22 +2397,49 @@ sequenceDiagram
     participant ScheduleCoord as ScheduleCoordinator
     participant UserDB as User (DB)
     participant ScheduleDB as StaffSchedule (DB)
+    participant AuditDB as AuditLog (DB)
 
-    storemanager->>CreateForm: inputScheduleDetails(employeeId, date, shiftType, posRegisterId)
+    storemanager->>CreateForm: inputScheduleDetails(employeeId, date, shiftType, targetStoreId)
     CreateForm->>ScheduleCoord: createSchedule(dto)
-    ScheduleCoord->>UserDB: verifyEmployeeInBranch(employeeId, storeId)
-    UserDB-->>ScheduleCoord: employee confirmed
-    ScheduleCoord->>ScheduleDB: checkConflict(employeeId, date, startTime, endTime)
-    ScheduleDB-->>ScheduleCoord: noConflict
-    ScheduleCoord->>ScheduleDB: createSchedule(dto)
-    ScheduleDB-->>ScheduleCoord: newSchedule
-    ScheduleCoord-->>CreateForm: showSuccess()
-    CreateForm-->>storemanager: refreshCalendarView()
+    
+    alt Cross-Branch Assignment (BR-90)
+        ScheduleCoord->>UserDB: verifyEmployeeHomeBranch(employeeId)
+        UserDB-->>ScheduleCoord: homeStoreId
+        Note over ScheduleCoord, UserDB: Store Manager assigns employee to targetStoreId directly
+        ScheduleCoord->>AuditDB: logCrossBranchAssignment(employeeId, homeStoreId, targetStoreId, managerId)
+    else Standard Assignment
+        ScheduleCoord->>UserDB: verifyEmployeeInBranch(employeeId, storeId)
+        UserDB-->>ScheduleCoord: employee confirmed
+    end
+
+    Note over ScheduleCoord, ScheduleDB: Labour Budget & Time Constraints Validation (BR-92)
+    ScheduleCoord->>ScheduleCoord: validateDailyWeeklyRestHours(employeeId, date, shiftType)
+    
+    alt Exceeds Hard Blocks (MAX_DAILY_HOURS, MAX_WEEKLY_HOURS, MIN_REST_HOURS)
+        ScheduleCoord-->>CreateForm: showValidationError(ERR_TIME_CONSTRAINTS)
+        CreateForm-->>storemanager: display error and block save
+    else Within Constraints
+        ScheduleCoord->>ScheduleCoord: checkLabourHourBudget(targetStoreId, date)
+        alt Soft Budget Exceeded
+            ScheduleCoord-->>CreateForm: promptForBudgetOverrideReason()
+            CreateForm-->>storemanager: display warning and ask for reason
+            storemanager->>CreateForm: inputOverrideReason(reasonText)
+            CreateForm->>ScheduleCoord: createScheduleWithOverride(dto, reasonText)
+            ScheduleCoord->>AuditDB: logBudgetOverride(targetStoreId, date, reasonText)
+        end
+        
+        ScheduleCoord->>ScheduleDB: checkConflict(employeeId, date, startTime, endTime)
+        ScheduleDB-->>ScheduleCoord: noConflict
+        ScheduleCoord->>ScheduleDB: createSchedule(dto)
+        ScheduleDB-->>ScheduleCoord: newSchedule
+        ScheduleCoord-->>CreateForm: showSuccess()
+        CreateForm-->>storemanager: refreshCalendarView()
+    end
 ```
 
-#### ***3.9.3 UC-66 Attendance Check-In with Photo (PDPA-Compliant)***
+#### ***3.9.3 UC-66 Attendance Check-In with Photo (PDPA-Compliant & Fallback)***
 
-*\[Employee clocks in at branch using their 4-digit PIN + camera photo capture (BR-93). System validates PIN, saves photo to server filesystem (only the path is stored in DB), computes lateness against scheduled start time, and creates an AttendanceLog record. PDPA compliance: photos are auto-purged after 90 days by PhotoAutoDeleteScheduler (BR-72).\]*
+*\[Employee clocks in at branch using their 4-digit PIN + camera photo capture (BR-93). System validates that the PIN is unique within the store and identifies the employee. Camera snapshot is mandatory at check-in/out; if the camera is unavailable, the action is queued and flagged for Store Manager confirmation rather than recorded without a photo. PDPA compliance: photos are auto-purged after 90 days by PhotoAutoDeleteScheduler (BR-72).\]*
 
 ```mermaid
 sequenceDiagram
@@ -2413,22 +2452,43 @@ sequenceDiagram
     participant AttendDB as AttendanceLog (DB)
 
     employee->>CheckInScreen: inputPinAndCapturePhoto(pin, photoData)
-    CheckInScreen->>AttendCoord: checkIn(employeeId, pin, photoData)
-    AttendCoord->>UserDB: verifyPin(employeeId, pin)
-    UserDB-->>AttendCoord: verified
-    AttendCoord->>PhotoMgr: validatePhotoFormat(photoData)
-    PhotoMgr-->>AttendCoord: valid
-    AttendCoord->>PhotoMgr: savePhotoToFilesystem(photoData)
-    PhotoMgr-->>AttendCoord: photoPath (server filesystem path)
-    Note over AttendCoord,AttendDB: Actual photo stored on server filesystem.\nOnly path string saved in DB. (BR-72 PDPA)
-    AttendCoord->>ScheduleDB: findTodaySchedule(employeeId, storeId)
-    ScheduleDB-->>AttendCoord: scheduleRecord (startTime)
-    AttendCoord->>AttendCoord: computeLateMinutes(checkInTime, startTime)
-    AttendCoord->>AttendCoord: determineStatus(ON_TIME / LATE)
-    AttendCoord->>AttendDB: createAttendanceLog(employeeId, checkInTime, photoPath, status, lateMinutes)
-    AttendDB-->>AttendCoord: attendanceRecord
-    AttendCoord-->>CheckInScreen: showCheckInSuccess(status)
-    CheckInScreen-->>employee: displaySuccess()
+    CheckInScreen->>AttendCoord: checkIn(storeId, pin, photoData)
+    
+    Note over AttendCoord, UserDB: Identify employee via branch-unique PIN (BR-93)
+    AttendCoord->>UserDB: findByStoreAndPin(storeId, pin)
+    
+    alt PIN invalid / Not unique / Locked
+        UserDB-->>AttendCoord: notFound / locked
+        AttendCoord-->>CheckInScreen: showAuthError(MSG02 / MSG03)
+        CheckInScreen-->>employee: display error (remaining attempts)
+    else Employee identified
+        UserDB-->>AttendCoord: employeeRecord
+        
+        alt Camera/Photo Unavailable
+            Note over AttendCoord, AttendDB: Flag check-in for manager confirmation (BR-93 fallback)
+            AttendCoord->>AttendDB: createPendingVerificationLog(employeeId, storeId, checkInTime, photoStatus=MISSING)
+            AttendDB-->>AttendCoord: pendingLog
+            AttendCoord-->>CheckInScreen: showWarning("Check-in queued. Requires Store Manager photo verification.")
+            CheckInScreen-->>employee: displayWarning()
+        else Photo Captured
+            AttendCoord->>PhotoMgr: validatePhotoFormat(photoData)
+            PhotoMgr-->>AttendCoord: valid
+            AttendCoord->>PhotoMgr: savePhotoToFilesystem(photoData)
+            PhotoMgr-->>AttendCoord: photoPath (server filesystem path, BR-72 PDPA)
+            
+            AttendCoord->>ScheduleDB: findTodaySchedule(employeeId, storeId)
+            ScheduleDB-->>AttendCoord: scheduleRecord (startTime)
+            
+            Note over AttendCoord: Lateness & OT derived in branch-local time (BR-39/BR-91)
+            AttendCoord->>AttendCoord: computeLateMinutes(checkInTime, startTime)
+            AttendCoord->>AttendCoord: determineStatus(ON_TIME / LATE)
+            
+            AttendCoord->>AttendDB: createAttendanceLog(employeeId, checkInTime, photoPath, status, lateMinutes)
+            AttendDB-->>AttendCoord: attendanceRecord
+            AttendCoord-->>CheckInScreen: showCheckInSuccess(status)
+            CheckInScreen-->>employee: displaySuccess()
+        end
+    end
 ```
 
 #### ***3.9.4 PDPA Photo Auto-Deletion (PhotoAutoDeleteScheduler)***
@@ -2452,6 +2512,41 @@ sequenceDiagram
     end
 
     Note over PhotoScheduler: PDPA BR-72 compliance satisfied
+```
+
+#### ***3.9.5 UC-39/UC-80 View Attendance Report & Worked Hours (BR-91 Derivation)***
+
+*\[storemanager views the branch attendance report and exports worked hours (UC-80). The AttendanceCoordinator retrieves schedules and logs, and derives key attendance metrics (Absence, Overtime, and Early-Leave) dynamically in branch-local timezone as per BR-39 and BR-91. Outliers are flagged for review.\]*
+
+```mermaid
+sequenceDiagram
+    actor storemanager
+    participant ReportView as AttendanceReportView
+    participant AttendCoord as AttendanceCoordinator
+    participant AttendDB as AttendanceLog (DB)
+    participant ScheduleDB as StaffSchedule (DB)
+
+    storemanager->>ReportView: requestAttendanceReport(storeId, dateRange)
+    ReportView->>AttendCoord: getAttendanceReport(storeId, dateRange)
+    AttendCoord->>AttendDB: fetchLogsForStore(storeId, dateRange)
+    AttendDB-->>AttendCoord: attendanceLogs[]
+    AttendCoord->>ScheduleDB: fetchSchedulesForStore(storeId, dateRange)
+    ScheduleDB-->>AttendCoord: schedules[]
+
+    loop for each employee in range
+        Note over AttendCoord: Derive Absence, OT, and Early-Leave per BR-91
+        AttendCoord->>AttendCoord: deriveLatenessAndOT(schedule, log)
+        alt Schedule exists but no log
+            AttendCoord->>AttendCoord: setMetric(ABSENT)
+        else Log check_out < schedule end
+            AttendCoord->>AttendCoord: calculateEarlyLeaveMinutes()
+        else Log total_hours > schedule_hours
+            AttendCoord->>AttendCoord: calculateOvertimeHours()
+        end
+    end
+
+    AttendCoord-->>ReportView: ReportDto (with derived Absence/OT/Early-Leave flags)
+    ReportView-->>storemanager: displayReportGrid()
 ```
 
 

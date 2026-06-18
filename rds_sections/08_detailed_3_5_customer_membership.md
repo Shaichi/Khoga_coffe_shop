@@ -57,8 +57,8 @@ classDiagram
         +email: String
         +birthDate: Date
         +loyaltyPoints: Integer
-        +pdpaConsentAt: DateTime
-        +pdpaConsentVersion: String
+        +consentAt: DateTime
+        +consentVersion: String
         +isActive: Boolean
     }
 
