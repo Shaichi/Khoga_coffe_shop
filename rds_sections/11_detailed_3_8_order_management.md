@@ -4,7 +4,7 @@
 
 #### ***3.8.1 Class Diagram***
 
-*\[Class diagram for Order Management. COMET stereotypes: OrderQueueView, BaristaQueueMonitor, CancellationDialog, RefundAuthDialog («boundary»); OrderCoordinator, OrderQueueCoordinator («control»); OrderTimeoutScheduler («timer»); Order, OrderItem, OrderCancellation, OrderRefund («entity»).\]*
+*\[Class diagram for Order Management. COMET stereotypes: OrderQueueView, BaristaQueueMonitor, CancellationDialog, RefundAuthDialog («boundary»); OrderCoordinator, OrderQueueCoordinator («control»); OrderTimeoutScheduler («timer»); Order, OrderItem, OrderItemTopping, OrderCancellation, OrderRefund («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -75,6 +75,14 @@ classDiagram
         +quantity: Integer
         +unitPrice: Decimal
     }
+    class OrderItemTopping {
+        <<entity>>
+        +id: UUID
+        +orderItemId: UUID
+        +toppingId: UUID
+        +quantity: Integer
+        +unitPrice: Decimal
+    }
     class OrderCancellation {
         <<entity>>
         +id: UUID
@@ -109,6 +117,7 @@ classDiagram
     Order *-- OrderItem
     Order *-- OrderCancellation
     Order *-- OrderRefund
+    OrderItem *-- OrderItemTopping
 ```
 
 #### ***3.8.2 UC-58 Cancel PENDING Order***

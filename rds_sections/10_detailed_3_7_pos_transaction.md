@@ -4,7 +4,7 @@
 
 #### ***3.7.1 Class Diagram***
 
-*\[Class diagram for POS Transaction. COMET stereotypes: ShiftOpenForm, PosCheckoutGrid, PaymentPanel, ShiftCloseForm, OfflineSyncIndicator («boundary»); VietQRClient, PrinterServiceProxy («boundary» external); CheckoutCoordinator, ShiftSessionCoordinator («control»); DiscountStackingEngine, ShiftReconciliationService, OfflineSyncManager («application logic»); ShiftAutoCloseScheduler («timer»); ShiftSession, Order, Voucher, Customer («entity»).\]*
+*\[Class diagram for POS Transaction. COMET stereotypes: ShiftOpenForm, PosCheckoutGrid, PaymentPanel, ShiftCloseForm, OfflineSyncIndicator («boundary»); VietQRClient, PrinterServiceProxy («boundary» external); CheckoutCoordinator, ShiftSessionCoordinator («control»); DiscountStackingEngine, ShiftReconciliationService, OfflineSyncManager («application logic»); ShiftAutoCloseScheduler («timer»); ShiftSession, Order, Voucher, Customer, SystemConfig («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -118,6 +118,13 @@ classDiagram
         +id: UUID
         +loyaltyPoints: Integer
     }
+    class SystemConfig {
+        <<entity>>
+        +configKey: String
+        +configValue: String
+        +scope: ConfigScope
+        +storeId: UUID
+    }
 
     ShiftOpenForm ..> ShiftSessionCoordinator
     ShiftCloseForm ..> ShiftSessionCoordinator
@@ -133,6 +140,7 @@ classDiagram
     ShiftAutoCloseScheduler --> ShiftSessionCoordinator
     DiscountStackingEngine --> Voucher
     DiscountStackingEngine --> Customer
+    DiscountStackingEngine --> SystemConfig
 ```
 
 #### ***3.7.2 UC-44 Open Shift***

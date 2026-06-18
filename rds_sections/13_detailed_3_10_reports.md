@@ -4,7 +4,7 @@
 
 #### ***3.10.1 Class Diagram***
 
-*\[Class diagram for Reports & Analytics. COMET stereotypes: HQDashboardView, BranchReportView, ZReportArchiveView, PriceHistoryView («boundary»); ReportCoordinator («control»); COGSCalculator, AnomalyDetector, LabourEfficiencyService, LoyaltyLiabilityService («application logic»); Order, StockTransaction, AuditLog, ShiftSession («entity»).\]*
+*\[Class diagram for Reports & Analytics. COMET stereotypes: HQDashboardView, BranchReportView, ZReportArchiveView, PriceHistoryView («boundary»); ReportCoordinator («control»); COGSCalculator, AnomalyDetector, LabourEfficiencyService, LoyaltyLiabilityService («application logic»); Order, StockTransaction, ShiftSession, AuditLog («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -85,6 +85,15 @@ classDiagram
         +newValueJson: JSON
         +createdAt: DateTime
     }
+    class ShiftSession {
+        <<entity>>
+        +id: UUID
+        +storeId: UUID
+        +cashierId: UUID
+        +status: ShiftStatus
+        +openedAt: DateTime
+        +closedAt: DateTime
+    }
 
     HQDashboardView ..> ReportCoordinator
     BranchReportView ..> ReportCoordinator
@@ -97,6 +106,7 @@ classDiagram
     ReportCoordinator --> Order
     ReportCoordinator --> StockTransaction
     ReportCoordinator --> AuditLog
+    ReportCoordinator --> ShiftSession
 ```
 
 #### ***3.10.2 UC-28/29 HQ Consolidated Revenue Report***

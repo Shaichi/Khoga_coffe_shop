@@ -1757,7 +1757,7 @@ sequenceDiagram
 
 #### ***3.7.1 Class Diagram***
 
-*\[Class diagram for POS Transaction. COMET stereotypes: ShiftOpenForm, PosCheckoutGrid, PaymentPanel, ShiftCloseForm, OfflineSyncIndicator («boundary»); VietQRClient, PrinterServiceProxy («boundary» external); CheckoutCoordinator, ShiftSessionCoordinator («control»); DiscountStackingEngine, ShiftReconciliationService, OfflineSyncManager («application logic»); ShiftAutoCloseScheduler («timer»); ShiftSession, Order, Voucher, Customer («entity»).\]*
+*\[Class diagram for POS Transaction. COMET stereotypes: ShiftOpenForm, PosCheckoutGrid, PaymentPanel, ShiftCloseForm, OfflineSyncIndicator («boundary»); VietQRClient, PrinterServiceProxy («boundary» external); CheckoutCoordinator, ShiftSessionCoordinator («control»); DiscountStackingEngine, ShiftReconciliationService, OfflineSyncManager («application logic»); ShiftAutoCloseScheduler («timer»); ShiftSession, Order, Voucher, Customer, SystemConfig («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -1871,6 +1871,13 @@ classDiagram
         +id: UUID
         +loyaltyPoints: Integer
     }
+    class SystemConfig {
+        <<entity>>
+        +configKey: String
+        +configValue: String
+        +scope: ConfigScope
+        +storeId: UUID
+    }
 
     ShiftOpenForm ..> ShiftSessionCoordinator
     ShiftCloseForm ..> ShiftSessionCoordinator
@@ -1886,6 +1893,7 @@ classDiagram
     ShiftAutoCloseScheduler --> ShiftSessionCoordinator
     DiscountStackingEngine --> Voucher
     DiscountStackingEngine --> Customer
+    DiscountStackingEngine --> SystemConfig
 ```
 
 #### ***3.7.2 UC-44 Open Shift***
@@ -2042,7 +2050,7 @@ stateDiagram-v2
 
 #### ***3.8.1 Class Diagram***
 
-*\[Class diagram for Order Management. COMET stereotypes: OrderQueueView, BaristaQueueMonitor, CancellationDialog, RefundAuthDialog («boundary»); OrderCoordinator, OrderQueueCoordinator («control»); OrderTimeoutScheduler («timer»); Order, OrderItem, OrderCancellation, OrderRefund («entity»).\]*
+*\[Class diagram for Order Management. COMET stereotypes: OrderQueueView, BaristaQueueMonitor, CancellationDialog, RefundAuthDialog («boundary»); OrderCoordinator, OrderQueueCoordinator («control»); OrderTimeoutScheduler («timer»); Order, OrderItem, OrderItemTopping, OrderCancellation, OrderRefund («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -2113,6 +2121,14 @@ classDiagram
         +quantity: Integer
         +unitPrice: Decimal
     }
+    class OrderItemTopping {
+        <<entity>>
+        +id: UUID
+        +orderItemId: UUID
+        +toppingId: UUID
+        +quantity: Integer
+        +unitPrice: Decimal
+    }
     class OrderCancellation {
         <<entity>>
         +id: UUID
@@ -2147,6 +2163,7 @@ classDiagram
     Order *-- OrderItem
     Order *-- OrderCancellation
     Order *-- OrderRefund
+    OrderItem *-- OrderItemTopping
 ```
 
 #### ***3.8.2 UC-58 Cancel PENDING Order***
@@ -2455,7 +2472,7 @@ sequenceDiagram
 
 #### ***3.10.1 Class Diagram***
 
-*\[Class diagram for Reports & Analytics. COMET stereotypes: HQDashboardView, BranchReportView, ZReportArchiveView, PriceHistoryView («boundary»); ReportCoordinator («control»); COGSCalculator, AnomalyDetector, LabourEfficiencyService, LoyaltyLiabilityService («application logic»); Order, StockTransaction, AuditLog, ShiftSession («entity»).\]*
+*\[Class diagram for Reports & Analytics. COMET stereotypes: HQDashboardView, BranchReportView, ZReportArchiveView, PriceHistoryView («boundary»); ReportCoordinator («control»); COGSCalculator, AnomalyDetector, LabourEfficiencyService, LoyaltyLiabilityService («application logic»); Order, StockTransaction, ShiftSession, AuditLog («entity»).\]*
 
 ```mermaid
 classDiagram
@@ -2536,6 +2553,15 @@ classDiagram
         +newValueJson: JSON
         +createdAt: DateTime
     }
+    class ShiftSession {
+        <<entity>>
+        +id: UUID
+        +storeId: UUID
+        +cashierId: UUID
+        +status: ShiftStatus
+        +openedAt: DateTime
+        +closedAt: DateTime
+    }
 
     HQDashboardView ..> ReportCoordinator
     BranchReportView ..> ReportCoordinator
@@ -2548,6 +2574,7 @@ classDiagram
     ReportCoordinator --> Order
     ReportCoordinator --> StockTransaction
     ReportCoordinator --> AuditLog
+    ReportCoordinator --> ShiftSession
 ```
 
 #### ***3.10.2 UC-28/29 HQ Consolidated Revenue Report***
