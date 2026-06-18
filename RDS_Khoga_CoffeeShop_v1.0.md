@@ -529,6 +529,8 @@ erDiagram
         uuid user_id FK
         date shift_date
         enum shift_type
+        time shift_start_time
+        time shift_end_time
         string pos_register_id
         datetime created_at
     }
@@ -540,7 +542,7 @@ erDiagram
         date shift_date
         datetime check_in_at
         datetime check_out_at
-        int lateness_minutes
+        datetime scheduled_start
         enum status
         string photo_url
     }
@@ -596,7 +598,7 @@ erDiagram
 | 17 | recipe_items | Ingredient formula defining how much of a raw material is consumed to produce one unit of a menu item or topping. Exactly one of menu_item_id or option_topping_id is non-null. Key definitions: PK is id (UUID); FK is menu_item_id → menu_items(id), option_topping_id → option_toppings(id), raw_material_id → raw_materials(id) |
 | 18 | stores | Physical branch locations with name, address, phone, and active status. Root entity that many other entities reference. Key definitions: PK is id (UUID) |
 | 19 | staff_schedules | Assigned employee shift blocks (MORNING / AFTERNOON / FULL_DAY) per date and branch. Includes shift_start_time, shift_end_time, and optional pos_register_id allocation. Key definitions: PK is id (UUID); FK is store_id → stores(id), user_id → users(id) |
-| 20 | attendance_logs | Employee clock-in/out records with branch-local lateness calculation (ON_TIME / LATE / ABSENT). Mandatory check-in photo_path stored server-side. PDPA: auto-purged after 90 days (BR-72). Key definitions: PK is id (UUID); FK is store_id → stores(id), user_id → users(id) |
+| 20 | attendance_logs | Employee clock-in/out records. At check-in, system snapshots scheduled_start (shift start time) to calculate lateness dynamically at the reporting layer; lateness is not stored in the database. Mandatory check-in photo_path stored server-side. PDPA: auto-purged after 90 days (BR-72). Key definitions: PK is id (UUID); FK is store_id → stores(id), user_id → users(id) |
 | 21 | audit_logs | Immutable security event log (append-only, no UPDATE / DELETE permitted). Records price changes, voucher mutations, user account changes, checkout voucher/point usage. Key definitions: PK is id (UUID); FK is user_id → users(id) |
 
 
@@ -2245,21 +2247,21 @@ sequenceDiagram
 
 #### ***3.8.5 ORDER Lifecycle Statechart***
 
-*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is system-triggered when recipe stock is insufficient. ABANDONED is system-triggered after 15 min in READY state. CANCELLED and ABANDONED are terminal states.\]*
+*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is triggered when a preparation issue is reported by the Barista (reportIssue()). ABANDONED is system-triggered after 15 min in READY state. CANCELLED and ABANDONED are terminal states.\]*
 
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING : submitCheckout() / status = PENDING
 
-    PENDING --> PREPARING : startPreparation() [hasIngredients == true] / deductStock(); status = PREPARING
+    PENDING --> PREPARING : startPreparation() / deductStock(); status = PREPARING
 
     PENDING --> CANCELLED : cancelOrder(reason) [status == PENDING] / logCancellation(); status = CANCELLED
 
-    PREPARING --> HOLD : startPreparation() [hasIngredients == false] / status = HOLD
+    PREPARING --> HOLD : reportIssue() / status = HOLD
 
     PREPARING --> READY : completePreparation() / status = READY
 
-    HOLD --> PREPARING : resumeOrder() [stockRestored == true] / deductStock(); status = PREPARING
+    HOLD --> PREPARING : resolveIssue() / status = PREPARING
 
     READY --> COMPLETED : confirmPickup() / status = COMPLETED
 
@@ -2362,9 +2364,9 @@ classDiagram
         +scheduledDate: Date
         +checkInTime: DateTime
         +checkOutTime: DateTime
+        +scheduledStart: DateTime
         +status: AttendanceStatus
         +photoPath: String
-        +lateMinutes: Integer
     }
     class User {
         <<entity>>
@@ -2479,11 +2481,8 @@ sequenceDiagram
             AttendCoord->>ScheduleDB: findTodaySchedule(employeeId, storeId)
             ScheduleDB-->>AttendCoord: scheduleRecord (startTime)
             
-            Note over AttendCoord: Lateness & OT derived in branch-local time (BR-39/BR-91)
-            AttendCoord->>AttendCoord: computeLateMinutes(checkInTime, startTime)
-            AttendCoord->>AttendCoord: determineStatus(ON_TIME / LATE)
-            
-            AttendCoord->>AttendDB: createAttendanceLog(employeeId, checkInTime, photoPath, status, lateMinutes)
+            Note over AttendCoord: Lateness & OT derived dynamically at reporting layer (BR-39/BR-91)
+            AttendCoord->>AttendDB: createAttendanceLog(employeeId, checkInTime, startTime, photoPath, status)
             AttendDB-->>AttendCoord: attendanceRecord
             AttendCoord-->>CheckInScreen: showCheckInSuccess(status)
             CheckInScreen-->>employee: displaySuccess()

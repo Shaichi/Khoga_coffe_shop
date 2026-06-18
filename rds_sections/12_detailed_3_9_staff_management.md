@@ -88,9 +88,9 @@ classDiagram
         +scheduledDate: Date
         +checkInTime: DateTime
         +checkOutTime: DateTime
+        +scheduledStart: DateTime
         +status: AttendanceStatus
         +photoPath: String
-        +lateMinutes: Integer
     }
     class User {
         <<entity>>
@@ -205,11 +205,8 @@ sequenceDiagram
             AttendCoord->>ScheduleDB: findTodaySchedule(employeeId, storeId)
             ScheduleDB-->>AttendCoord: scheduleRecord (startTime)
             
-            Note over AttendCoord: Lateness & OT derived in branch-local time (BR-39/BR-91)
-            AttendCoord->>AttendCoord: computeLateMinutes(checkInTime, startTime)
-            AttendCoord->>AttendCoord: determineStatus(ON_TIME / LATE)
-            
-            AttendCoord->>AttendDB: createAttendanceLog(employeeId, checkInTime, photoPath, status, lateMinutes)
+            Note over AttendCoord: Lateness & OT derived dynamically at reporting layer (BR-39/BR-91)
+            AttendCoord->>AttendDB: createAttendanceLog(employeeId, checkInTime, startTime, photoPath, status)
             AttendDB-->>AttendCoord: attendanceRecord
             AttendCoord-->>CheckInScreen: showCheckInSuccess(status)
             CheckInScreen-->>employee: displaySuccess()

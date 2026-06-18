@@ -201,21 +201,21 @@ sequenceDiagram
 
 #### ***3.8.5 ORDER Lifecycle Statechart***
 
-*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is system-triggered when recipe stock is insufficient. ABANDONED is system-triggered after 15 min in READY state. CANCELLED and ABANDONED are terminal states.\]*
+*\[The Order has 7 states. Transitions are enforced by OrderCoordinator. The HOLD state is triggered when a preparation issue is reported by the Barista (reportIssue()). ABANDONED is system-triggered after 15 min in READY state. CANCELLED and ABANDONED are terminal states.\]*
 
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING : submitCheckout() / status = PENDING
 
-    PENDING --> PREPARING : startPreparation() [hasIngredients == true] / deductStock(); status = PREPARING
+    PENDING --> PREPARING : startPreparation() / deductStock(); status = PREPARING
 
     PENDING --> CANCELLED : cancelOrder(reason) [status == PENDING] / logCancellation(); status = CANCELLED
 
-    PREPARING --> HOLD : startPreparation() [hasIngredients == false] / status = HOLD
+    PREPARING --> HOLD : reportIssue() / status = HOLD
 
     PREPARING --> READY : completePreparation() / status = READY
 
-    HOLD --> PREPARING : resumeOrder() [stockRestored == true] / deductStock(); status = PREPARING
+    HOLD --> PREPARING : resolveIssue() / status = PREPARING
 
     READY --> COMPLETED : confirmPickup() / status = COMPLETED
 
