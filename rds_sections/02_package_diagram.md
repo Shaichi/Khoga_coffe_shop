@@ -1,11 +1,11 @@
 ### **1.2 Package Diagram**
 
-*\[The overall package diagram shows the decomposition of the system into 18 subsystems (packages). Each package follows the COMET Information Hiding principle, encapsulating its own controller, service, repository, and domain components. The Spring Boot backend is organized under the root package `com.khoga.coffeeshop`. The web frontend resides in `src/main/resources/static/`. The Flutter application is a separate project `khoga_pos_app/`.\]*
+*\[The overall package diagram shows the decomposition of the system into 18 subsystems (packages). Each package follows the COMET Information Hiding principle, encapsulating its own controller, service, repository, and domain components. The Spring Boot backend is organized under the root package `com.khoga.coffeeshop`. The web frontend uses Thymeleaf templates in `src/main/resources/templates/`. The Flutter application is a separate project `khoga_pos_app/`.\]*
 
 ```mermaid
 graph TB
     subgraph PRESENTATION["Presentation Layer (Client UIs)"]
-        WEBUI["static/ (Web Admin & Manager Console)"]
+        WEBUI["templates/ (Thymeleaf Web Admin & Manager Console)"]
         FLUTTER["khoga_pos_app/ (Flutter POS & Barista App)"]
     end
 
@@ -99,5 +99,5 @@ graph TB
 | 14 | `com.khoga.integration` | External system adapters («boundary» external proxies): `VietQRClient` + `VietQRSettlementHandler` (payment gateway), `EmailService` (SMTP OTP/alerts), `PrinterService` (ESC/POS receipt and cup label). |
 | 15 | `com.khoga.common` | Shared persistence layer: all 21 JPA `@Entity` classes, `@Repository` interfaces, request/response DTOs, custom exceptions, `@ControllerAdvice`, and input validators. Classified as «entity» (data) subsystem. |
 | 16 | `com.khoga.scheduler` | Spring `@Scheduled` background timer tasks («timer» subsystem): `OrderTimeoutScheduler` (15-min READY→ABANDONED), `ShiftAutoCloseScheduler` (23:59 cron), `LowStockAlertScheduler` (22:00 cron), `ReadyAbandonScheduler`, `OtpExpiryScheduler` (10-min), `PhotoAutoDeleteScheduler` (02:00 cron — PDPA BR-72). |
-| 17 | `src/main/resources/static/` | HTML/JavaScript web frontend for HQ Admin Portal and Store Manager Console. Communicates via `fetch()` REST API calls with JWT Bearer tokens. Classified as «boundary» (UI Web) subsystem. |
+| 17 | `src/main/resources/templates/` | Thymeleaf server-side rendered web frontend for HQ Admin Portal and Store Manager Console. Views are rendered by Spring MVC controllers and delivered as HTML. Static assets (CSS/JS/images) reside in `src/main/resources/static/`. Classified as «boundary» (UI Web) subsystem. |
 | 18 | `khoga_pos_app/` | Flutter application for POS Terminal and Barista Queue Monitor. Communicates via `dio` HTTP client. Supports offline mode via `sqflite` SQLite for cash-only operations when network is unavailable (BR-86). Classified as «boundary» (UI Flutter) subsystem. |

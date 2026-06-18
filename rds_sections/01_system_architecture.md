@@ -8,7 +8,7 @@
 graph TB
     subgraph PRESENTATION["PRESENTATION TIER"]
         direction LR
-        subgraph WEB["HTML + JavaScript"]
+        subgraph WEB["Thymeleaf (Spring MVC)"]
             HQ["HQ Admin Portal (ceoviewer / businessadmin / ssadmin)"]
             MGR["Store Manager Console (storemanager)"]
         end
@@ -58,7 +58,7 @@ graph TB
 
 | No | Component | COMET Type | Description |
 | :---: | ----- | ----- | ----- |
-| 01 | HTML + JavaScript Web Frontend | «boundary» (UI) | Web frontend for HQ Admin Portal (roles: ceoviewer, businessadmin, ssadmin) and Store Manager Console (role: storemanager). Communicates with backend via REST API calls over HTTPS/JSON. |
+| 01 | Thymeleaf Web Frontend | «boundary» (UI) | Server-side rendered web frontend using Spring Boot Thymeleaf templates for HQ Admin Portal (roles: ceoviewer, businessadmin, ssadmin) and Store Manager Console (role: storemanager). Views are rendered on the server and delivered as HTML pages. |
 | 02 | Flutter (Dart) Mobile/Tablet App | «boundary» (UI) | Mobile/tablet frontend for POS Terminal (role: cashier) and Barista Queue Monitor (role: barista). Supports offline mode via sqflite SQLite for cash-only transactions (BR-86). |
 | 03 | @RestController Layer | «boundary» (API Gateway) | Spring Boot REST controllers. Receive HTTP requests, validate inputs using Bean Validation, apply JWT authentication, and delegate to @Service layer. All endpoints prefixed `/api/v1/`. |
 | 04 | @Service Layer | «control» (Coordinator) | Business logic orchestration. Each service coordinates domain entities, calls application logic components, and manages transactions via @Transactional. |
@@ -74,7 +74,7 @@ graph TB
 
 | COMET Stereotype | Spring Boot Implementation | Examples |
 | ----- | ----- | ----- |
-| «boundary» (UI Screen) | View: HTML/JS pages, Flutter Widgets | LoginForm, PosCheckoutGrid, BaristaQueueMonitor |
+| «boundary» (UI Screen) | View: Thymeleaf templates (.html), Flutter Widgets | LoginForm, PosCheckoutGrid, BaristaQueueMonitor |
 | «boundary» (API Endpoint) | Controller: @RestController | AuthController, OrderController, PosController |
 | «boundary» (External Proxy) | Adapter: RestTemplate / WebClient | VietQRClient, EmailService, PrinterService |
 | «control» (Coordinator) | Service: @Service (business orchestration) | AuthService, CheckoutService, OrderQueueService |
