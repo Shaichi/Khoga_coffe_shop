@@ -2972,7 +2972,7 @@ participant AuditDB as "«entity»<br/>AuditLog (DB)"
     ssadmin->>BranchForm: submitBranchAction(dto)
     BranchForm->>BranchCoord: submitAction(dto)
 
-    alt ADD Branch (UC-63)
+    alt ADD Branch (UC-64)
         BranchCoord->>ConfigDB: getConfig(MAX_ACTIVE_BRANCHES)
         ConfigDB-->>BranchCoord: maxBranches = N
         BranchCoord->>StoreDB: countActiveBranches()
@@ -2981,12 +2981,12 @@ participant AuditDB as "«entity»<br/>AuditLog (DB)"
         BranchCoord->>StoreDB: createStore(dto, isActive=true)
         StoreDB-->>BranchCoord: newStore
         BranchCoord->>AuditDB: writeAuditLog(CREATE, stores, null, newStore)
-    else EDIT Branch (UC-64)
+    else EDIT Branch (UC-65 Update)
         BranchCoord->>StoreDB: findById(storeId)
         StoreDB-->>BranchCoord: oldStoreRecord
         BranchCoord->>StoreDB: updateStore(storeId, dto)
         BranchCoord->>AuditDB: writeAuditLog(UPDATE, stores, oldRecord, newRecord)
-    else DEACTIVATE Branch (UC-65)
+    else DEACTIVATE Branch (UC-65 Deactivate)
         BranchCoord->>ShiftDB: findOpenShifts(storeId)
         ShiftDB-->>BranchCoord: openShiftsList (must be empty)
         BranchCoord->>OrderDB: findNonTerminalOrders(storeId)
