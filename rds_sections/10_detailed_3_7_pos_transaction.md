@@ -270,11 +270,11 @@ participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> OPEN : openShift(openingCash) / status = OPEN
+    [*] --> OPEN : openShift()
 
-    OPEN --> CLOSED : closeShift(closingCash) / generateZReport(); status = CLOSED
+    OPEN --> CLOSED : closeShift()
 
-    OPEN --> CLOSED : timeTrigger [currentDate == 23:59] / autoCloseShift(); status = CLOSED
+    OPEN --> CLOSED : timeTrigger [23:59]
 
     CLOSED --> [*] : archive()
 ```

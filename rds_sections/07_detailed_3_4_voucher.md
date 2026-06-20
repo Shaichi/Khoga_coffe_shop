@@ -107,15 +107,15 @@ participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> SCHEDULED : createVoucher() [validFrom > currentDate && isActive == true]
+    [*] --> SCHEDULED : createVoucher() [future date]
 
-    SCHEDULED --> ACTIVE : timeTrigger [currentDate >= validFrom && isActive == true]
+    SCHEDULED --> ACTIVE : timeTrigger [valid date]
 
-    ACTIVE --> EXHAUSTED : useVoucher() [currentUsesTotal >= maxUsesTotal || currentDate > validTo]
+    ACTIVE --> EXHAUSTED : useVoucher() [limit reached]
 
-    ACTIVE --> DEACTIVATED : deactivate() [isBusinessAdmin == true] / setIsActive(false)
+    ACTIVE --> DEACTIVATED : deactivate() [by Admin]
 
-    DEACTIVATED --> ACTIVE : reactivate() [isBusinessAdmin == true && currentDate <= validTo] / setIsActive(true)
+    DEACTIVATED --> ACTIVE : reactivate() [by Admin]
 
     EXHAUSTED --> [*] : archive()
     DEACTIVATED --> [*] : archive()

@@ -923,22 +923,22 @@ participant UserDB as "«entity»<br/>User (DB)"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CREATED : createAccount() / setMustChangePassword(true)
+    [*] --> CREATED : createAccount()
 
-    CREATED --> OPERATIONAL : login() [mustChangePassword == true] / forcePasswordChange()
+    CREATED --> OPERATIONAL : login() [mustChangePwd]
 
     state OPERATIONAL {
         [*] --> ACTIVE
-        ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount(15min)
-        LOCKED --> ACTIVE : timeTrigger [suspensionElapsed >= 15min] / resetFailedAttempts()
-        LOCKED --> ACTIVE : unlock() [isSSAdmin == true] / resetFailedAttempts()
+        ACTIVE --> LOCKED : loginFailed() [>= 5 fails]
+        LOCKED --> ACTIVE : timeTrigger [15m elapsed]
+        LOCKED --> ACTIVE : unlock() [by Admin]
     }
 
-    OPERATIONAL --> INACTIVE_BY_SM : deactivate() [isSM == true && isOwnBranch == true] / deactivateAccount()
-    OPERATIONAL --> INACTIVE_BY_ADMIN : deactivate() [isSSAdmin == true] / deactivateAccount()
+    OPERATIONAL --> INACTIVE_BY_SM : deactivate() [by SM]
+    OPERATIONAL --> INACTIVE_BY_ADMIN : deactivate() [by Admin]
 
-    INACTIVE_BY_SM --> OPERATIONAL : reactivate() [isSSAdmin == true] / activateAccount()
-    INACTIVE_BY_ADMIN --> OPERATIONAL : reactivate() [isSSAdmin == true] / activateAccount()
+    INACTIVE_BY_SM --> OPERATIONAL : reactivate() [by Admin]
+    INACTIVE_BY_ADMIN --> OPERATIONAL : reactivate() [by Admin]
 ```
 
 
@@ -1469,15 +1469,15 @@ participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> SCHEDULED : createVoucher() [validFrom > currentDate && isActive == true]
+    [*] --> SCHEDULED : createVoucher() [future date]
 
-    SCHEDULED --> ACTIVE : timeTrigger [currentDate >= validFrom && isActive == true]
+    SCHEDULED --> ACTIVE : timeTrigger [valid date]
 
-    ACTIVE --> EXHAUSTED : useVoucher() [currentUsesTotal >= maxUsesTotal || currentDate > validTo]
+    ACTIVE --> EXHAUSTED : useVoucher() [limit reached]
 
-    ACTIVE --> DEACTIVATED : deactivate() [isBusinessAdmin == true] / setIsActive(false)
+    ACTIVE --> DEACTIVATED : deactivate() [by Admin]
 
-    DEACTIVATED --> ACTIVE : reactivate() [isBusinessAdmin == true && currentDate <= validTo] / setIsActive(true)
+    DEACTIVATED --> ACTIVE : reactivate() [by Admin]
 
     EXHAUSTED --> [*] : archive()
     DEACTIVATED --> [*] : archive()
@@ -2070,11 +2070,11 @@ participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> OPEN : openShift(openingCash) / status = OPEN
+    [*] --> OPEN : openShift()
 
-    OPEN --> CLOSED : closeShift(closingCash) / generateZReport(); status = CLOSED
+    OPEN --> CLOSED : closeShift()
 
-    OPEN --> CLOSED : timeTrigger [currentDate == 23:59] / autoCloseShift(); status = CLOSED
+    OPEN --> CLOSED : timeTrigger [23:59]
 
     CLOSED --> [*] : archive()
 ```

@@ -284,21 +284,21 @@ participant UserDB as "«entity»<br/>User (DB)"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CREATED : createAccount() / setMustChangePassword(true)
+    [*] --> CREATED : createAccount()
 
-    CREATED --> OPERATIONAL : login() [mustChangePassword == true] / forcePasswordChange()
+    CREATED --> OPERATIONAL : login() [mustChangePwd]
 
     state OPERATIONAL {
         [*] --> ACTIVE
-        ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount(15min)
-        LOCKED --> ACTIVE : timeTrigger [suspensionElapsed >= 15min] / resetFailedAttempts()
-        LOCKED --> ACTIVE : unlock() [isSSAdmin == true] / resetFailedAttempts()
+        ACTIVE --> LOCKED : loginFailed() [>= 5 fails]
+        LOCKED --> ACTIVE : timeTrigger [15m elapsed]
+        LOCKED --> ACTIVE : unlock() [by Admin]
     }
 
-    OPERATIONAL --> INACTIVE_BY_SM : deactivate() [isSM == true && isOwnBranch == true] / deactivateAccount()
-    OPERATIONAL --> INACTIVE_BY_ADMIN : deactivate() [isSSAdmin == true] / deactivateAccount()
+    OPERATIONAL --> INACTIVE_BY_SM : deactivate() [by SM]
+    OPERATIONAL --> INACTIVE_BY_ADMIN : deactivate() [by Admin]
 
-    INACTIVE_BY_SM --> OPERATIONAL : reactivate() [isSSAdmin == true] / activateAccount()
-    INACTIVE_BY_ADMIN --> OPERATIONAL : reactivate() [isSSAdmin == true] / activateAccount()
+    INACTIVE_BY_SM --> OPERATIONAL : reactivate() [by Admin]
+    INACTIVE_BY_ADMIN --> OPERATIONAL : reactivate() [by Admin]
 ```
 
