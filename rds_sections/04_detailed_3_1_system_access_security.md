@@ -105,6 +105,9 @@ classDiagram
         +isActive: Boolean
         +mustChangePassword: Boolean
         +attendancePin: String
+        +failedAttempts: Integer
+        +lockExpiryAt: DateTime
+        +passwordLastChangedAt: DateTime
         +createdAt: DateTime
         +lastLoginAt: DateTime
     }
@@ -132,11 +135,11 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant LoginForm
-    participant AuthCoordinator
-    participant UserDB as User (DB)
-    participant EmailSvc as EmailServiceProxy
-    participant MfaForm as MfaChallengeForm
+participant LoginForm as "«boundary»<br/>LoginForm"
+participant AuthCoordinator as "«control»<br/>AuthCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant EmailSvc as "«boundary»<br/>EmailServiceProxy"
+participant MfaForm as "«boundary»<br/>MfaChallengeForm"
 
     User->>LoginForm: inputCredentials(username, password)
     LoginForm->>AuthCoordinator: submitLogin(username, password)
@@ -172,14 +175,14 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant ForgotForm as ForgotPasswordForm
-    participant AuthCoordinator
-    participant UserDB as User (DB)
-    participant EmailSvc as EmailServiceProxy
-    participant OtpTimer as OtpExpiryTimer
-    participant OtpForm as OtpVerificationForm
-    participant SetPassForm as SetNewPasswordForm
-    participant Validator as PasswordPolicyValidator
+participant ForgotForm as "«boundary»<br/>ForgotPasswordForm"
+participant AuthCoordinator as "«control»<br/>AuthCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant EmailSvc as "«boundary»<br/>EmailServiceProxy"
+participant OtpTimer as "«timer»<br/>OtpExpiryTimer"
+participant OtpForm as "«boundary»<br/>OtpVerificationForm"
+participant SetPassForm as "«boundary»<br/>SetNewPasswordForm"
+participant Validator as "«application logic»<br/>PasswordPolicyValidator"
 
     User->>ForgotForm: inputEmail(email) address
     ForgotForm->>AuthCoordinator: submitEmail(email)
@@ -213,11 +216,11 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant LoginForm
-    participant AuthCoordinator
-    participant ForceChangeForm as ForcePasswordChangeForm
-    participant Validator as PasswordPolicyValidator
-    participant UserDB as User (DB)
+participant LoginForm as "«boundary»<br/>LoginForm"
+participant AuthCoordinator as "«control»<br/>AuthCoordinator"
+participant ForceChangeForm as "«boundary»<br/>ForcePasswordChangeForm"
+participant Validator as "«application logic»<br/>PasswordPolicyValidator"
+participant UserDB as "«entity»<br/>User (DB)"
 
     User->>LoginForm: login with temp credentials
     LoginForm->>AuthCoordinator: submitLogin(username, tempPwd)
@@ -243,12 +246,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant ProfileView
-    participant EditProfileForm
-    participant ChangePassForm as ChangePasswordForm
-    participant ProfileCoordinator
-    participant Validator as PasswordPolicyValidator
-    participant UserDB as User (DB)
+participant ProfileView as "«boundary»<br/>ProfileView"
+participant EditProfileForm as "«boundary»<br/>EditProfileForm"
+participant ChangePassForm as "«boundary»<br/>ChangePasswordForm"
+participant ProfileCoordinator as "«control»<br/>ProfileCoordinator"
+participant Validator as "«application logic»<br/>PasswordPolicyValidator"
+participant UserDB as "«entity»<br/>User (DB)"
 
     User->>ProfileView: open Profile Screen
     ProfileView->>ProfileCoordinator: viewProfile(userId)

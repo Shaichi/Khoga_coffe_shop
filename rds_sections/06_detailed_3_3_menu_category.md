@@ -18,7 +18,7 @@ classDiagram
         <<boundary>>
         +name: String
         +categoryId: UUID
-        +price: Decimal
+        +price: BigDecimal
         +barcode: String
         +recipeLines: List~RecipeLineDto~
         +submitForm()
@@ -61,7 +61,7 @@ classDiagram
         +id: UUID
         +categoryId: UUID
         +name: String
-        +price: Decimal
+        +price: BigDecimal
         +barcode: String
         +abbreviation: String
         +isActive: Boolean
@@ -79,7 +79,7 @@ classDiagram
         +id: UUID
         +menuItemId: UUID
         +name: String
-        +price: Decimal
+        +price: BigDecimal
         +isActive: Boolean
     }
     class RecipeItem {
@@ -88,7 +88,7 @@ classDiagram
         +menuItemId: UUID
         +optionToppingId: UUID
         +rawMaterialId: UUID
-        +quantityRequired: Decimal
+        +quantityRequired: BigDecimal
     }
     class RawMaterial {
         <<entity>>
@@ -96,7 +96,7 @@ classDiagram
         +code: String
         +name: String
         +unit: String
-        +standardCost: Decimal
+        +standardCost: BigDecimal
         +isActive: Boolean
     }
     class BranchMenuStatus {
@@ -134,12 +134,12 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant AddForm as AddMenuItemForm
-    participant CatalogCoord as CatalogCoordinator
-    participant RawMatDB as RawMaterial (DB)
-    participant MenuDB as MenuItem (DB)
-    participant RecipeDB as RecipeItem (DB)
-    participant AuditDB as AuditLog (DB)
+participant AddForm as "«boundary»<br/>AddMenuItemForm"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant RawMatDB as "«entity»<br/>RawMaterial (DB)"
+participant MenuDB as "«entity»<br/>MenuItem (DB)"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     bizadmin->>AddForm: inputMenuItemDetails(name, price, barcode, recipeLines)
     AddForm->>CatalogCoord: submitForm(dto)
@@ -164,11 +164,11 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant EditForm as EditMenuItemForm
-    participant CatalogCoord as CatalogCoordinator
-    participant RawMatDB as RawMaterial (DB)
-    participant ToppingDB as OptionTopping (DB)
-    participant RecipeDB as RecipeItem (DB)
+participant EditForm as "«boundary»<br/>EditMenuItemForm"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant RawMatDB as "«entity»<br/>RawMaterial (DB)"
+participant ToppingDB as "«entity»<br/>OptionTopping (DB)"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
 
     bizadmin->>EditForm: inputToppingDetails(name, price, recipeLines)
     EditForm->>CatalogCoord: submitTopping(dto)
@@ -195,10 +195,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant CatForm as AddCategoryForm / EditCategoryForm
-    participant CatalogCoord as CatalogCoordinator
-    participant MenuDB as MenuItem (DB)
-    participant CatDB as Category (DB)
+participant CatForm as "«boundary»<br/>AddCategoryForm / EditCategoryForm"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant MenuDB as "«entity»<br/>MenuItem (DB)"
+participant CatDB as "«entity»<br/>Category (DB)"
 
     bizadmin->>CatForm: submitAction(dto)
     CatForm->>CatalogCoord: submitAction(dto)
@@ -225,10 +225,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant MatView as RawMaterialMasterView
-    participant CatalogCoord as CatalogCoordinator
-    participant StockTxDB as StockTransaction (DB)
-    participant MatDB as RawMaterial (DB)
+participant MatView as "«boundary»<br/>RawMaterialMasterView"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant StockTxDB as "«entity»<br/>StockTransaction (DB)"
+participant MatDB as "«entity»<br/>RawMaterial (DB)"
 
     bizadmin->>MatView: openRawMaterialMaster()
     MatView->>CatalogCoord: listMaterials()

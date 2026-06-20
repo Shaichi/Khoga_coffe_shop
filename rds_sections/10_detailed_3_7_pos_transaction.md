@@ -11,7 +11,7 @@ classDiagram
     class ShiftOpenForm {
         <<boundary>>
         +cashierId: UUID
-        +openingCash: Decimal
+        +openingCash: BigDecimal
         +posRegisterId: String
         +submitOpen()
     }
@@ -27,14 +27,14 @@ classDiagram
     class PaymentPanel {
         <<boundary>>
         +paymentMethod: PaymentMethod
-        +cashReceived: Decimal
+        +cashReceived: BigDecimal
         +qrCodeDisplay: QRImage
         +confirmCash()
         +confirmQrPaid()
     }
     class ShiftCloseForm {
         <<boundary>>
-        +closingCash: Decimal
+        +closingCash: BigDecimal
         +submitClose()
     }
 
@@ -59,13 +59,13 @@ classDiagram
         <<application logic>>
         +applyVoucher(voucherCode, cart): CartDto
         +applyLoyaltyPoints(points, cart): CartDto
-        +computeFinalTotal(cart): Decimal
+        +computeFinalTotal(cart): BigDecimal
         +enforceStackingRules(cart): CartDto
     }
     class ShiftReconciliationService {
         <<application logic>>
-        +computeExpectedCash(sessionId): Decimal
-        +computeDiscrepancy(expected, actual): Decimal
+        +computeExpectedCash(sessionId): BigDecimal
+        +computeDiscrepancy(expected, actual): BigDecimal
         +generateZReport(sessionId): ZReportDto
     }
 
@@ -80,8 +80,8 @@ classDiagram
         +storeId: UUID
         +userId: UUID
         +posRegisterId: String
-        +startingCash: Decimal
-        +endingCash: Decimal
+        +startingCash: BigDecimal
+        +endingCash: BigDecimal
         +status: ShiftStatus
         +startTime: DateTime
         +endTime: DateTime
@@ -140,9 +140,9 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant OpenForm as ShiftOpenForm
-    participant ShiftCoord as ShiftSessionCoordinator
-    participant ShiftDB as ShiftSession (DB)
+participant OpenForm as "«boundary»<br/>ShiftOpenForm"
+participant ShiftCoord as "«control»<br/>ShiftSessionCoordinator"
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
 
     cashier->>OpenForm: inputOpeningCashFloat(openingCash) + register number
     OpenForm->>ShiftCoord: openShift(cashierId, storeId, openingCash, register)
@@ -162,14 +162,14 @@ sequenceDiagram
 sequenceDiagram
     actor cashier
     participant PosGrid as PosCheckoutGrid
-    participant CheckoutCoord as CheckoutCoordinator
-    participant DiscountEngine as DiscountStackingEngine
-    participant VoucherDB as Voucher (DB)
-    participant CustomerDB as Customer (DB)
-    participant OrderDB as Order (DB)
+participant CheckoutCoord as "«control»<br/>CheckoutCoordinator"
+participant DiscountEngine as "«application logic»<br/>DiscountStackingEngine"
+participant VoucherDB as "«entity»<br/>Voucher (DB)"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
+participant OrderDB as "«entity»<br/>Order (DB)"
     participant PayPanel as PaymentPanel
-    participant PrintSvc as PrinterServiceProxy
-    participant AuditDB as AuditLog (DB)
+participant PrintSvc as "«boundary»<br/>PrinterServiceProxy"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     cashier->>PosGrid: add items to cart
     cashier->>PosGrid: (optional) search + attach customer
@@ -211,11 +211,11 @@ sequenceDiagram
     actor cashier
     actor customer
     participant PayPanel as PaymentPanel
-    participant CheckoutCoord as CheckoutCoordinator
-    participant VietQRClient
+participant CheckoutCoord as "«control»<br/>CheckoutCoordinator"
+participant VietQRClient as "«boundary»<br/>VietQRClient"
     participant VietQRGateway as VietQR Gateway (External)
-    participant OrderDB as Order (DB)
-    participant PrintSvc as PrinterServiceProxy
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant PrintSvc as "«boundary»<br/>PrinterServiceProxy"
 
     cashier->>PayPanel: select VietQR payment
     PayPanel->>CheckoutCoord: initiateQrPayment(orderId)
@@ -244,11 +244,11 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant CloseForm as ShiftCloseForm
-    participant ShiftCoord as ShiftSessionCoordinator
-    participant ReconcileSvc as ShiftReconciliationService
-    participant OrderDB as Order (DB)
-    participant ShiftDB as ShiftSession (DB)
+participant CloseForm as "«boundary»<br/>ShiftCloseForm"
+participant ShiftCoord as "«control»<br/>ShiftSessionCoordinator"
+participant ReconcileSvc as "«application logic»<br/>ShiftReconciliationService"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
 
     cashier->>CloseForm: enter closing cash amount
     CloseForm->>ShiftCoord: closeShift(sessionId, closingCash)

@@ -1,8 +1,8 @@
-**CAPSTONE PROJECT REPORT**
+﻿**CAPSTONE PROJECT REPORT**
 
-**Report 4 – Software Design Document**
+**Report 4 - Software Design Document**
 
-**Khoga Café Shop Management System**
+**Khoga Cafe Shop Management System**
 
 Version: 1.0 | Date: 2026-06-18
 
@@ -51,8 +51,6 @@ Version: 1.0 | Date: 2026-06-18
 |  |  |  |  |
 
 \*A – Added   M – Modified   D – Deleted
-
-
 
 
 # **II. Software Design Document**
@@ -142,87 +140,72 @@ graph TB
 | «timer» (Scheduled Task) | Scheduler: @Scheduled / @Async | OrderTimeoutScheduler, ShiftAutoCloseScheduler |
 
 
-
-
 ### **1.2 Package Diagram**
 
 *\[The overall package diagram shows the decomposition of the system into 18 subsystems (packages). Each package follows the COMET Information Hiding principle, encapsulating its own controller, service, repository, and domain components. The Spring Boot backend is organized under the root package `com.khoga.coffeeshop`. The web frontend uses Thymeleaf templates in `src/main/resources/templates/`. The Flutter application is a separate project `khoga_pos_app/`.\]*
 
 ```mermaid
 graph TB
-    subgraph PRESENTATION["Presentation Layer (Client UIs)"]
-        WEBUI["templates/ (Thymeleaf Web Admin & Manager Console)"]
-        FLUTTER["khoga_pos_app/ (Flutter POS & Barista App)"]
-    end
-
-    subgraph FEATURES["com.khoga.coffeeshop (Feature Packages)"]
-        %% Grid layout using invisible links for clean alignment
-        AUTH["auth (Authentication & MFA)"] ~~~ USER["user (User Accounts)"] ~~~ CATALOG["catalog (Menu & Recipes)"] ~~~ VOUCHER["voucher (Voucher System)"]
-        CUSTOMER["customer (CRM & Loyalty)"] ~~~ INVENTORY["inventory (Stock & Deduction)"] ~~~ POS["pos (Checkout & Shifts)"] ~~~ ORDER["order (Order & Queue)"]
-        STAFF["staff (Staff & Attendance)"] ~~~ REPORT["report (BI & COGS Reports)"] ~~~ BRANCH["branch (Branch CRUD)"] ~~~ CONFIG["config_module (Central Config)"]
-
-        %% Vertical alignment paths
-        AUTH ~~~ CUSTOMER ~~~ STAFF
-        USER ~~~ INVENTORY ~~~ REPORT
-        CATALOG ~~~ POS ~~~ BRANCH
-        VOUCHER ~~~ ORDER ~~~ CONFIG
-
-        %% Core Inter-feature Dependencies
-        POS -.->|"<<use>>"| CATALOG
-        POS -.->|"<<use>>"| VOUCHER
-        POS -.->|"<<use>>"| CUSTOMER
-        ORDER -.->|"<<access>>"| POS
-        INVENTORY -.->|"<<use>>"| CATALOG
-        REPORT -.->|"<<access>>"| CONFIG
-    end
-
-    subgraph INFRASTRUCTURE["Infrastructure & Support Layer"]
-        SCHEDULER["scheduler (Scheduled Tasks)"]
-        INTEGRATION["integration (VietQR, SMTP, Printer)"]
-        AUDIT["audit (Audit Log Listener)"]
-    end
-
-    subgraph DOMAIN["Shared Domain Tier"]
-        COMMON["common (Entities & Repositories)"]
-    end
-
-    %% Client UI to Features Access
-    WEBUI -.->|"<<access>>"| AUTH
-    WEBUI -.->|"<<access>>"| USER
-    WEBUI -.->|"<<access>>"| CATALOG
-    WEBUI -.->|"<<access>>"| REPORT
-    WEBUI -.->|"<<access>>"| CONFIG
+    %% Khoga Coffee Shop - Layered Application Package Diagram
     
-    FLUTTER -.->|"<<access>>"| AUTH
-    FLUTTER -.->|"<<access>>"| POS
-    FLUTTER -.->|"<<access>>"| ORDER
-    FLUTTER -.->|"<<access>>"| STAFF
+    subgraph LAYERED["Layered Application"]
+        
+        subgraph PRESENTATION["Presentation Layer"]
+            WEBUI["📁 templates (Web Admin)"]
+            FLUTTER["📁 khoga_pos_app (Flutter)"]
+        end
 
-    %% Features dependency on Shared Entities/Repositories
-    FEATURES -.->|"<<import>>"| COMMON
+        subgraph BUSINESS["Business Layer (Services & Logic)"]
+            AUTH["📁 auth"] ~~~ USER["📁 user"] ~~~ CATALOG["📁 catalog"]
+            VOUCHER["📁 voucher"] ~~~ CUSTOMER["📁 customer"] ~~~ INVENTORY["📁 inventory"]
+            POS["📁 pos"] ~~~ ORDER["📁 order"] ~~~ STAFF["📁 staff"]
+            REPORT["📁 report"] ~~~ BRANCH["📁 branch"]
+            
+            %% Core Business Dependencies
+            POS -.->|"<<access>>"| CATALOG
+            POS -.->|"<<access>>"| VOUCHER
+            POS -.->|"<<access>>"| CUSTOMER
+            ORDER -.->|"<<access>>"| POS
+            INVENTORY -.->|"<<access>>"| CATALOG
+        end
 
-    %% Features dependency on Infrastructure
-    POS -.->|"<<use>>"| INTEGRATION
-    AUTH -.->|"<<use>>"| INTEGRATION
-    STAFF -.->|"<<use>>"| INTEGRATION
-    REPORT -.->|"<<access>>"| AUDIT
+        subgraph DATA["Data Layer"]
+            COMMON["📁 common (Entities & Repositories)"]
+        end
 
-    %% Infrastructure dependencies
-    SCHEDULER -.->|"<<use>>"| POS
-    SCHEDULER -.->|"<<use>>"| INVENTORY
-    INTEGRATION -.->|"<<import>>"| COMMON
-    AUDIT -.->|"<<import>>"| COMMON
+        subgraph CROSS_CUTTING["Cross Cutting & Infrastructure"]
+            AUDIT["📁 audit"]
+            INTEGRATION["📁 integration"]
+            SCHEDULER["📁 scheduler"]
+            CONFIG["📁 config"]
+        end
+        
+    end
+
+    %% Force Vertical Alignment for Layers
+    PRESENTATION ~~~ BUSINESS ~~~ DATA
+
+    %% Layer-to-Layer & Cross-Cutting Dependencies
+    PRESENTATION -.->|"<<access>>"| BUSINESS
+    BUSINESS -.->|"<<import>>"| DATA
+    
+    %% Specific Cross-Cutting relationships
+    BUSINESS -.->|"<<import>>"| INTEGRATION
+    BUSINESS -.->|"<<access>>"| AUDIT
+    BUSINESS -.->|"<<access>>"| CONFIG
+    SCHEDULER -.->|"<<access>>"| BUSINESS
+    
+    %% Cross-Cutting to Data
+    CROSS_CUTTING -.->|"<<import>>"| DATA
 
     %% Visual Styling
-    classDef package fill:#e3f2fd,stroke:#0d47a1,stroke-width:1px,color:#0d47a1;
-    classDef client fill:#f1f8e9,stroke:#33691e,stroke-width:1px,color:#33691e;
-    classDef infra fill:#fff3e0,stroke:#e65100,stroke-width:1px,color:#e65100;
-    classDef domain fill:#f3e5f5,stroke:#4a148c,stroke-width:1px,color:#4a148c;
+    classDef package fill:#e3f2fd,stroke:#0d47a1,stroke-width:1.5px,color:#0d47a1;
+    classDef layer fill:#f8f9fa,stroke:#495057,stroke-width:2px,color:#212529,stroke-dasharray: 5 5;
+    classDef mainLayer fill:#e9ecef,stroke:#adb5bd,stroke-width:2px;
 
-    class WEBUI,FLUTTER client;
-    class AUTH,USER,POS,ORDER,CUSTOMER,VOUCHER,CATALOG,INVENTORY,STAFF,REPORT,BRANCH,CONFIG package;
-    class SCHEDULER,INTEGRATION,AUDIT infra;
-    class COMMON domain;
+    class WEBUI,FLUTTER,AUTH,USER,CATALOG,VOUCHER,CUSTOMER,INVENTORY,POS,ORDER,STAFF,REPORT,BRANCH,COMMON,AUDIT,INTEGRATION,SCHEDULER,CONFIG package;
+    class PRESENTATION,BUSINESS,DATA,CROSS_CUTTING layer;
+    class LAYERED mainLayer;
 ```
 
 ***Package Descriptions***
@@ -240,7 +223,7 @@ graph TB
 | 09 | `com.khoga.staff` | Staff scheduling and attendance tracking. Schedule CRUD by storemanager. Attendance check-in with PIN + camera photo (PDPA-compliant BR-72). Worked-hours export. Contains schedule/attendance controllers and services, `AttendancePhotoManager` («application logic»). Coordinates UC-35→UC-39, UC-66, UC-80. |
 | 10 | `com.khoga.report` | All reporting and analytics: HQ consolidated dashboard, COGS/margin, price change history, loyalty liability, labour efficiency, Z-report archive, anomaly detection. Contains `ReportController` («boundary»), multiple report service classes («application logic»). Coordinates UC-28→UC-29, UC-40→UC-41, UC-76→UC-83. |
 | 11 | `com.khoga.branch` | Branch lifecycle management: add, edit, deactivate. Enforces MAX_ACTIVE_BRANCHES constraint (BR-54). Contains `BranchController` («boundary»), `BranchService` («control»). Coordinates UC-63→UC-65. |
-| 12 | `com.khoga.config_module` | Central system configuration (tax rate, loyalty rates, VietQR credentials) managed by ssadmin, and branch-local overrides by storemanager. Contains `ConfigController` («boundary»), `SystemConfigService` («control»). Coordinates UC-30, UC-42. |
+| 12 | `com.khoga.config` | Central system configuration (tax rate, loyalty rates, VietQR credentials) managed by ssadmin, and branch-local overrides by storemanager. Contains `ConfigController` («boundary»), `SystemConfigService` («control»). Coordinates UC-30, UC-42. |
 | 13 | `com.khoga.audit` | Immutable audit log service auto-triggered by @EntityListeners for: price changes, voucher mutations, user account changes, checkout voucher/loyalty usage. Contains `AuditLogService`. Supports BR-68, BR-80, BR-81. |
 | 14 | `com.khoga.integration` | External system adapters («boundary» external proxies): `VietQRClient` + `VietQRSettlementHandler` (payment gateway), `EmailService` (SMTP OTP/alerts), `PrinterService` (ESC/POS receipt and cup label). |
 | 15 | `com.khoga.common` | Shared persistence layer: all 21 JPA `@Entity` classes, `@Repository` interfaces, request/response DTOs, custom exceptions, `@ControllerAdvice`, and input validators. Classified as «entity» (data) subsystem. |
@@ -248,12 +231,48 @@ graph TB
 | 17 | `src/main/resources/templates/` | Thymeleaf server-side rendered web frontend for HQ Admin Portal and Store Manager Console. Views are rendered by Spring MVC controllers and delivered as HTML. Static assets (CSS/JS/images) reside in `src/main/resources/static/`. Classified as «boundary» (UI Web) subsystem. |
 | 18 | `khoga_pos_app/` | Flutter application for POS Terminal and Barista Queue Monitor. Communicates via `dio` HTTP client over HTTPS/JSON. Always-online; requires active network connection to process transactions. Classified as «boundary» (UI Flutter) subsystem. |
 
+***Subsystem-level Package Diagram***
 
+*\[A typical backend subsystem (e.g., `com.khoga.auth`, `com.khoga.inventory`) follows the package structure diagram below, encapsulating its controller, service, repository, and model packages. This organization isolates the data access, business coordination, and interface boundary logic inside each package, conforming to the COMET information hiding principles.\]*
+
+```mermaid
+graph TB
+    subgraph SUBSYSTEM["📁 com.khoga.[subsystem]"]
+        direction TB
+        CTRL["📁 controller<br/>(Boundary - RestControllers)"]
+        SVC["📁 service<br/>(Control & Application Logic)"]
+        REPO["📁 repository<br/>(Entity - JPA Repositories)"]
+        MODEL["📁 model<br/>(Entity - JPA Entities & DTOs)"]
+
+        CTRL -.->|"<<use>>"| SVC
+        SVC -.->|"<<use>>"| REPO
+        REPO -.->|"<<access>>"| MODEL
+        CTRL -.->|"<<access>>"| MODEL
+        SVC -.->|"<<access>>"| MODEL
+    end
+```
+
+***Package and Class Naming Conventions***
+
+| Stereotype / Element | Package / Location | Naming Pattern / Suffix | Examples | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Subsystem Package** | `com.khoga.*` | Lowercase singular/plural nouns representing functional domains. | `com.khoga.auth`, `com.khoga.inventory`, `com.khoga.pos` | Flat package layout grouping all domain-specific EBC classes together. |
+| **«boundary» (API)** | `com.khoga.*.controller` | `[Feature]Controller` | `AuthController`, `PosController`, `OrderController` | Spring Boot `@RestController` mapping endpoints under `/api/v1/`. |
+| **«boundary» (UI Web)** | `src/main/resources/templates/` | `[Feature/Role]_[Action].html` or PascalCase widgets | `login_web.html`, `materials_web.html`, `branch_add_web.html` | Thymeleaf templates for server-side rendered admin portals. |
+| **«boundary» (UI Flutter)** | `khoga_pos_app/` | `[Feature][Form/Grid/Monitor]` in PascalCase | `LoginForm`, `PosCheckoutGrid`, `BaristaQueueMonitor` | Flutter UI widgets for cashier and barista terminals. |
+| **«boundary» (External Proxy)** | `com.khoga.integration` | `[Service]Client` or `[Service]ServiceProxy` | `VietQRClient`, `EmailService`, `PrinterService` | External service integration gateways and adapters. |
+| **«control» (Service)** | `com.khoga.*.service` | `[Feature]Service` or `[Feature]Coordinator` | `AuthService`, `UserService`, `UserManagementCoordinator` | Spring `@Service` managing transactions and workflow orchestration. |
+| **«application logic»** | `com.khoga.*.service` | `[Feature][Engine/Calculator/Validator/Manager]` | `DiscountStackingEngine`, `LoyaltyPointCalculator`, `PasswordPolicyValidator`, `AttendancePhotoManager` | Stateless helper components containing pure business calculations or validations. |
+| **«entity» (JPA Entity)** | `com.khoga.common` (mapped in `com.khoga.*.model`) | PascalCase singular nouns matching database tables | `User`, `MenuItem`, `StockTransaction`, `AuditLog` | `@Entity` classes representing the database relational schema. |
+| **«entity» (Repository)** | `com.khoga.common` (mapped in `com.khoga.*.repository`) | `[EntityName]Repository` | `UserRepository`, `MenuItemRepository`, `StockItemRepository` | `@Repository` interfaces extending Spring Data JPA repositories. |
+| **«timer» (Scheduler)** | `com.khoga.scheduler` | `[Task]Scheduler` or `[Task]Timer` | `OrderTimeoutScheduler`, `ShiftAutoCloseScheduler`, `OtpExpiryTimer` | Spring `@Scheduled` background timers handling automated cron jobs. |
 
 
 ## **2\. Database Design**
 
 *\[The database design follows the entity relationships defined in the SRS (§3.1.5 / §3.1.6). The system uses `SQL Server` with ACID transactions and Unicode support (`NVARCHAR`). All primary keys use `UUID` (`VARCHAR(36)`). The diagrams below show the entity relationships with full column definitions, followed by the table descriptions.\]*
+
+> **Note regarding System Configuration (`system_configs`)**: Following the Product Owner's decision, system configuration parameters (e.g., `MAX_ACTIVE_BRANCHES`, `VAT`, `VietQR` credentials) are treated as infrastructure-level key-value settings. They are managed outside the 21 core business entities defined in this schema and do not participate in standard relational constraints.
 
 ### **2.1. Core Sales & POS ERD**
 
@@ -284,6 +303,9 @@ erDiagram
         datetime last_login_at
         boolean must_change_password
         string attendance_pin
+        int failed_attempts
+        datetime lock_expiry_at
+        datetime password_last_changed_at
     }
 
     CATEGORY {
@@ -470,6 +492,9 @@ erDiagram
         datetime last_login_at
         boolean must_change_password
         string attendance_pin
+        int failed_attempts
+        datetime lock_expiry_at
+        datetime password_last_changed_at
     }
 
     RAW_MATERIAL {
@@ -612,8 +637,6 @@ erDiagram
 > **NOTE — Central configuration (`SystemConfig`):** Central parameters edited via UC-30 (tax rate BR-45, loyalty params BR-94, `MAX_ACTIVE_BRANCHES` BR-54, VietQR credentials, etc.) are persisted in an **infrastructure-level key-value store** (`config_key` / `config_value` / `scope` / `store_id` / `updated_by` / `updated_at`). This is **intentionally kept outside the 21-entity business ERD** above; it is referenced by the detailed designs in §3.7 and §3.11 as the `SystemConfig` «entity». The 21-table count therefore covers only the core business domain.
 
 
-
-
 ## **3\. Detailed Design**
 
 ### **3.1 System Access & Security**
@@ -721,6 +744,9 @@ classDiagram
         +isActive: Boolean
         +mustChangePassword: Boolean
         +attendancePin: String
+        +failedAttempts: Integer
+        +lockExpiryAt: DateTime
+        +passwordLastChangedAt: DateTime
         +createdAt: DateTime
         +lastLoginAt: DateTime
     }
@@ -748,11 +774,11 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant LoginForm
-    participant AuthCoordinator
-    participant UserDB as User (DB)
-    participant EmailSvc as EmailServiceProxy
-    participant MfaForm as MfaChallengeForm
+participant LoginForm as "«boundary»<br/>LoginForm"
+participant AuthCoordinator as "«control»<br/>AuthCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant EmailSvc as "«boundary»<br/>EmailServiceProxy"
+participant MfaForm as "«boundary»<br/>MfaChallengeForm"
 
     User->>LoginForm: inputCredentials(username, password)
     LoginForm->>AuthCoordinator: submitLogin(username, password)
@@ -788,14 +814,14 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant ForgotForm as ForgotPasswordForm
-    participant AuthCoordinator
-    participant UserDB as User (DB)
-    participant EmailSvc as EmailServiceProxy
-    participant OtpTimer as OtpExpiryTimer
-    participant OtpForm as OtpVerificationForm
-    participant SetPassForm as SetNewPasswordForm
-    participant Validator as PasswordPolicyValidator
+participant ForgotForm as "«boundary»<br/>ForgotPasswordForm"
+participant AuthCoordinator as "«control»<br/>AuthCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant EmailSvc as "«boundary»<br/>EmailServiceProxy"
+participant OtpTimer as "«timer»<br/>OtpExpiryTimer"
+participant OtpForm as "«boundary»<br/>OtpVerificationForm"
+participant SetPassForm as "«boundary»<br/>SetNewPasswordForm"
+participant Validator as "«application logic»<br/>PasswordPolicyValidator"
 
     User->>ForgotForm: inputEmail(email) address
     ForgotForm->>AuthCoordinator: submitEmail(email)
@@ -829,11 +855,11 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant LoginForm
-    participant AuthCoordinator
-    participant ForceChangeForm as ForcePasswordChangeForm
-    participant Validator as PasswordPolicyValidator
-    participant UserDB as User (DB)
+participant LoginForm as "«boundary»<br/>LoginForm"
+participant AuthCoordinator as "«control»<br/>AuthCoordinator"
+participant ForceChangeForm as "«boundary»<br/>ForcePasswordChangeForm"
+participant Validator as "«application logic»<br/>PasswordPolicyValidator"
+participant UserDB as "«entity»<br/>User (DB)"
 
     User->>LoginForm: login with temp credentials
     LoginForm->>AuthCoordinator: submitLogin(username, tempPwd)
@@ -859,12 +885,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    participant ProfileView
-    participant EditProfileForm
-    participant ChangePassForm as ChangePasswordForm
-    participant ProfileCoordinator
-    participant Validator as PasswordPolicyValidator
-    participant UserDB as User (DB)
+participant ProfileView as "«boundary»<br/>ProfileView"
+participant EditProfileForm as "«boundary»<br/>EditProfileForm"
+participant ChangePassForm as "«boundary»<br/>ChangePasswordForm"
+participant ProfileCoordinator as "«control»<br/>ProfileCoordinator"
+participant Validator as "«application logic»<br/>PasswordPolicyValidator"
+participant UserDB as "«entity»<br/>User (DB)"
 
     User->>ProfileView: open Profile Screen
     ProfileView->>ProfileCoordinator: viewProfile(userId)
@@ -915,8 +941,6 @@ stateDiagram-v2
 
     INACTIVE_BY_ADMIN --> ACTIVE : reactivate() [isSSAdmin == true] / activateAccount()
 ```
-
-
 
 
 
@@ -987,6 +1011,9 @@ classDiagram
         +isActive: Boolean
         +mustChangePassword: Boolean
         +attendancePin: String
+        +failedAttempts: Integer
+        +lockExpiryAt: DateTime
+        +passwordLastChangedAt: DateTime
     }
     class Store {
         <<entity>>
@@ -1023,13 +1050,13 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant AddForm as AddUserForm
-    participant UserMgmtCoord as UserManagementCoordinator
-    participant Validator as PasswordPolicyValidator
-    participant StoreDB as Store (DB)
-    participant UserDB as User (DB)
-    participant EmailSvc as EmailServiceProxy
-    participant AuditDB as AuditLog (DB)
+    participant AddForm as "«boundary»<br/>AddUserForm"
+    participant UserMgmtCoord as "«control»<br/>UserManagementCoordinator"
+    participant Validator as "«application logic»<br/>PasswordPolicyValidator"
+    participant StoreDB as "«entity»<br/>Store (DB)"
+    participant UserDB as "«entity»<br/>User (DB)"
+    participant EmailSvc as "«boundary»<br/>EmailServiceProxy"
+    participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>AddForm: inputUserDetails(name, username, role, email, phone, storeId)
     AddForm->>UserMgmtCoord: submitForm(dto)
@@ -1054,10 +1081,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant EditForm as EditUserForm
-    participant UserMgmtCoord as UserManagementCoordinator
-    participant UserDB as User (DB)
-    participant AuditDB as AuditLog (DB)
+    participant EditForm as "«boundary»<br/>EditUserForm"
+    participant UserMgmtCoord as "«control»<br/>UserManagementCoordinator"
+    participant UserDB as "«entity»<br/>User (DB)"
+    participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>EditForm: select user + edit fields
     EditForm->>UserMgmtCoord: submitChanges(userId, dto)
@@ -1076,8 +1103,6 @@ sequenceDiagram
     UserMgmtCoord-->>EditForm: showSuccess()
     EditForm-->>ssadmin: display updated user record
 ```
-
-
 
 
 
@@ -1101,7 +1126,7 @@ classDiagram
         <<boundary>>
         +name: String
         +categoryId: UUID
-        +price: Decimal
+        +price: BigDecimal
         +barcode: String
         +recipeLines: List~RecipeLineDto~
         +submitForm()
@@ -1144,7 +1169,7 @@ classDiagram
         +id: UUID
         +categoryId: UUID
         +name: String
-        +price: Decimal
+        +price: BigDecimal
         +barcode: String
         +abbreviation: String
         +isActive: Boolean
@@ -1162,7 +1187,7 @@ classDiagram
         +id: UUID
         +menuItemId: UUID
         +name: String
-        +price: Decimal
+        +price: BigDecimal
         +isActive: Boolean
     }
     class RecipeItem {
@@ -1171,7 +1196,7 @@ classDiagram
         +menuItemId: UUID
         +optionToppingId: UUID
         +rawMaterialId: UUID
-        +quantityRequired: Decimal
+        +quantityRequired: BigDecimal
     }
     class RawMaterial {
         <<entity>>
@@ -1179,7 +1204,7 @@ classDiagram
         +code: String
         +name: String
         +unit: String
-        +standardCost: Decimal
+        +standardCost: BigDecimal
         +isActive: Boolean
     }
     class BranchMenuStatus {
@@ -1217,12 +1242,12 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant AddForm as AddMenuItemForm
-    participant CatalogCoord as CatalogCoordinator
-    participant RawMatDB as RawMaterial (DB)
-    participant MenuDB as MenuItem (DB)
-    participant RecipeDB as RecipeItem (DB)
-    participant AuditDB as AuditLog (DB)
+participant AddForm as "«boundary»<br/>AddMenuItemForm"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant RawMatDB as "«entity»<br/>RawMaterial (DB)"
+participant MenuDB as "«entity»<br/>MenuItem (DB)"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     bizadmin->>AddForm: inputMenuItemDetails(name, price, barcode, recipeLines)
     AddForm->>CatalogCoord: submitForm(dto)
@@ -1247,11 +1272,11 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant EditForm as EditMenuItemForm
-    participant CatalogCoord as CatalogCoordinator
-    participant RawMatDB as RawMaterial (DB)
-    participant ToppingDB as OptionTopping (DB)
-    participant RecipeDB as RecipeItem (DB)
+participant EditForm as "«boundary»<br/>EditMenuItemForm"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant RawMatDB as "«entity»<br/>RawMaterial (DB)"
+participant ToppingDB as "«entity»<br/>OptionTopping (DB)"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
 
     bizadmin->>EditForm: inputToppingDetails(name, price, recipeLines)
     EditForm->>CatalogCoord: submitTopping(dto)
@@ -1278,10 +1303,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant CatForm as AddCategoryForm / EditCategoryForm
-    participant CatalogCoord as CatalogCoordinator
-    participant MenuDB as MenuItem (DB)
-    participant CatDB as Category (DB)
+participant CatForm as "«boundary»<br/>AddCategoryForm / EditCategoryForm"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant MenuDB as "«entity»<br/>MenuItem (DB)"
+participant CatDB as "«entity»<br/>Category (DB)"
 
     bizadmin->>CatForm: submitAction(dto)
     CatForm->>CatalogCoord: submitAction(dto)
@@ -1308,10 +1333,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant MatView as RawMaterialMasterView
-    participant CatalogCoord as CatalogCoordinator
-    participant StockTxDB as StockTransaction (DB)
-    participant MatDB as RawMaterial (DB)
+participant MatView as "«boundary»<br/>RawMaterialMasterView"
+participant CatalogCoord as "«control»<br/>CatalogCoordinator"
+participant StockTxDB as "«entity»<br/>StockTransaction (DB)"
+participant MatDB as "«entity»<br/>RawMaterial (DB)"
 
     bizadmin->>MatView: openRawMaterialMaster()
     MatView->>CatalogCoord: listMaterials()
@@ -1336,8 +1361,6 @@ sequenceDiagram
 
 
 
-
-
 ### **3.4 Voucher Management**
 
 *\[Provide the detailed design for Voucher Management, covering UC-20→UC-23 (View/Add/Update/Delete Voucher). Voucher application at checkout is described in Section 3.7 POS Transaction (UC-48). Actor: businessadmin (CRUD). The class diagram covers the voucher lifecycle; the sequence diagram covers the add/update flow. The VOUCHER statechart documents the full lifecycle.\]*
@@ -1358,9 +1381,9 @@ classDiagram
         <<boundary>>
         +code: String
         +discountType: DiscountType
-        +discountValue: Decimal
-        +capAmount: Decimal
-        +minOrderValue: Decimal
+        +discountValue: BigDecimal
+        +capAmount: BigDecimal
+        +minOrderValue: BigDecimal
         +validFrom: Date
         +validTo: Date
         +maxUsesTotal: Integer
@@ -1386,9 +1409,9 @@ classDiagram
         +id: UUID
         +code: String
         +discountType: DiscountType
-        +discountValue: Decimal
-        +capAmount: Decimal
-        +minOrderValue: Decimal
+        +discountValue: BigDecimal
+        +capAmount: BigDecimal
+        +minOrderValue: BigDecimal
         +validFrom: Date
         +validTo: Date
         +maxUsesTotal: Integer
@@ -1415,10 +1438,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant VoucherForm as AddVoucherForm / EditVoucherForm
-    participant VoucherCoord as VoucherCoordinator
-    participant VoucherDB as Voucher (DB)
-    participant AuditDB as AuditLog (DB)
+participant VoucherForm as "«boundary»<br/>AddVoucherForm / EditVoucherForm"
+participant VoucherCoord as "«control»<br/>VoucherCoordinator"
+participant VoucherDB as "«entity»<br/>Voucher (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     bizadmin->>VoucherForm: inputVoucherDetails(code, discountType, discountValue, capAmount, validity, limits)
     VoucherForm->>VoucherCoord: submitForm(dto)
@@ -1460,8 +1483,6 @@ stateDiagram-v2
     EXHAUSTED --> [*] : archive()
     DEACTIVATED --> [*] : archive()
 ```
-
-
 
 
 
@@ -1512,7 +1533,7 @@ classDiagram
     class LoyaltyPointCalculator {
         <<application logic>>
         +calculateEarned(orderTotal): Integer
-        +calculateRedemptionValue(points): Decimal
+        +calculateRedemptionValue(points): BigDecimal
         +validateSufficientPoints(balance, toRedeem): Boolean
     }
     class Customer {
@@ -1542,9 +1563,9 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant AddForm as AddCustomerForm
-    participant CustomerCoord as CustomerCoordinator
-    participant CustomerDB as Customer (DB)
+participant AddForm as "«boundary»<br/>AddCustomerForm"
+participant CustomerCoord as "«control»<br/>CustomerCoordinator"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
 
     cashier->>AddForm: inputCustomerDetails(name, phone, email)
     AddForm->>AddForm: validate PDPA checkbox = true (mandatory, BR-71)
@@ -1565,9 +1586,9 @@ sequenceDiagram
 sequenceDiagram
     actor cashier
     participant RedemptionPanel
-    participant CustomerCoord as CustomerCoordinator
-    participant LoyaltyCalc as LoyaltyPointCalculator
-    participant CustomerDB as Customer (DB)
+participant CustomerCoord as "«control»<br/>CustomerCoordinator"
+participant LoyaltyCalc as "«application logic»<br/>LoyaltyPointCalculator"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
 
     cashier->>RedemptionPanel: inputRedemptionDetails(customerId, pointsToRedeem)
     RedemptionPanel->>CustomerCoord: getPointsBalance(customerId)
@@ -1586,8 +1607,6 @@ sequenceDiagram
     CustomerCoord-->>RedemptionPanel: showSuccess(remainingPoints)
     RedemptionPanel-->>cashier: displayUpdatedBalance(remainingPoints)
 ```
-
-
 
 
 
@@ -1610,21 +1629,21 @@ classDiagram
     class ImportStockForm {
         <<boundary>>
         +stockItemId: UUID
-        +quantity: Decimal
+        +quantity: BigDecimal
         +note: String
         +submitImport()
     }
     class ExportStockForm {
         <<boundary>>
         +stockItemId: UUID
-        +quantity: Decimal
+        +quantity: BigDecimal
         +reason: String
         +submitExport()
     }
     class StockAuditForm {
         <<boundary>>
         +stockItemId: UUID
-        +actualQuantity: Decimal
+        +actualQuantity: BigDecimal
         +note: String
         +submitAudit()
     }
@@ -1653,8 +1672,8 @@ classDiagram
         +id: UUID
         +storeId: UUID
         +rawMaterialId: UUID
-        +currentQuantity: Decimal
-        +minAlertThreshold: Decimal
+        +currentQuantity: BigDecimal
+        +minAlertThreshold: BigDecimal
     }
     class StockTransaction {
         <<entity>>
@@ -1662,7 +1681,7 @@ classDiagram
         +stockItemId: UUID
         +managerId: UUID
         +transactionType: TxType
-        +quantity: Decimal
+        +quantity: BigDecimal
         +reason: String
         +createdAt: DateTime
     }
@@ -1697,10 +1716,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant ImportForm as ImportStockForm
-    participant StockCoord as StockCoordinator
-    participant StockItemDB as StockItem (DB)
-    participant TxDB as StockTransaction (DB)
+participant ImportForm as "«boundary»<br/>ImportStockForm"
+participant StockCoord as "«control»<br/>StockCoordinator"
+participant StockItemDB as "«entity»<br/>StockItem (DB)"
+participant TxDB as "«entity»<br/>StockTransaction (DB)"
 
     storemanager->>ImportForm: select stock item + enter quantity + note
     ImportForm->>StockCoord: submitImport(dto)
@@ -1721,10 +1740,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant AuditForm as StockAuditForm
-    participant StockCoord as StockCoordinator
-    participant StockItemDB as StockItem (DB)
-    participant TxDB as StockTransaction (DB)
+participant AuditForm as "«boundary»<br/>StockAuditForm"
+participant StockCoord as "«control»<br/>StockCoordinator"
+participant StockItemDB as "«entity»<br/>StockItem (DB)"
+participant TxDB as "«entity»<br/>StockTransaction (DB)"
 
     storemanager->>AuditForm: enter actual count (actualQty) for each item + note
     AuditForm->>StockCoord: submitAudit(dtoList)
@@ -1746,12 +1765,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor barista
-    participant BaristaMonitor as BaristaQueueMonitor
-    participant OrderCoord as OrderCoordinator
-    participant RecipeDeductSvc as RecipeDeductionService
-    participant RecipeDB as RecipeItem (DB)
-    participant StockItemDB as StockItem (DB)
-    participant TxDB as StockTransaction (DB)
+participant BaristaMonitor as "«boundary»<br/>BaristaQueueMonitor"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant RecipeDeductSvc as "«application logic»<br/>RecipeDeductionService"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
+participant StockItemDB as "«entity»<br/>StockItem (DB)"
+participant TxDB as "«entity»<br/>StockTransaction (DB)"
 
     barista->>BaristaMonitor: startPreparation(orderId) on order
     BaristaMonitor->>OrderCoord: updateStatus(orderId, PREPARING)
@@ -1780,8 +1799,6 @@ sequenceDiagram
 
 
 
-
-
 ### **3.7 POS Transaction**
 
 *\[Provide the detailed design for POS Transaction, covering UC-44→UC-55 (Open Shift, Full Checkout Pipeline, VietQR Payment, Close Shift/Z-Report). Actor: cashier (POS Terminal on Flutter). Key design decisions: (1) DiscountStackingEngine enforces voucher + loyalty point stacking rules (BR-70); (2) VietQR uses idempotency key = orderId (BR-84/BR-85); (3) ShiftAutoCloseScheduler force-closes open shifts at 23:59.\]*
@@ -1795,7 +1812,7 @@ classDiagram
     class ShiftOpenForm {
         <<boundary>>
         +cashierId: UUID
-        +openingCash: Decimal
+        +openingCash: BigDecimal
         +posRegisterId: String
         +submitOpen()
     }
@@ -1811,14 +1828,14 @@ classDiagram
     class PaymentPanel {
         <<boundary>>
         +paymentMethod: PaymentMethod
-        +cashReceived: Decimal
+        +cashReceived: BigDecimal
         +qrCodeDisplay: QRImage
         +confirmCash()
         +confirmQrPaid()
     }
     class ShiftCloseForm {
         <<boundary>>
-        +closingCash: Decimal
+        +closingCash: BigDecimal
         +submitClose()
     }
 
@@ -1843,13 +1860,13 @@ classDiagram
         <<application logic>>
         +applyVoucher(voucherCode, cart): CartDto
         +applyLoyaltyPoints(points, cart): CartDto
-        +computeFinalTotal(cart): Decimal
+        +computeFinalTotal(cart): BigDecimal
         +enforceStackingRules(cart): CartDto
     }
     class ShiftReconciliationService {
         <<application logic>>
-        +computeExpectedCash(sessionId): Decimal
-        +computeDiscrepancy(expected, actual): Decimal
+        +computeExpectedCash(sessionId): BigDecimal
+        +computeDiscrepancy(expected, actual): BigDecimal
         +generateZReport(sessionId): ZReportDto
     }
 
@@ -1864,8 +1881,8 @@ classDiagram
         +storeId: UUID
         +userId: UUID
         +posRegisterId: String
-        +startingCash: Decimal
-        +endingCash: Decimal
+        +startingCash: BigDecimal
+        +endingCash: BigDecimal
         +status: ShiftStatus
         +startTime: DateTime
         +endTime: DateTime
@@ -1924,9 +1941,9 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant OpenForm as ShiftOpenForm
-    participant ShiftCoord as ShiftSessionCoordinator
-    participant ShiftDB as ShiftSession (DB)
+participant OpenForm as "«boundary»<br/>ShiftOpenForm"
+participant ShiftCoord as "«control»<br/>ShiftSessionCoordinator"
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
 
     cashier->>OpenForm: inputOpeningCashFloat(openingCash) + register number
     OpenForm->>ShiftCoord: openShift(cashierId, storeId, openingCash, register)
@@ -1946,14 +1963,14 @@ sequenceDiagram
 sequenceDiagram
     actor cashier
     participant PosGrid as PosCheckoutGrid
-    participant CheckoutCoord as CheckoutCoordinator
-    participant DiscountEngine as DiscountStackingEngine
-    participant VoucherDB as Voucher (DB)
-    participant CustomerDB as Customer (DB)
-    participant OrderDB as Order (DB)
+participant CheckoutCoord as "«control»<br/>CheckoutCoordinator"
+participant DiscountEngine as "«application logic»<br/>DiscountStackingEngine"
+participant VoucherDB as "«entity»<br/>Voucher (DB)"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
+participant OrderDB as "«entity»<br/>Order (DB)"
     participant PayPanel as PaymentPanel
-    participant PrintSvc as PrinterServiceProxy
-    participant AuditDB as AuditLog (DB)
+participant PrintSvc as "«boundary»<br/>PrinterServiceProxy"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     cashier->>PosGrid: add items to cart
     cashier->>PosGrid: (optional) search + attach customer
@@ -1995,11 +2012,11 @@ sequenceDiagram
     actor cashier
     actor customer
     participant PayPanel as PaymentPanel
-    participant CheckoutCoord as CheckoutCoordinator
-    participant VietQRClient
+participant CheckoutCoord as "«control»<br/>CheckoutCoordinator"
+participant VietQRClient as "«boundary»<br/>VietQRClient"
     participant VietQRGateway as VietQR Gateway (External)
-    participant OrderDB as Order (DB)
-    participant PrintSvc as PrinterServiceProxy
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant PrintSvc as "«boundary»<br/>PrinterServiceProxy"
 
     cashier->>PayPanel: select VietQR payment
     PayPanel->>CheckoutCoord: initiateQrPayment(orderId)
@@ -2028,11 +2045,11 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant CloseForm as ShiftCloseForm
-    participant ShiftCoord as ShiftSessionCoordinator
-    participant ReconcileSvc as ShiftReconciliationService
-    participant OrderDB as Order (DB)
-    participant ShiftDB as ShiftSession (DB)
+participant CloseForm as "«boundary»<br/>ShiftCloseForm"
+participant ShiftCoord as "«control»<br/>ShiftSessionCoordinator"
+participant ReconcileSvc as "«application logic»<br/>ShiftReconciliationService"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
 
     cashier->>CloseForm: enter closing cash amount
     CloseForm->>ShiftCoord: closeShift(sessionId, closingCash)
@@ -2062,8 +2079,6 @@ stateDiagram-v2
 
     CLOSED --> [*] : archive()
 ```
-
-
 
 
 
@@ -2099,7 +2114,7 @@ classDiagram
         <<boundary>>
         +orderId: UUID
         +refundType: RefundType
-        +amount: Decimal
+        +amount: BigDecimal
         +smApprovalPin: String
         +submitRefund()
     }
@@ -2133,10 +2148,10 @@ classDiagram
         +status: OrderStatus
         +paymentStatus: PaymentStatus
         +paymentMethod: PaymentMethod
-        +subtotal: Decimal
-        +discount: Decimal
-        +taxAmount: Decimal
-        +total: Decimal
+        +subtotal: BigDecimal
+        +discount: BigDecimal
+        +taxAmount: BigDecimal
+        +total: BigDecimal
         +createdAt: DateTime
     }
     class OrderItem {
@@ -2145,7 +2160,7 @@ classDiagram
         +orderId: UUID
         +menuItemId: UUID
         +quantity: Integer
-        +unitPrice: Decimal
+        +unitPrice: BigDecimal
     }
     class OrderItemTopping {
         <<entity>>
@@ -2153,7 +2168,7 @@ classDiagram
         +orderItemId: UUID
         +toppingId: UUID
         +quantity: Integer
-        +unitPrice: Decimal
+        +unitPrice: BigDecimal
     }
     class OrderCancellation {
         <<entity>>
@@ -2172,7 +2187,7 @@ classDiagram
         +cashierId: UUID
         +shiftSessionId: UUID
         +refundType: RefundType
-        +amount: Decimal
+        +amount: BigDecimal
         +reason: String
         +notes: String
         +createdAt: DateTime
@@ -2201,10 +2216,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant CancelDialog as CancellationDialog
-    participant OrderCoord as OrderCoordinator
-    participant OrderDB as Order (DB)
-    participant CancelDB as OrderCancellation (DB)
+participant CancelDialog as "«boundary»<br/>CancellationDialog"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant CancelDB as "«entity»<br/>OrderCancellation (DB)"
 
     cashier->>CancelDialog: inputCancellationDetails(orderId, reason, notes)
     CancelDialog->>OrderCoord: cancelOrder(dto)
@@ -2226,13 +2241,13 @@ sequenceDiagram
 sequenceDiagram
     actor cashier
     actor storemanager
-    participant RefundDialog as RefundAuthDialog
-    participant OrderCoord as OrderCoordinator
-    participant UserDB as User (DB)
-    participant OrderDB as Order (DB)
-    participant RefundDB as OrderRefund (DB)
-    participant ShiftDB as ShiftSession (DB)
-    participant CustomerDB as Customer (DB)
+participant RefundDialog as "«boundary»<br/>RefundAuthDialog"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant RefundDB as "«entity»<br/>OrderRefund (DB)"
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
 
     cashier->>RefundDialog: inputRefundDetails(orderId, refundType, amount)
     RefundDialog->>RefundDialog: requestSmPin()
@@ -2271,9 +2286,9 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant TimeoutScheduler as OrderTimeoutScheduler
-    participant OrderCoord as OrderCoordinator
-    participant OrderDB as Order (DB)
+participant TimeoutScheduler as "«timer»<br/>OrderTimeoutScheduler"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant OrderDB as "«entity»<br/>Order (DB)"
 
     loop every 1 minute
         TimeoutScheduler->>OrderDB: findReadyOrdersOlderThan(15min)
@@ -2314,8 +2329,6 @@ stateDiagram-v2
     CANCELLED --> [*] : archive()
     ABANDONED --> [*] : archive()
 ```
-
-
 
 
 
@@ -2440,11 +2453,11 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant CreateForm as CreateScheduleForm
-    participant ScheduleCoord as ScheduleCoordinator
-    participant UserDB as User (DB)
-    participant ScheduleDB as StaffSchedule (DB)
-    participant AuditDB as AuditLog (DB)
+participant CreateForm as "«boundary»<br/>CreateScheduleForm"
+participant ScheduleCoord as "«control»<br/>ScheduleCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     storemanager->>CreateForm: inputScheduleDetails(employeeId, date, shiftType, targetStoreId)
     CreateForm->>ScheduleCoord: createSchedule(dto)
@@ -2491,12 +2504,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor employee
-    participant CheckInScreen as AttendanceCheckInScreen
-    participant AttendCoord as AttendanceCoordinator
-    participant PhotoMgr as AttendancePhotoManager
-    participant UserDB as User (DB)
-    participant ScheduleDB as StaffSchedule (DB)
-    participant AttendDB as AttendanceLog (DB)
+participant CheckInScreen as "«boundary»<br/>AttendanceCheckInScreen"
+participant AttendCoord as "«control»<br/>AttendanceCoordinator"
+participant PhotoMgr as "«application logic»<br/>AttendancePhotoManager"
+participant UserDB as "«entity»<br/>User (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
+participant AttendDB as "«entity»<br/>AttendanceLog (DB)"
 
     employee->>CheckInScreen: inputPinAndCapturePhoto(pin, photoData)
     CheckInScreen->>AttendCoord: checkIn(storeId, pin, photoData)
@@ -2541,8 +2554,8 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant PhotoScheduler as PhotoAutoDeleteScheduler
-    participant AttendDB as AttendanceLog (DB)
+participant PhotoScheduler as "«timer»<br/>PhotoAutoDeleteScheduler"
+participant AttendDB as "«entity»<br/>AttendanceLog (DB)"
     participant Filesystem as Server Filesystem
 
     Note over PhotoScheduler: Triggered at 02:00 daily (cron: 0 2 * * *)
@@ -2565,10 +2578,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant ReportView as AttendanceReportView
-    participant AttendCoord as AttendanceCoordinator
-    participant AttendDB as AttendanceLog (DB)
-    participant ScheduleDB as StaffSchedule (DB)
+participant ReportView as "«boundary»<br/>AttendanceReportView"
+participant AttendCoord as "«control»<br/>AttendanceCoordinator"
+participant AttendDB as "«entity»<br/>AttendanceLog (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
 
     storemanager->>ReportView: requestAttendanceReport(storeId, dateRange)
     ReportView->>AttendCoord: getAttendanceReport(storeId, dateRange)
@@ -2592,8 +2605,6 @@ sequenceDiagram
     AttendCoord-->>ReportView: ReportDto (with derived Absence/OT/Early-Leave flags)
     ReportView-->>storemanager: displayReportGrid()
 ```
-
-
 
 
 
@@ -2645,8 +2656,8 @@ classDiagram
     }
     class COGSCalculator {
         <<application logic>>
-        +calculateCOGS(orderId): Decimal
-        +calculateMargin(revenue, cogs): Decimal
+        +calculateCOGS(orderId): BigDecimal
+        +calculateMargin(revenue, cogs): BigDecimal
         +aggregateCOGSByPeriod(storeId, range): COGSReportDto
     }
     class AnomalyDetector {
@@ -2658,23 +2669,23 @@ classDiagram
     class LabourEfficiencyService {
         <<application logic>>
         +calculateWorkedHours(storeId, range): Map~User_Hours~
-        +calculateRevenuePerStaffHour(storeId, range): Decimal
+        +calculateRevenuePerStaffHour(storeId, range): BigDecimal
     }
     class LoyaltyLiabilityService {
         <<application logic>>
         +getTotalOutstandingPoints(): Integer
-        +estimateLiabilityValue(points, conversionRate): Decimal
+        +estimateLiabilityValue(points, conversionRate): BigDecimal
     }
     class Order {
         <<entity>>
-        +totalAmount: Decimal
+        +totalAmount: BigDecimal
         +status: OrderStatus
         +createdAt: DateTime
     }
     class StockTransaction {
         <<entity>>
         +transactionType: TxType
-        +quantityChange: Decimal
+        +quantityChange: BigDecimal
         +createdAt: DateTime
     }
     class AuditLog {
@@ -2715,9 +2726,9 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor hquser
-    participant HQDash as HQDashboardView
-    participant ReportCoord as ReportCoordinator
-    participant OrderDB as Order (DB)
+participant HQDash as "«boundary»<br/>HQDashboardView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant OrderDB as "«entity»<br/>Order (DB)"
 
     hquser->>HQDash: selectDateRangeAndBranchFilter(dateRange, branchFilter)
     HQDash->>ReportCoord: getHQConsolidatedReport(filter)
@@ -2744,12 +2755,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor reporter
-    participant BranchReport as BranchReportView
-    participant ReportCoord as ReportCoordinator
-    participant COGSCalc as COGSCalculator
-    participant OrderDB as Order (DB)
-    participant RecipeDB as RecipeItem (DB)
-    participant RawMatDB as RawMaterial (DB)
+participant BranchReport as "«boundary»<br/>BranchReportView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant COGSCalc as "«application logic»<br/>COGSCalculator"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
+participant RawMatDB as "«entity»<br/>RawMaterial (DB)"
 
     reporter->>BranchReport: requestCogsReport(dateRange)
     BranchReport->>ReportCoord: getCOGSReport(storeId, range)
@@ -2774,12 +2785,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor admin
-    participant HQDash as HQDashboardView
-    participant ReportCoord as ReportCoordinator
-    participant AnomalyDetector
-    participant OrderDB as Order (DB)
-    participant StockDB as StockTransaction (DB)
-    participant RefundDB as OrderRefund (DB)
+participant HQDash as "«boundary»<br/>HQDashboardView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant AnomalyDetector as "«application logic»<br/>AnomalyDetector"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant StockDB as "«entity»<br/>StockTransaction (DB)"
+participant RefundDB as "«entity»<br/>OrderRefund (DB)"
 
     admin->>HQDash: requestAnomalyReport()
     HQDash->>ReportCoord: getAnomalyReport(storeId, range)
@@ -2810,9 +2821,9 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor viewer
-    participant PriceHistView as PriceHistoryView
-    participant ReportCoord as ReportCoordinator
-    participant AuditDB as AuditLog (DB)
+participant PriceHistView as "«boundary»<br/>PriceHistoryView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     viewer->>PriceHistView: selectMenuItem(menuItemId)
     PriceHistView->>ReportCoord: getPriceChangeHistory(menuItemId)
@@ -2821,8 +2832,6 @@ sequenceDiagram
     ReportCoord-->>PriceHistView: List~PriceChangeDto~
     PriceHistView-->>viewer: displayPriceChangeTimeline()
 ```
-
-
 
 
 
@@ -2925,10 +2934,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant ConfigForm as SystemConfigForm
-    participant ConfigCoord as SystemConfigCoordinator
-    participant ConfigDB as SystemConfig (DB)
-    participant AuditDB as AuditLog (DB)
+participant ConfigForm as "«boundary»<br/>SystemConfigForm"
+participant ConfigCoord as "«control»<br/>SystemConfigCoordinator"
+participant ConfigDB as "«entity»<br/>SystemConfig (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>ConfigForm: openConfigPanel()
     ConfigForm->>ConfigCoord: getSystemConfig(key="*")
@@ -2953,15 +2962,15 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant BranchForm as AddBranchForm / EditBranchForm
-    participant BranchCoord as BranchCoordinator
+participant BranchForm as "«boundary»<br/>AddBranchForm / EditBranchForm"
+participant BranchCoord as "«control»<br/>BranchCoordinator"
     participant ConfigDB as SystemConfig (KV store)
-    participant ShiftDB as ShiftSession (DB)
-    participant OrderDB as Order (DB)
-    participant StoreDB as Store (DB)
-    participant UserDB as User (DB)
-    participant ScheduleDB as StaffSchedule (DB)
-    participant AuditDB as AuditLog (DB)
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant StoreDB as "«entity»<br/>Store (DB)"
+participant UserDB as "«entity»<br/>User (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>BranchForm: submitBranchAction(dto)
     BranchForm->>BranchCoord: submitAction(dto)

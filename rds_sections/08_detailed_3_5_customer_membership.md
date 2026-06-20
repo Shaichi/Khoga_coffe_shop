@@ -45,7 +45,7 @@ classDiagram
     class LoyaltyPointCalculator {
         <<application logic>>
         +calculateEarned(orderTotal): Integer
-        +calculateRedemptionValue(points): Decimal
+        +calculateRedemptionValue(points): BigDecimal
         +validateSufficientPoints(balance, toRedeem): Boolean
     }
     class Customer {
@@ -75,9 +75,9 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant AddForm as AddCustomerForm
-    participant CustomerCoord as CustomerCoordinator
-    participant CustomerDB as Customer (DB)
+participant AddForm as "«boundary»<br/>AddCustomerForm"
+participant CustomerCoord as "«control»<br/>CustomerCoordinator"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
 
     cashier->>AddForm: inputCustomerDetails(name, phone, email)
     AddForm->>AddForm: validate PDPA checkbox = true (mandatory, BR-71)
@@ -98,9 +98,9 @@ sequenceDiagram
 sequenceDiagram
     actor cashier
     participant RedemptionPanel
-    participant CustomerCoord as CustomerCoordinator
-    participant LoyaltyCalc as LoyaltyPointCalculator
-    participant CustomerDB as Customer (DB)
+participant CustomerCoord as "«control»<br/>CustomerCoordinator"
+participant LoyaltyCalc as "«application logic»<br/>LoyaltyPointCalculator"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
 
     cashier->>RedemptionPanel: inputRedemptionDetails(customerId, pointsToRedeem)
     RedemptionPanel->>CustomerCoord: getPointsBalance(customerId)

@@ -18,9 +18,9 @@ classDiagram
         <<boundary>>
         +code: String
         +discountType: DiscountType
-        +discountValue: Decimal
-        +capAmount: Decimal
-        +minOrderValue: Decimal
+        +discountValue: BigDecimal
+        +capAmount: BigDecimal
+        +minOrderValue: BigDecimal
         +validFrom: Date
         +validTo: Date
         +maxUsesTotal: Integer
@@ -46,9 +46,9 @@ classDiagram
         +id: UUID
         +code: String
         +discountType: DiscountType
-        +discountValue: Decimal
-        +capAmount: Decimal
-        +minOrderValue: Decimal
+        +discountValue: BigDecimal
+        +capAmount: BigDecimal
+        +minOrderValue: BigDecimal
         +validFrom: Date
         +validTo: Date
         +maxUsesTotal: Integer
@@ -75,10 +75,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor bizadmin
-    participant VoucherForm as AddVoucherForm / EditVoucherForm
-    participant VoucherCoord as VoucherCoordinator
-    participant VoucherDB as Voucher (DB)
-    participant AuditDB as AuditLog (DB)
+participant VoucherForm as "«boundary»<br/>AddVoucherForm / EditVoucherForm"
+participant VoucherCoord as "«control»<br/>VoucherCoordinator"
+participant VoucherDB as "«entity»<br/>Voucher (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     bizadmin->>VoucherForm: inputVoucherDetails(code, discountType, discountValue, capAmount, validity, limits)
     VoucherForm->>VoucherCoord: submitForm(dto)

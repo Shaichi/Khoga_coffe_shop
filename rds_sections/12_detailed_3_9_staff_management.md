@@ -119,11 +119,11 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant CreateForm as CreateScheduleForm
-    participant ScheduleCoord as ScheduleCoordinator
-    participant UserDB as User (DB)
-    participant ScheduleDB as StaffSchedule (DB)
-    participant AuditDB as AuditLog (DB)
+participant CreateForm as "«boundary»<br/>CreateScheduleForm"
+participant ScheduleCoord as "«control»<br/>ScheduleCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     storemanager->>CreateForm: inputScheduleDetails(employeeId, date, shiftType, targetStoreId)
     CreateForm->>ScheduleCoord: createSchedule(dto)
@@ -170,12 +170,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor employee
-    participant CheckInScreen as AttendanceCheckInScreen
-    participant AttendCoord as AttendanceCoordinator
-    participant PhotoMgr as AttendancePhotoManager
-    participant UserDB as User (DB)
-    participant ScheduleDB as StaffSchedule (DB)
-    participant AttendDB as AttendanceLog (DB)
+participant CheckInScreen as "«boundary»<br/>AttendanceCheckInScreen"
+participant AttendCoord as "«control»<br/>AttendanceCoordinator"
+participant PhotoMgr as "«application logic»<br/>AttendancePhotoManager"
+participant UserDB as "«entity»<br/>User (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
+participant AttendDB as "«entity»<br/>AttendanceLog (DB)"
 
     employee->>CheckInScreen: inputPinAndCapturePhoto(pin, photoData)
     CheckInScreen->>AttendCoord: checkIn(storeId, pin, photoData)
@@ -220,8 +220,8 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant PhotoScheduler as PhotoAutoDeleteScheduler
-    participant AttendDB as AttendanceLog (DB)
+participant PhotoScheduler as "«timer»<br/>PhotoAutoDeleteScheduler"
+participant AttendDB as "«entity»<br/>AttendanceLog (DB)"
     participant Filesystem as Server Filesystem
 
     Note over PhotoScheduler: Triggered at 02:00 daily (cron: 0 2 * * *)
@@ -244,10 +244,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant ReportView as AttendanceReportView
-    participant AttendCoord as AttendanceCoordinator
-    participant AttendDB as AttendanceLog (DB)
-    participant ScheduleDB as StaffSchedule (DB)
+participant ReportView as "«boundary»<br/>AttendanceReportView"
+participant AttendCoord as "«control»<br/>AttendanceCoordinator"
+participant AttendDB as "«entity»<br/>AttendanceLog (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
 
     storemanager->>ReportView: requestAttendanceReport(storeId, dateRange)
     ReportView->>AttendCoord: getAttendanceReport(storeId, dateRange)

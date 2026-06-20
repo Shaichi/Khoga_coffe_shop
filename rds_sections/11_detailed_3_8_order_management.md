@@ -30,7 +30,7 @@ classDiagram
         <<boundary>>
         +orderId: UUID
         +refundType: RefundType
-        +amount: Decimal
+        +amount: BigDecimal
         +smApprovalPin: String
         +submitRefund()
     }
@@ -64,10 +64,10 @@ classDiagram
         +status: OrderStatus
         +paymentStatus: PaymentStatus
         +paymentMethod: PaymentMethod
-        +subtotal: Decimal
-        +discount: Decimal
-        +taxAmount: Decimal
-        +total: Decimal
+        +subtotal: BigDecimal
+        +discount: BigDecimal
+        +taxAmount: BigDecimal
+        +total: BigDecimal
         +createdAt: DateTime
     }
     class OrderItem {
@@ -76,7 +76,7 @@ classDiagram
         +orderId: UUID
         +menuItemId: UUID
         +quantity: Integer
-        +unitPrice: Decimal
+        +unitPrice: BigDecimal
     }
     class OrderItemTopping {
         <<entity>>
@@ -84,7 +84,7 @@ classDiagram
         +orderItemId: UUID
         +toppingId: UUID
         +quantity: Integer
-        +unitPrice: Decimal
+        +unitPrice: BigDecimal
     }
     class OrderCancellation {
         <<entity>>
@@ -103,7 +103,7 @@ classDiagram
         +cashierId: UUID
         +shiftSessionId: UUID
         +refundType: RefundType
-        +amount: Decimal
+        +amount: BigDecimal
         +reason: String
         +notes: String
         +createdAt: DateTime
@@ -132,10 +132,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor cashier
-    participant CancelDialog as CancellationDialog
-    participant OrderCoord as OrderCoordinator
-    participant OrderDB as Order (DB)
-    participant CancelDB as OrderCancellation (DB)
+participant CancelDialog as "«boundary»<br/>CancellationDialog"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant CancelDB as "«entity»<br/>OrderCancellation (DB)"
 
     cashier->>CancelDialog: inputCancellationDetails(orderId, reason, notes)
     CancelDialog->>OrderCoord: cancelOrder(dto)
@@ -157,13 +157,13 @@ sequenceDiagram
 sequenceDiagram
     actor cashier
     actor storemanager
-    participant RefundDialog as RefundAuthDialog
-    participant OrderCoord as OrderCoordinator
-    participant UserDB as User (DB)
-    participant OrderDB as Order (DB)
-    participant RefundDB as OrderRefund (DB)
-    participant ShiftDB as ShiftSession (DB)
-    participant CustomerDB as Customer (DB)
+participant RefundDialog as "«boundary»<br/>RefundAuthDialog"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant UserDB as "«entity»<br/>User (DB)"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant RefundDB as "«entity»<br/>OrderRefund (DB)"
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
+participant CustomerDB as "«entity»<br/>Customer (DB)"
 
     cashier->>RefundDialog: inputRefundDetails(orderId, refundType, amount)
     RefundDialog->>RefundDialog: requestSmPin()
@@ -202,9 +202,9 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant TimeoutScheduler as OrderTimeoutScheduler
-    participant OrderCoord as OrderCoordinator
-    participant OrderDB as Order (DB)
+participant TimeoutScheduler as "«timer»<br/>OrderTimeoutScheduler"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant OrderDB as "«entity»<br/>Order (DB)"
 
     loop every 1 minute
         TimeoutScheduler->>OrderDB: findReadyOrdersOlderThan(15min)

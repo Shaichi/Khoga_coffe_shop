@@ -46,8 +46,8 @@ classDiagram
     }
     class COGSCalculator {
         <<application logic>>
-        +calculateCOGS(orderId): Decimal
-        +calculateMargin(revenue, cogs): Decimal
+        +calculateCOGS(orderId): BigDecimal
+        +calculateMargin(revenue, cogs): BigDecimal
         +aggregateCOGSByPeriod(storeId, range): COGSReportDto
     }
     class AnomalyDetector {
@@ -59,23 +59,23 @@ classDiagram
     class LabourEfficiencyService {
         <<application logic>>
         +calculateWorkedHours(storeId, range): Map~User_Hours~
-        +calculateRevenuePerStaffHour(storeId, range): Decimal
+        +calculateRevenuePerStaffHour(storeId, range): BigDecimal
     }
     class LoyaltyLiabilityService {
         <<application logic>>
         +getTotalOutstandingPoints(): Integer
-        +estimateLiabilityValue(points, conversionRate): Decimal
+        +estimateLiabilityValue(points, conversionRate): BigDecimal
     }
     class Order {
         <<entity>>
-        +totalAmount: Decimal
+        +totalAmount: BigDecimal
         +status: OrderStatus
         +createdAt: DateTime
     }
     class StockTransaction {
         <<entity>>
         +transactionType: TxType
-        +quantityChange: Decimal
+        +quantityChange: BigDecimal
         +createdAt: DateTime
     }
     class AuditLog {
@@ -116,9 +116,9 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor hquser
-    participant HQDash as HQDashboardView
-    participant ReportCoord as ReportCoordinator
-    participant OrderDB as Order (DB)
+participant HQDash as "«boundary»<br/>HQDashboardView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant OrderDB as "«entity»<br/>Order (DB)"
 
     hquser->>HQDash: selectDateRangeAndBranchFilter(dateRange, branchFilter)
     HQDash->>ReportCoord: getHQConsolidatedReport(filter)
@@ -145,12 +145,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor reporter
-    participant BranchReport as BranchReportView
-    participant ReportCoord as ReportCoordinator
-    participant COGSCalc as COGSCalculator
-    participant OrderDB as Order (DB)
-    participant RecipeDB as RecipeItem (DB)
-    participant RawMatDB as RawMaterial (DB)
+participant BranchReport as "«boundary»<br/>BranchReportView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant COGSCalc as "«application logic»<br/>COGSCalculator"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
+participant RawMatDB as "«entity»<br/>RawMaterial (DB)"
 
     reporter->>BranchReport: requestCogsReport(dateRange)
     BranchReport->>ReportCoord: getCOGSReport(storeId, range)
@@ -175,12 +175,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor admin
-    participant HQDash as HQDashboardView
-    participant ReportCoord as ReportCoordinator
-    participant AnomalyDetector
-    participant OrderDB as Order (DB)
-    participant StockDB as StockTransaction (DB)
-    participant RefundDB as OrderRefund (DB)
+participant HQDash as "«boundary»<br/>HQDashboardView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant AnomalyDetector as "«application logic»<br/>AnomalyDetector"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant StockDB as "«entity»<br/>StockTransaction (DB)"
+participant RefundDB as "«entity»<br/>OrderRefund (DB)"
 
     admin->>HQDash: requestAnomalyReport()
     HQDash->>ReportCoord: getAnomalyReport(storeId, range)
@@ -211,9 +211,9 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor viewer
-    participant PriceHistView as PriceHistoryView
-    participant ReportCoord as ReportCoordinator
-    participant AuditDB as AuditLog (DB)
+participant PriceHistView as "«boundary»<br/>PriceHistoryView"
+participant ReportCoord as "«control»<br/>ReportCoordinator"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     viewer->>PriceHistView: selectMenuItem(menuItemId)
     PriceHistView->>ReportCoord: getPriceChangeHistory(menuItemId)

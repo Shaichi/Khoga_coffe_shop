@@ -65,6 +65,9 @@ classDiagram
         +isActive: Boolean
         +mustChangePassword: Boolean
         +attendancePin: String
+        +failedAttempts: Integer
+        +lockExpiryAt: DateTime
+        +passwordLastChangedAt: DateTime
     }
     class Store {
         <<entity>>
@@ -101,13 +104,13 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant AddForm as AddUserForm
-    participant UserMgmtCoord as UserManagementCoordinator
-    participant Validator as PasswordPolicyValidator
-    participant StoreDB as Store (DB)
-    participant UserDB as User (DB)
-    participant EmailSvc as EmailServiceProxy
-    participant AuditDB as AuditLog (DB)
+    participant AddForm as "«boundary»<br/>AddUserForm"
+    participant UserMgmtCoord as "«control»<br/>UserManagementCoordinator"
+    participant Validator as "«application logic»<br/>PasswordPolicyValidator"
+    participant StoreDB as "«entity»<br/>Store (DB)"
+    participant UserDB as "«entity»<br/>User (DB)"
+    participant EmailSvc as "«boundary»<br/>EmailServiceProxy"
+    participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>AddForm: inputUserDetails(name, username, role, email, phone, storeId)
     AddForm->>UserMgmtCoord: submitForm(dto)
@@ -132,10 +135,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant EditForm as EditUserForm
-    participant UserMgmtCoord as UserManagementCoordinator
-    participant UserDB as User (DB)
-    participant AuditDB as AuditLog (DB)
+    participant EditForm as "«boundary»<br/>EditUserForm"
+    participant UserMgmtCoord as "«control»<br/>UserManagementCoordinator"
+    participant UserDB as "«entity»<br/>User (DB)"
+    participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>EditForm: select user + edit fields
     EditForm->>UserMgmtCoord: submitChanges(userId, dto)

@@ -97,10 +97,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant ConfigForm as SystemConfigForm
-    participant ConfigCoord as SystemConfigCoordinator
-    participant ConfigDB as SystemConfig (DB)
-    participant AuditDB as AuditLog (DB)
+participant ConfigForm as "«boundary»<br/>SystemConfigForm"
+participant ConfigCoord as "«control»<br/>SystemConfigCoordinator"
+participant ConfigDB as "«entity»<br/>SystemConfig (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>ConfigForm: openConfigPanel()
     ConfigForm->>ConfigCoord: getSystemConfig(key="*")
@@ -125,15 +125,15 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor ssadmin
-    participant BranchForm as AddBranchForm / EditBranchForm
-    participant BranchCoord as BranchCoordinator
+participant BranchForm as "«boundary»<br/>AddBranchForm / EditBranchForm"
+participant BranchCoord as "«control»<br/>BranchCoordinator"
     participant ConfigDB as SystemConfig (KV store)
-    participant ShiftDB as ShiftSession (DB)
-    participant OrderDB as Order (DB)
-    participant StoreDB as Store (DB)
-    participant UserDB as User (DB)
-    participant ScheduleDB as StaffSchedule (DB)
-    participant AuditDB as AuditLog (DB)
+participant ShiftDB as "«entity»<br/>ShiftSession (DB)"
+participant OrderDB as "«entity»<br/>Order (DB)"
+participant StoreDB as "«entity»<br/>Store (DB)"
+participant UserDB as "«entity»<br/>User (DB)"
+participant ScheduleDB as "«entity»<br/>StaffSchedule (DB)"
+participant AuditDB as "«entity»<br/>AuditLog (DB)"
 
     ssadmin->>BranchForm: submitBranchAction(dto)
     BranchForm->>BranchCoord: submitAction(dto)

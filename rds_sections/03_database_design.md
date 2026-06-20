@@ -2,6 +2,8 @@
 
 *\[The database design follows the entity relationships defined in the SRS (§3.1.5 / §3.1.6). The system uses `SQL Server` with ACID transactions and Unicode support (`NVARCHAR`). All primary keys use `UUID` (`VARCHAR(36)`). The diagrams below show the entity relationships with full column definitions, followed by the table descriptions.\]*
 
+> **Note regarding System Configuration (`system_configs`)**: Following the Product Owner's decision, system configuration parameters (e.g., `MAX_ACTIVE_BRANCHES`, `VAT`, `VietQR` credentials) are treated as infrastructure-level key-value settings. They are managed outside the 21 core business entities defined in this schema and do not participate in standard relational constraints.
+
 ### **2.1. Core Sales & POS ERD**
 
 *\[This diagram focuses on sales flows at the POS terminal, Menu information, Customers, Shift sessions, and Promotions.\]*
@@ -31,6 +33,9 @@ erDiagram
         datetime last_login_at
         boolean must_change_password
         string attendance_pin
+        int failed_attempts
+        datetime lock_expiry_at
+        datetime password_last_changed_at
     }
 
     CATEGORY {
@@ -217,6 +222,9 @@ erDiagram
         datetime last_login_at
         boolean must_change_password
         string attendance_pin
+        int failed_attempts
+        datetime lock_expiry_at
+        datetime password_last_changed_at
     }
 
     RAW_MATERIAL {

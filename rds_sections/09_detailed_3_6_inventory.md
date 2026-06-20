@@ -17,21 +17,21 @@ classDiagram
     class ImportStockForm {
         <<boundary>>
         +stockItemId: UUID
-        +quantity: Decimal
+        +quantity: BigDecimal
         +note: String
         +submitImport()
     }
     class ExportStockForm {
         <<boundary>>
         +stockItemId: UUID
-        +quantity: Decimal
+        +quantity: BigDecimal
         +reason: String
         +submitExport()
     }
     class StockAuditForm {
         <<boundary>>
         +stockItemId: UUID
-        +actualQuantity: Decimal
+        +actualQuantity: BigDecimal
         +note: String
         +submitAudit()
     }
@@ -60,8 +60,8 @@ classDiagram
         +id: UUID
         +storeId: UUID
         +rawMaterialId: UUID
-        +currentQuantity: Decimal
-        +minAlertThreshold: Decimal
+        +currentQuantity: BigDecimal
+        +minAlertThreshold: BigDecimal
     }
     class StockTransaction {
         <<entity>>
@@ -69,7 +69,7 @@ classDiagram
         +stockItemId: UUID
         +managerId: UUID
         +transactionType: TxType
-        +quantity: Decimal
+        +quantity: BigDecimal
         +reason: String
         +createdAt: DateTime
     }
@@ -104,10 +104,10 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant ImportForm as ImportStockForm
-    participant StockCoord as StockCoordinator
-    participant StockItemDB as StockItem (DB)
-    participant TxDB as StockTransaction (DB)
+participant ImportForm as "«boundary»<br/>ImportStockForm"
+participant StockCoord as "«control»<br/>StockCoordinator"
+participant StockItemDB as "«entity»<br/>StockItem (DB)"
+participant TxDB as "«entity»<br/>StockTransaction (DB)"
 
     storemanager->>ImportForm: select stock item + enter quantity + note
     ImportForm->>StockCoord: submitImport(dto)
@@ -128,10 +128,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor storemanager
-    participant AuditForm as StockAuditForm
-    participant StockCoord as StockCoordinator
-    participant StockItemDB as StockItem (DB)
-    participant TxDB as StockTransaction (DB)
+participant AuditForm as "«boundary»<br/>StockAuditForm"
+participant StockCoord as "«control»<br/>StockCoordinator"
+participant StockItemDB as "«entity»<br/>StockItem (DB)"
+participant TxDB as "«entity»<br/>StockTransaction (DB)"
 
     storemanager->>AuditForm: enter actual count (actualQty) for each item + note
     AuditForm->>StockCoord: submitAudit(dtoList)
@@ -153,12 +153,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor barista
-    participant BaristaMonitor as BaristaQueueMonitor
-    participant OrderCoord as OrderCoordinator
-    participant RecipeDeductSvc as RecipeDeductionService
-    participant RecipeDB as RecipeItem (DB)
-    participant StockItemDB as StockItem (DB)
-    participant TxDB as StockTransaction (DB)
+participant BaristaMonitor as "«boundary»<br/>BaristaQueueMonitor"
+participant OrderCoord as "«control»<br/>OrderCoordinator"
+participant RecipeDeductSvc as "«application logic»<br/>RecipeDeductionService"
+participant RecipeDB as "«entity»<br/>RecipeItem (DB)"
+participant StockItemDB as "«entity»<br/>StockItem (DB)"
+participant TxDB as "«entity»<br/>StockTransaction (DB)"
 
     barista->>BaristaMonitor: startPreparation(orderId) on order
     BaristaMonitor->>OrderCoord: updateStatus(orderId, PREPARING)
