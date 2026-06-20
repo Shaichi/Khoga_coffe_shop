@@ -899,7 +899,7 @@ The system comprises the following screens across its user portals:
 | | | Branch Management List Screen | Lists all store branches with status indicators for System Admin management. |
 | | | Add Branch Form | Form for System Admin to register a new store branch with name, address, and phone. |
 | | | Edit / Deactivate Branch Screen | Form to modify branch details or deactivate (close) a branch. |
-| 8 | Inventory Management | Manager Dashboard Home | Store Manager portal home screen with navigation to all manager modules. |
+| 8 | Inventory Management | Manager Dashboard Home | Store Manager App home screen with navigation to all manager modules. |
 | | | Stock List Screen | Displays branch inventory quantities and alert flags. |
 | | | Stock History Log Screen | Displays historical ledger logs of all stock imports/exports. |
 | | | Stock Import Form Screen | Form to record supplier inventory imports. |
@@ -5698,7 +5698,7 @@ This section details specifications for business reports views, sales analytics 
 ### 3.12.8.1 Screen Mock-up (Desktop / Tablet Landscape)
 ```
 +---------------------------------------------------------------------------------+
-| Store Manager Portal > Reports > Daily Z-Report                                 |
+| Store Manager App > Reports > Daily Z-Report                                 |
 +---------------------------------------------------------------------------------+
 |  Business Day: [ 2026-05-24 ]   Branch: District 1            [ Export / Print ] |
 |                                                                                 |
