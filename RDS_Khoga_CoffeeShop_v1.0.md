@@ -925,21 +925,20 @@ participant UserDB as "«entity»<br/>User (DB)"
 stateDiagram-v2
     [*] --> CREATED : createAccount() / setMustChangePassword(true)
 
-    CREATED --> ACTIVE : login() [mustChangePassword == true] / forcePasswordChange(); setMustChangePassword(false)
+    CREATED --> OPERATIONAL : login() [mustChangePassword == true] / forcePasswordChange()
 
-    ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount(suspend15min)
+    state OPERATIONAL {
+        [*] --> ACTIVE
+        ACTIVE --> LOCKED : loginFailed() [consecutiveFailures >= 5] / lockAccount(15min)
+        LOCKED --> ACTIVE : timeTrigger [suspensionElapsed >= 15min] / resetFailedAttempts()
+        LOCKED --> ACTIVE : unlock() [isSSAdmin == true] / resetFailedAttempts()
+    }
 
-    ACTIVE --> INACTIVE_BY_SM : deactivate() [isSM == true && isOwnBranch == true] / deactivateAccount()
+    OPERATIONAL --> INACTIVE_BY_SM : deactivate() [isSM == true && isOwnBranch == true] / deactivateAccount()
+    OPERATIONAL --> INACTIVE_BY_ADMIN : deactivate() [isSSAdmin == true] / deactivateAccount()
 
-    ACTIVE --> INACTIVE_BY_ADMIN : deactivate() [isSSAdmin == true] / deactivateAccount()
-
-    LOCKED --> ACTIVE : timeTrigger [suspensionElapsed >= 15min] / resetFailedAttempts()
-
-    LOCKED --> ACTIVE : unlock() [isSSAdmin == true] / resetFailedAttempts()
-
-    INACTIVE_BY_SM --> ACTIVE : reactivate() [isSSAdmin == true] / activateAccount()
-
-    INACTIVE_BY_ADMIN --> ACTIVE : reactivate() [isSSAdmin == true] / activateAccount()
+    INACTIVE_BY_SM --> OPERATIONAL : reactivate() [isSSAdmin == true] / activateAccount()
+    INACTIVE_BY_ADMIN --> OPERATIONAL : reactivate() [isSSAdmin == true] / activateAccount()
 ```
 
 
@@ -2309,21 +2308,19 @@ participant OrderDB as "«entity»<br/>Order (DB)"
 stateDiagram-v2
     [*] --> PENDING : submitCheckout() / status = PENDING
 
-    PENDING --> PREPARING : startPreparation() / deductStock(); status = PREPARING
+    PENDING --> IN_PROGRESS : startPreparation() / deductStock()
+    PENDING --> CANCELLED : cancelOrder(reason) [status == PENDING] / logCancellation()
 
-    PENDING --> CANCELLED : cancelOrder(reason) [status == PENDING] / logCancellation(); status = CANCELLED
+    state IN_PROGRESS {
+        [*] --> PREPARING
+        PREPARING --> HOLD : reportIssue()
+        HOLD --> PREPARING : resolveIssue()
+        PREPARING --> READY : completePreparation()
+    }
 
-    PREPARING --> HOLD : reportIssue() / status = HOLD
-
-    PREPARING --> READY : completePreparation() / status = READY
-
-    HOLD --> PREPARING : resolveIssue() / status = PREPARING
-
-    READY --> COMPLETED : confirmPickup() / status = COMPLETED
-
-    READY --> ABANDONED : timeTrigger [elapsedTime >= READY_ABANDON_TIMEOUT] / status = ABANDONED
-
-    READY --> ABANDONED : forceCloseAtShiftClose() [isStoreManager == true] / status = ABANDONED
+    IN_PROGRESS --> COMPLETED : confirmPickup() [status == READY] / status = COMPLETED
+    IN_PROGRESS --> ABANDONED : timeTrigger [elapsedTime >= READY_ABANDON_TIMEOUT] / status = ABANDONED
+    IN_PROGRESS --> ABANDONED : forceCloseAtShiftClose() [isStoreManager == true] / status = ABANDONED
 
     COMPLETED --> [*] : archive()
     CANCELLED --> [*] : archive()

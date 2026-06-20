@@ -225,21 +225,19 @@ participant OrderDB as "«entity»<br/>Order (DB)"
 stateDiagram-v2
     [*] --> PENDING : submitCheckout() / status = PENDING
 
-    PENDING --> PREPARING : startPreparation() / deductStock(); status = PREPARING
+    PENDING --> IN_PROGRESS : startPreparation() / deductStock()
+    PENDING --> CANCELLED : cancelOrder(reason) [status == PENDING] / logCancellation()
 
-    PENDING --> CANCELLED : cancelOrder(reason) [status == PENDING] / logCancellation(); status = CANCELLED
+    state IN_PROGRESS {
+        [*] --> PREPARING
+        PREPARING --> HOLD : reportIssue()
+        HOLD --> PREPARING : resolveIssue()
+        PREPARING --> READY : completePreparation()
+    }
 
-    PREPARING --> HOLD : reportIssue() / status = HOLD
-
-    PREPARING --> READY : completePreparation() / status = READY
-
-    HOLD --> PREPARING : resolveIssue() / status = PREPARING
-
-    READY --> COMPLETED : confirmPickup() / status = COMPLETED
-
-    READY --> ABANDONED : timeTrigger [elapsedTime >= READY_ABANDON_TIMEOUT] / status = ABANDONED
-
-    READY --> ABANDONED : forceCloseAtShiftClose() [isStoreManager == true] / status = ABANDONED
+    IN_PROGRESS --> COMPLETED : confirmPickup() [status == READY] / status = COMPLETED
+    IN_PROGRESS --> ABANDONED : timeTrigger [elapsedTime >= READY_ABANDON_TIMEOUT] / status = ABANDONED
+    IN_PROGRESS --> ABANDONED : forceCloseAtShiftClose() [isStoreManager == true] / status = ABANDONED
 
     COMPLETED --> [*] : archive()
     CANCELLED --> [*] : archive()
