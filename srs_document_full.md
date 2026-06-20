@@ -1,4 +1,4 @@
-﻿# SOFTWARE REQUIREMENT SPECIFICATION
+# SOFTWARE REQUIREMENT SPECIFICATION
 ## Coffee Shop Management System
 
 ---
@@ -6269,8 +6269,8 @@ This section describes system behaviors, attributes, constraints, and external i
 This section provides information to ensure that the system will communicate properly with users and with external hardware or software/system elements.
 
 ### 4.1.1 User Interfaces
-- **POS Terminal**: Touchscreen-optimized interface designed for high-speed cashier operations. Form layouts, buttons, and checkout workflows must fit fully on a single screen without vertical or horizontal scrolling.
-- **Admin & Manager Portals**: Web-based responsive dashboards with clear menus, tables, and forms, supporting dark/light mode toggles and structured navigation grids.
+- **POS Terminal, Barista Monitor, & Store Manager App**: Touchscreen-optimized mobile interfaces designed for high-speed branch operations, queue management, and branch-local configuration.
+- **HQ Admin Portal**: Web-based responsive dashboards with clear menus, tables, and forms, supporting dark/light mode toggles and structured navigation grids.
 
 ### 4.1.2 Hardware Interfaces
 - **POS Receipt Printer**: Connection via standard USB port or local network port using receipt print formatting.
@@ -6374,8 +6374,8 @@ The system's performance characteristics, transaction response times, and capaci
 - Backups must be stored in a geographically separate location from the primary server.
 
 ### 4.2.8 Browser & Device Support
-- **Admin Dashboard**: Must support the latest two stable versions of Google Chrome, Mozilla Firefox, and Microsoft Edge on Windows/macOS desktop.
-- **POS Terminal & Mobile Application**: Built using Flutter, supporting:
+- **HQ Admin Portal**: Must support the latest two stable versions of Google Chrome, Mozilla Firefox, and Microsoft Edge on Windows/macOS desktop.
+- **Store Manager Console, POS Terminal & Mobile Application**: Built using Flutter, supporting:
   - Android mobile and tablet devices (Android 9.0 / API 28 and above).
   - iOS mobile and tablet devices (iOS 14.0 and above).
   - Windows 10+ for desktop touchscreen terminals.
