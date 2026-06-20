@@ -122,9 +122,9 @@ classDiagram
     CatalogCoordinator --> RawMaterial
     CatalogCoordinator --> BranchMenuStatus
     CatalogCoordinator --> AuditLog
-    RecipeItem --> RawMaterial
-    MenuItem *-- RecipeItem
-    OptionTopping *-- RecipeItem
+    RecipeItem "*" --> "1" RawMaterial
+    MenuItem "1" *-- "*" RecipeItem
+    OptionTopping "1" *-- "*" RecipeItem
 ```
 
 #### ***3.3.2 UC-18 Add Menu Item with Recipe Formula***
